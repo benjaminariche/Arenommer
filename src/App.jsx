@@ -148,7 +148,7 @@ function EmpHome({ onOfferClick }) {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 500, color: D, margin: "0 0 4px" }}>Bonjour Marie</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 500, color: D, margin: "0 0 4px" }}>Bonjour Benjamin</h1>
         <p style={{ fontSize: 14, color: GR, margin: 0 }}>Bienvenue sur votre espace avantages</p>
       </div>
 
@@ -157,7 +157,7 @@ function EmpHome({ onOfferClick }) {
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(24,95,165,0.9) 0%, rgba(12,68,124,0.85) 100%)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px" }}>
           <div style={{ color: "#fff" }}>
             <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 6 }}>Votre entreprise fait partie des</div>
-            <div style={{ fontSize: 34, fontWeight: 600 }}>Top 12% des TPE</div>
+            <div style={{ fontSize: 34, fontWeight: 600 }}>Top 10% des TPE</div>
             <div style={{ fontSize: 14, opacity: 0.8, marginTop: 6 }}>en matière d'avantages salariés en France</div>
           </div>
           <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 14, padding: "18px 24px", textAlign: "center", color: "#fff", backdropFilter: "blur(4px)" }}>
@@ -305,7 +305,7 @@ function EmpWallet() {
 function BossHome() {
   return (
     <div>
-      <div style={{ marginBottom: 20 }}><h1 style={{ fontSize: 22, fontWeight: 500, color: D, margin: "0 0 4px" }}>Tableau de bord</h1><p style={{ fontSize: 14, color: GR, margin: 0 }}>Optique Dupont — 3 bénéficiaires</p></div>
+      <div style={{ marginBottom: 20 }}><h1 style={{ fontSize: 22, fontWeight: 500, color: D, margin: "0 0 4px" }}>Tableau de bord</h1><p style={{ fontSize: 14, color: GR, margin: 0 }}> Alpha Optique  — 3 bénéficiaires</p></div>
       <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 16, position: "relative", height: 170 }}>
         <img src={IMG.hero} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(24,95,165,0.92) 0%, rgba(12,68,124,0.88) 100%)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px" }}>
@@ -350,9 +350,9 @@ function BossHome() {
 
 function BossTeam() {
   const members = [
-    { name: "Marie Lemaire", role: "Opticienne — CDI", initials: "ML", lastUse: "Aujourd'hui" },
-    { name: "Julien Renaud", role: "Opticien — CDI", initials: "JR", lastUse: "Hier" },
-    { name: "Sofia Amrani", role: "Alternante", initials: "SA", lastUse: "Il y a 3 jours" },
+    { name: "Scott Ariche", role: "Opticienne — CDI", initials: "ML", lastUse: "Aujourd'hui" },
+    { name: "Ilana Ariche", role: "Opticien — CDI", initials: "JR", lastUse: "Hier" },
+    { name: "Jules Ariche", role: "Alternante", initials: "SA", lastUse: "Il y a 3 jours" },
   ];
   return (
     <div>
@@ -455,12 +455,12 @@ export default function App() {
       <div style={{ display: "flex" }}>
         {mode === "employee" ? (
           <>
-            <Sidebar items={empNav} active={empPage === "detail" ? "catalogue" : empPage} onSelect={(id) => { setEmpPage(id); setSelectedOffer(null); }} user={{ initials: "ML", name: "Marie Lemaire", sub: "Optique Dupont" }} role="Espace salarié" />
+            <Sidebar items={empNav} active={empPage === "detail" ? "catalogue" : empPage} onSelect={(id) => { setEmpPage(id); setSelectedOffer(null); }} user={{ initials: "ML", name: "Benjamin Ariche", sub: "Alpha Optique" }} role="Espace salarié" />
             <div style={{ flex: 1, padding: "24px 32px", minHeight: "100vh", background: "#fff", overflowY: "auto" }}>{empViews[empPage]}</div>
           </>
         ) : (
           <>
-            <Sidebar items={bossNav} active={bossPage} onSelect={setBossPage} user={{ initials: "PD", name: "M. Dupont", sub: "Dirigeant" }} role="Espace dirigeant" />
+            <Sidebar items={bossNav} active={bossPage} onSelect={setBossPage} user={{ initials: "PD", name: "Mme & M Ariche", sub: "Dirigeant" }} role="Espace dirigeant" />
             <div style={{ flex: 1, padding: "24px 32px", minHeight: "100vh", background: "#fff", overflowY: "auto" }}>{bossViews[bossPage]}</div>
           </>
         )}
