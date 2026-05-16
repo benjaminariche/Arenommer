@@ -40,8 +40,19 @@ const INIT_SCANNER = {
   navigo: { pct: 50, max: 75, done: false },
   cadeaux: { amount: 0, max: 193, done: false },
   vacances: { amount: 0, max: 550, done: false },
-  resto: { amount: 10, max: 13, done: true },
+  resto: { amount: 10, pct: 55, max: 15, done: false },
   mutuelle: { amount: 0, max: 180, done: false },
+  ppv_type: { value: "Premier versement" },
+  ppv_already: {},  // { [empId]: montant déjà versé }
+};
+
+// ─── TOOLTIP INFO TEXTS ───────────────────────────────────────────────
+const INFO_TEXTS = {
+  ppv: "La Prime de Partage de la Valeur remplace la prime Macron. Elle est versée librement par l'employeur, sans charges sociales ni impôt pour les salariés gagnant moins de 3 SMIC. Le montant peut être différent selon l'ancienneté ou la classification.",
+  navigo: "L'employeur est obligé de rembourser 50% du Navigo. Il peut monter jusqu'à 75% en restant exonéré de cotisations sociales. Ce taux s'applique de manière uniforme à tous les salariés utilisant les transports en commun.",
+  cadeaux: "Les bons d'achat sont exonérés de charges sociales jusqu'à ~193€ par événement (Noël, rentrée, mariage...). Ils doivent être attribués à l'occasion d'un événement précis et utilisés en lien avec cet événement.",
+  vacances: "Les TPE sans CSE peuvent attribuer des chèques vacances directement. La contribution patronale (jusqu'à 80%) est exonérée de cotisations sociales. Le salarié co-finance au minimum 20% du montant total.",
+  resto: "La part patronale du titre-restaurant est exonérée entre 50% et 60% du montant facial du billet. En dehors de cette fourchette, la part excédentaire est soumise à cotisations. Le montant facial peut aller jusqu'à ~15€.",
 };
 
 // ─── KIT PDF GENERATORS ───────────────────────────────────────────────
@@ -295,6 +306,22 @@ function Badge({ text, variant = "blue", t }) {
 function Bar({ pct, color, h = 4 }) {
   return <div style={{ width: "100%", height: h, background: "#33333322", borderRadius: h / 2, overflow: "hidden" }}>
     <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: "100%", background: color, borderRadius: h / 2, transition: "width 0.5s ease" }} /></div>;
+}
+function Tooltip({ text, t }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div style={{ position: "relative", display: "inline-flex" }}>
+      <div onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}
+        style={{ width: 18, height: 18, borderRadius: "50%", background: t.bgSecondary, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "help", flexShrink: 0 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: t.textSec }}>i</span>
+      </div>
+      {show && (
+        <div style={{ position: "absolute", left: 24, top: -6, width: 280, background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, padding: "10px 14px", fontSize: 12, color: t.textSec, lineHeight: 1.6, zIndex: 100, boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+          {text}
+        </div>
+      )}
+    </div>
+  );
 }
 function Inp({ label, value, onChange, type = "text", placeholder, t, hint }) {
   return <div style={{ marginBottom: 14 }}>
@@ -694,7 +721,13 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
   const s = scannerState;
   const activeEmp = employees.filter(e => e.active);
   const n = activeEmp.length;
-  const totalPPV = activeEmp.reduce((sum, e) => sum + (e.ppv || 0), 0);
+  const isComplement = s.ppv_type?.value === "Versement complémentaire";
+  const totalPPVNew = activeEmp.reduce((sum, e) => {
+    const already = isComplement ? (s.ppv_already?.[e.id] || 0) : 0;
+    return sum + Math.min(e.ppv || 0, Math.max(0, 3000 - already));
+  }, 0);
+  const totalPPVAlready = isComplement ? activeEmp.reduce((sum, e) => sum + (s.ppv_already?.[e.id] || 0), 0) : 0;
+  const totalPPV = totalPPVNew;
   const totalNavigo = Math.round(((s.navigo.pct - 50) / 100) * 86.40 * 12 * n);
   const totalCadeaux = s.cadeaux.amount * n;
   const totalVacances = s.vacances.amount * n;
@@ -702,12 +735,13 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
   const globalPct = Math.round([totalPPV > 0, totalNavigo > 0, totalCadeaux > 0, totalVacances > 0].filter(Boolean).length / 4 * 100);
   const update = (key, field, val) => setScannerState(p => ({ ...p, [key]: { ...p[key], [field]: val } }));
 
+  const restoTotal = Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n);
   const items = [
     { id: "ppv", title: "PPV 2026 — par salarié", icon: "coin", color: "blue", loi: "Art. 1 loi n°2022-1158 — max 3 000€/salarié", total: totalPPV, pct: Math.round((totalPPV / (3000 * n)) * 100), perEmployee: true, savingsLabel: `${fmt(Math.round(totalPPV * 0.45))}€ économisés vs primes classiques` },
     { id: "navigo", title: "Navigo — taux uniforme", icon: "bus", color: "amber", loi: "Art. L3261-4 CT — exo jusqu'à 75%", total: totalNavigo, pct: Math.round(((s.navigo.pct - 50) / 25) * 100), perEmployee: false },
     { id: "cadeaux", title: "Chèques cadeaux Noël", icon: "gift", color: "amber", loi: "Circ. URSSAF — plafond ~193€/événement", total: totalCadeaux, pct: Math.round((s.cadeaux.amount / 193) * 100), perEmployee: false },
     { id: "vacances", title: "Chèques vacances", icon: "beach", color: "amber", loi: "Art. L411-9 Code tourisme — 30% SMIC", total: totalVacances, pct: Math.round((s.vacances.amount / 550) * 100), perEmployee: false },
-    { id: "resto", title: "Titres-restaurant", icon: "tools-kitchen-2", color: "green", loi: "Art. L3262-1 CT — exo 50-60% jusqu'à ~7,26€/j", total: Math.round(s.resto.amount * 0.55 * 220 * n), pct: Math.round((s.resto.amount / s.resto.max) * 100), perEmployee: false, done: true },
+    { id: "resto", title: "Titres-restaurant", icon: "tools-kitchen-2", color: "green", loi: "Art. L3262-1 CT — exo part patronale 50-60%", total: restoTotal, pct: Math.round((s.resto.amount / s.resto.max) * 100), perEmployee: false, isResto: true },
   ];
 
   return <div>
@@ -738,7 +772,10 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
           <div style={{ width: 34, height: 34, borderRadius: 10, background: cl, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={item.icon} size={16} color={c} /></div>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-              <span style={{ fontSize: 14, fontWeight: 500, color: t.text }}>{item.title}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: t.text }}>{item.title}</span>
+                <Tooltip text={INFO_TEXTS[item.id]} t={t} />
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 {item.total > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: c }}>{fmt(item.total)}€ équipe</span>}
                 <Badge text={item.done ? "Activé" : item.total > 0 ? "Configuré" : "À activer"} variant={item.done ? "green" : item.total > 0 ? "blue" : "amber"} t={t} />
@@ -750,32 +787,174 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
         </div>
         {isOpen && <div style={{ borderTop: `1px solid ${t.border}`, padding: "16px 18px" }}>
           <span style={{ fontSize: 11, color: t.textSec, fontFamily: "monospace", background: t.bgSecondary, padding: "3px 10px", borderRadius: 6, display: "inline-block", marginBottom: 12 }}>{item.loi}</span>
+
           {item.perEmployee ? (
             <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 10 }}>Montant individuel (modulable selon ancienneté ou classification)</div>
-              {activeEmp.map(emp => <div key={emp.id} style={{ display: "flex", alignItems: "center", gap: 12, background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
-                <div style={{ width: 30, height: 30, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, color: t.blue, flexShrink: 0 }}>{emp.initials}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{emp.firstName} {emp.lastName}</div>
-                  <div style={{ fontSize: 11, color: t.textSec }}>{emp.seniority} mois d'ancienneté</div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input type="range" min={0} max={3000} step={100} value={emp.ppv || 0} onChange={e => onUpdateEmployeePPV(emp.id, parseInt(e.target.value))} style={{ width: 120, accentColor: c }} />
-                  <span style={{ fontSize: 15, fontWeight: 600, color: c, minWidth: 60, textAlign: "right" }}>{fmt(emp.ppv || 0)}€</span>
-                </div>
-              </div>)}
-              <div style={{ background: cl, borderRadius: 10, padding: "12px 16px", display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-                <div><div style={{ fontSize: 11, color: c }}>Total PPV équipe</div><div style={{ fontSize: 20, fontWeight: 600, color: c }}>{fmt(totalPPV)} €</div></div>
-                <div style={{ textAlign: "right" }}><div style={{ fontSize: 11, color: c }}>Plafond restant</div><div style={{ fontSize: 16, fontWeight: 500, color: c }}>{fmt(3000 * n - totalPPV)}€</div></div>
+              {/* PPV — type versement */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                {["Premier versement", "Versement complémentaire"].map(type => {
+                  const sel = (s.ppv_type?.value || "Premier versement") === type;
+                  return <button key={type} onClick={() => update("ppv_type", "value", type)}
+                    style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${sel ? c : t.border}`, background: sel ? cl : "transparent", color: sel ? c : t.textSec, fontSize: 12, fontWeight: sel ? 500 : 400, cursor: "pointer", fontFamily: font }}>
+                    {type}
+                  </button>;
+                })}
               </div>
+
+              {(s.ppv_type?.value || "Premier versement") === "Versement complémentaire" && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ background: t.amberLight, borderRadius: 8, padding: "10px 14px", fontSize: 12, color: t.amber, marginBottom: 14, lineHeight: 1.5 }}>
+                    ⚠️ Un versement complémentaire nécessite une <strong>DUE modificative</strong> faisant référence à la DUE initiale. Renseignez les montants déjà versés pour calculer le reliquat disponible.
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 10 }}>Montants déjà versés cette année par salarié</div>
+                  {activeEmp.map(emp => {
+                    const already = s.ppv_already?.[emp.id] || 0;
+                    const reliquat = Math.max(0, 3000 - already);
+                    return (
+                      <div key={emp.id} style={{ display: "flex", alignItems: "center", gap: 12, background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", marginBottom: 6 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: t.amberLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, color: t.amber, flexShrink: 0 }}>{emp.initials}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{emp.firstName} {emp.lastName}</div>
+                          <div style={{ fontSize: 11, color: t.textSec }}>Reliquat : <strong style={{ color: reliquat > 0 ? t.green : t.red }}>{fmt(reliquat)}€</strong> disponibles</div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <input type="range" min={0} max={3000} step={100} value={already}
+                            onChange={e => setScannerState(p => ({ ...p, ppv_already: { ...p.ppv_already, [emp.id]: parseInt(e.target.value) } }))}
+                            style={{ width: 100, accentColor: t.amber }} />
+                          <span style={{ fontSize: 14, fontWeight: 600, color: t.amber, minWidth: 52, textAlign: "right" }}>{fmt(already)}€</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 10 }}>
+                {(s.ppv_type?.value || "Premier versement") === "Versement complémentaire" ? "Nouveau versement à configurer" : "Montant par salarié"}
+                <span style={{ fontSize: 12, color: t.textSec, fontWeight: 400, marginLeft: 6 }}>(modulable par ancienneté ou classification)</span>
+              </div>
+
+              {activeEmp.map(emp => {
+                const already = (s.ppv_type?.value === "Versement complémentaire") ? (s.ppv_already?.[emp.id] || 0) : 0;
+                const maxAllowed = Math.max(0, 3000 - already);
+                const currentPPV = Math.min(emp.ppv || 0, maxAllowed);
+                const totalAnnual = already + currentPPV;
+                return (
+                  <div key={emp.id} style={{ background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, color: t.blue, flexShrink: 0 }}>{emp.initials}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{emp.firstName} {emp.lastName}</div>
+                        <div style={{ fontSize: 11, color: t.textSec }}>{emp.seniority} mois d'ancienneté</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <input type="range" min={0} max={maxAllowed} step={100} value={currentPPV}
+                          onChange={e => onUpdateEmployeePPV(emp.id, parseInt(e.target.value))}
+                          style={{ width: 110, accentColor: c }} />
+                        <span style={{ fontSize: 15, fontWeight: 600, color: c, minWidth: 56, textAlign: "right" }}>{fmt(currentPPV)}€</span>
+                      </div>
+                    </div>
+                    {already > 0 && (
+                      <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                        <div style={{ flex: 1, background: t.amberLight, borderRadius: 6, padding: "5px 8px", fontSize: 11, color: t.amber, textAlign: "center" }}>Déjà versé : {fmt(already)}€</div>
+                        <div style={{ flex: 1, background: cl, borderRadius: 6, padding: "5px 8px", fontSize: 11, color: c, textAlign: "center" }}>Ce versement : {fmt(currentPPV)}€</div>
+                        <div style={{ flex: 1, background: t.card, borderRadius: 6, padding: "5px 8px", fontSize: 11, color: t.text, textAlign: "center", fontWeight: 600, border: `1px solid ${t.border}` }}>Total annuel : {fmt(totalAnnual)}€</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Récap global */}
+              {(() => {
+                const isComplement = s.ppv_type?.value === "Versement complémentaire";
+                const totalAlready = activeEmp.reduce((sum, e) => sum + (s.ppv_already?.[e.id] || 0), 0);
+                const totalNew = activeEmp.reduce((sum, e) => {
+                  const already = isComplement ? (s.ppv_already?.[e.id] || 0) : 0;
+                  return sum + Math.min(e.ppv || 0, Math.max(0, 3000 - already));
+                }, 0);
+                const totalAnnual = totalAlready + totalNew;
+                return (
+                  <div style={{ background: cl, borderRadius: 10, padding: "12px 16px", marginTop: 10 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: isComplement ? "1fr 1fr 1fr" : "1fr 1fr", gap: 12 }}>
+                      {isComplement && (
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 11, color: c, marginBottom: 2 }}>Déjà versé (année)</div>
+                          <div style={{ fontSize: 18, fontWeight: 600, color: t.amber }}>{fmt(totalAlready)} €</div>
+                        </div>
+                      )}
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 11, color: c, marginBottom: 2 }}>{isComplement ? "Ce versement" : "Total équipe"}</div>
+                        <div style={{ fontSize: 18, fontWeight: 600, color: c }}>{fmt(totalNew)} €</div>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 11, color: c, marginBottom: 2 }}>{isComplement ? "Total annuel équipe" : "Plafond restant"}</div>
+                        <div style={{ fontSize: 18, fontWeight: 600, color: c }}>{isComplement ? fmt(totalAnnual) : fmt(3000 * n - totalNew)} €</div>
+                      </div>
+                    </div>
+                    {isComplement && totalAnnual > 0 && (
+                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c}22`, fontSize: 12, color: c, textAlign: "center" }}>
+                        Économie totale vs primes classiques : <strong>~{fmt(Math.round(totalAnnual * 0.45))} €</strong> de charges
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div style={{ marginTop: 12, background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontSize: 12, color: t.textSec }}>📄 Kit DUE pré-rempli + mémo comptable</div>
-                <button onClick={() => downloadKit("ppv", { company, employees, scannerState })}
+                <div style={{ fontSize: 12, color: t.textSec }}>📄 {(s.ppv_type?.value || "Premier versement") === "Versement complémentaire" ? "DUE modificative" : "DUE initiale"} pré-remplie + mémo comptable</div>
+                <button onClick={() => downloadKit("ppv", { company, employees, scannerState, ppvType: s.ppv_type?.value || "Premier versement" })}
                   style={{ padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.blue}`, background: t.blueLighter, color: t.blue, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: 6 }}>
                   <Icon name="download" size={14} color={t.blue} /> Télécharger le kit Perky
                 </button>
               </div>
             </div>
+
+          ) : item.isResto ? (
+            <div>
+              {/* RESTO — double slider */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: t.text }}>Montant facial du billet</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: c }}>{sv.amount}€</span>
+                </div>
+                <input type="range" min={8} max={15} step={0.5} value={sv.amount}
+                  onChange={e => update("resto", "amount", parseFloat(e.target.value))}
+                  style={{ width: "100%", accentColor: c, cursor: "pointer", marginBottom: 4 }} />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: t.textTert }}>
+                  <span>8€ (min recommandé)</span><span>15€</span>
+                </div>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: t.text }}>Part prise en charge par l'entreprise</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: c }}>{sv.pct}%</span>
+                    <span style={{ fontSize: 12, color: t.textSec }}>({(sv.amount * sv.pct / 100).toFixed(2)}€/billet)</span>
+                    {(sv.pct < 50 || sv.pct > 60) && <span style={{ fontSize: 11, color: t.red, background: t.redLight, padding: "2px 8px", borderRadius: 6 }}>⚠️ Hors zone exo</span>}
+                    {sv.pct >= 50 && sv.pct <= 60 && <span style={{ fontSize: 11, color: t.green, background: t.greenLight, padding: "2px 8px", borderRadius: 6 }}>✓ Exonéré</span>}
+                  </div>
+                </div>
+                <input type="range" min={40} max={70} step={1} value={sv.pct}
+                  onChange={e => update("resto", "pct", parseInt(e.target.value))}
+                  style={{ width: "100%", accentColor: sv.pct >= 50 && sv.pct <= 60 ? c : t.red, cursor: "pointer", marginBottom: 4 }} />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: t.textTert }}>
+                  <span>40%</span>
+                  <span style={{ color: t.green, fontWeight: 500 }}>Zone exonérée : 50% → 60%</span>
+                  <span>70%</span>
+                </div>
+              </div>
+              {sv.amount > 0 && (
+                <div style={{ background: cl, borderRadius: 10, padding: "12px 16px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                    <div><div style={{ fontSize: 11, color: c }}>Part patronale/billet</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{(sv.amount * sv.pct / 100).toFixed(2)}€</div></div>
+                    <div><div style={{ fontSize: 11, color: c }}>Part salarié/billet</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{(sv.amount * (1 - sv.pct / 100)).toFixed(2)}€</div></div>
+                    <div><div style={{ fontSize: 11, color: c }}>Pouvoir d'achat équipe/an</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{fmt(restoTotal)}€</div></div>
+                  </div>
+                </div>
+              )}
+            </div>
+
           ) : (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -980,11 +1159,13 @@ function BossFactures({ t }) {
 
 // ─── EMPLOYEE HOME ────────────────────────────────────────────────────
 function EmpHome({ employee, scannerState, t, onGoToCatalogue }) {
-  const ppv = employee.ppv || 0;
+  const ppvNew = employee.ppv || 0;
+  const ppvAlready = (scannerState.ppv_type?.value === "Versement complémentaire") ? (scannerState.ppv_already?.[employee.id] || 0) : 0;
+  const ppv = ppvNew + ppvAlready;
   const navigoExtra = Math.round(((scannerState.navigo.pct - 50) / 100) * 86.40 * 12);
   const cadeau = scannerState.cadeaux.amount;
   const vacances = scannerState.vacances.amount;
-  const restoYear = Math.round(scannerState.resto.amount * 0.55 * 220);
+  const restoYear = Math.round(scannerState.resto.amount * (scannerState.resto.pct / 100) * 220);
   const cashPerks = ppv + cadeau;
   const naturePerks = navigoExtra + restoYear + vacances;
   const totalPerks = cashPerks + naturePerks;
@@ -1039,7 +1220,7 @@ function EmpHome({ employee, scannerState, t, onGoToCatalogue }) {
       <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}><Icon name="gift" size={18} color={t.blue} /> Ce que Alpha Optique vous offre</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
         {[
-          ppv > 0 && { title: "PPV 2026", sub: `${fmt(ppv)}€ nets versés`, icon: "coin", type: "cash" },
+          ppv > 0 && { title: "PPV 2026", sub: ppvAlready > 0 ? `${fmt(ppv)}€ au total (${fmt(ppvAlready)}€ + ${fmt(ppvNew)}€)` : `${fmt(ppv)}€ nets versés`, icon: "coin", type: "cash" },
           navigoExtra > 0 && { title: `Transport ${scannerState.navigo.pct}%`, sub: `+${fmt(navigoExtra)}€/an`, icon: "bus", type: "nature" },
           scannerState.resto.amount > 0 && { title: "Titres-restaurant", sub: `${scannerState.resto.amount}€/jour`, icon: "tools-kitchen-2", type: "nature" },
         ].filter(Boolean).map((it, i) => {
@@ -1154,7 +1335,57 @@ function OfferDetail({ offer, onBack, onAddToCart, t }) {
 }
 
 // ─── CART ─────────────────────────────────────────────────────────────
-function CartPage({ cart, onRemove, t }) {
+function PaymentConfirm({ orders, onGoToWallet, onGoToCatalogue, t }) {
+  const total = orders.reduce((s, i) => s + i.price * (i.qty || 1), 0);
+  const orderNum = orders[0]?.orderNum || "000000";
+  const email = "benjamin@alphaoptique.fr";
+  return (
+    <div style={{ maxWidth: 540, margin: "60px auto 0", textAlign: "center" }}>
+      <div style={{ width: 80, height: 80, borderRadius: "50%", background: t.greenLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+        <Icon name="circle-check" size={40} color={t.green} />
+      </div>
+      <h1 style={{ fontSize: 24, fontWeight: 500, color: t.text, margin: "0 0 8px" }}>Paiement confirmé !</h1>
+      <div style={{ fontSize: 14, color: t.textSec, marginBottom: 28 }}>Commande #{orderNum} — {total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</div>
+
+      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "20px 24px", marginBottom: 16, textAlign: "left" }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 14 }}>Vos billets</div>
+        {orders.map((item, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: i < orders.length - 1 ? 12 : 0 }}>
+            <img src={item.img} alt="" style={{ width: 52, height: 38, borderRadius: 8, objectFit: "cover" }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{item.name}</div>
+              <div style={{ fontSize: 12, color: t.textSec }}>{item.cat}</div>
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 500, color: t.green }}>✓ Ajouté au wallet</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: t.blueLighter, borderRadius: 14, padding: "16px 20px", marginBottom: 24, textAlign: "left" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: t.blue, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon name="mail" size={18} color="#fff" />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 500, color: t.blue, marginBottom: 4 }}>Un email de confirmation vous a été envoyé</div>
+            <div style={{ fontSize: 13, color: t.blue, opacity: 0.8 }}>Vos billets sont également disponibles à l'adresse <strong>{email}</strong>. Retrouvez-les à tout moment dans votre wallet Perky.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={onGoToCatalogue} style={{ flex: 1, padding: "12px", borderRadius: 10, border: `1px solid ${t.border}`, background: "none", color: t.textSec, fontSize: 14, cursor: "pointer", fontFamily: font }}>
+          Continuer mes achats
+        </button>
+        <button onClick={onGoToWallet} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <Icon name="wallet" size={16} color="#fff" /> Voir mon wallet
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CartPage({ cart, onRemove, onPay, t }) {
   const total = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
   if (!cart.length) return <div style={{ textAlign: "center", padding: "80px 0" }}>
     <Icon name="shopping-cart" size={48} color={t.textTert} />
@@ -1184,8 +1415,12 @@ function CartPage({ cart, onRemove, t }) {
           <div style={{ borderTop: `1px solid ${t.border}`, marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 16 }}>
             <span>Total</span><span>{total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
           </div>
-          <button style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: font }}>Procéder au paiement</button>
-          <div style={{ fontSize: 11, color: t.textSec, textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>Billet envoyé dans votre wallet après paiement</div>
+          <button onClick={onPay} style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: font }}>
+            Procéder au paiement
+          </button>
+          <div style={{ fontSize: 11, color: t.textSec, textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
+            Billets envoyés dans votre wallet et par email
+          </div>
         </div>
       </div>
     </div>
@@ -1251,7 +1486,7 @@ const bossNav = [
 // ─── MAIN APP ─────────────────────────────────────────────────────────
 export default function App() {
   const [dark, setDark] = useState(false);
-  const [authState, setAuthState] = useState("login"); // login | emp-activation | boss-onboarding | app
+  const [authState, setAuthState] = useState("login");
   const [currentAccount, setCurrentAccount] = useState(null);
   const [empPage, setEmpPage] = useState("home");
   const [bossPage, setBossPage] = useState("home");
@@ -1261,6 +1496,16 @@ export default function App() {
   const [employees, setEmployees] = useState(INIT_EMPLOYEES);
   const [scannerState, setScannerState] = useState(INIT_SCANNER);
   const [company, setCompany] = useState({ name: "Alpha Optique", sector: "Optique / Santé", siret: "" });
+  const [paidOrders, setPaidOrders] = useState([]);
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, icon: "gift", color: "#1D9E75", title: "Votre employeur a activé les chèques vacances", sub: "Jusqu'à 550€ disponibles pour vos prochaines vacances", time: "Il y a 2j", read: false },
+    { id: 2, icon: "coin", color: "#185FA5", title: "PPV 2026 versée sur votre paie", sub: "1 000€ nets ont été ajoutés à votre bulletin de mai", time: "Il y a 5j", read: false },
+    { id: 3, icon: "flame", color: "#BA7517", title: "Nouvelle offre : Disneyland Paris", sub: "-30€ sur le billet 1 jour, disponible dès maintenant", time: "Il y a 1sem", read: true },
+    { id: 4, icon: "bus", color: "#378ADD", title: "Transport remboursé à 75%", sub: "Votre employeur prend désormais en charge 75% de votre Navigo", time: "Il y a 2sem", read: true },
+  ]);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -1283,12 +1528,30 @@ export default function App() {
   const updateEmployeePPV = useCallback((id, val) => {
     setEmployees(p => p.map(e => e.id === id ? { ...e, ppv: val } : e));
   }, []);
+
   const addToCart = useCallback((offer) => {
     setCart(p => { const ex = p.find(i => i.id === offer.id); return ex ? p.map(i => i.id === offer.id ? { ...i, qty: (i.qty || 1) + 1 } : i) : [...p, { ...offer, qty: 1 }]; });
     setEmpPage("cart");
   }, []);
 
+  const handlePayment = useCallback(() => {
+    const orderNum = Math.floor(Math.random() * 900000) + 100000;
+    setPaidOrders(cart.map(i => ({ ...i, orderNum, paidAt: new Date() })));
+    setCart([]);
+    setShowPaymentConfirm(true);
+    const newNotif = {
+      id: Date.now(), icon: "ticket", color: "#1D9E75",
+      title: `Commande #${orderNum} confirmée`,
+      sub: `${cart.length} billet${cart.length > 1 ? "s" : ""} disponible${cart.length > 1 ? "s" : ""} dans votre wallet`,
+      time: "À l'instant", read: false,
+    };
+    setNotifications(p => [newNotif, ...p]);
+  }, [cart]);
+
+  const markAllRead = () => setNotifications(p => p.map(n => ({ ...n, read: true })));
+
   const activeEmployee = employees.find(e => e.id === 1) || INIT_EMPLOYEES[0];
+  const currentEmpPage = showPaymentConfirm ? "confirmation" : empPage;
 
   if (authState === "login") return <LoginPage onLogin={handleLogin} t={t} />;
   if (authState === "emp-activation") return <EmployeeActivation onComplete={() => setAuthState("app")} t={t} />;
@@ -1300,7 +1563,8 @@ export default function App() {
     home: <EmpHome employee={activeEmployee} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />,
     catalogue: <EmpCatalogue onOfferClick={o => { setSelectedOffer(o); setEmpPage("detail"); }} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
     detail: selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => { setSelectedOffer(null); setEmpPage("catalogue"); }} onAddToCart={addToCart} t={t} /> : null,
-    cart: <CartPage cart={cart} onRemove={id => setCart(p => p.filter(i => i.id !== id))} t={t} />,
+    cart: <CartPage cart={cart} onRemove={id => setCart(p => p.filter(i => i.id !== id))} onPay={handlePayment} t={t} />,
+    confirmation: <PaymentConfirm orders={paidOrders} onGoToWallet={() => { setShowPaymentConfirm(false); setEmpPage("wallet"); }} onGoToCatalogue={() => { setShowPaymentConfirm(false); setEmpPage("catalogue"); }} t={t} />,
     wallet: <EmpWallet t={t} />,
     settings: <Settings dark={dark} setDark={setDark} t={t} />,
   };
@@ -1315,8 +1579,8 @@ export default function App() {
   };
 
   return (
-    <div style={{ fontFamily: font, background: t.bg, minHeight: "100vh", color: t.text }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 20px", borderBottom: `1px solid ${t.border}`, background: t.sidebar }}>
+    <div style={{ fontFamily: font, background: t.bg, minHeight: "100vh", color: t.text }} onClick={() => showNotifs && setShowNotifs(false)}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 20px", borderBottom: `1px solid ${t.border}`, background: t.sidebar, position: "relative", zIndex: 200 }}>
         <div style={{ display: "flex", gap: 6 }}>
           {[{ id: "employee", icon: "user", label: "Espace salarié" }, { id: "employer", icon: "briefcase", label: "Espace patron" }].map(m => {
             const active = isPatron ? m.id === "employer" : m.id === "employee";
@@ -1326,14 +1590,55 @@ export default function App() {
             </button>;
           })}
         </div>
-        <button onClick={handleLogout} style={{ fontSize: 12, color: t.textSec, border: `1px solid ${t.border}`, background: "none", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="logout" size={14} color={t.textSec} /> Déconnexion
-        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Cloche notifs — espace salarié uniquement */}
+          {!isPatron && (
+            <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowNotifs(s => !s)} style={{ position: "relative", width: 36, height: 36, borderRadius: 10, border: `1px solid ${t.border}`, background: showNotifs ? t.blueLighter : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon name="bell" size={18} color={showNotifs ? t.blue : t.textSec} />
+                {unreadCount > 0 && <span style={{ position: "absolute", top: 7, right: 7, width: 8, height: 8, borderRadius: "50%", background: t.red, border: `2px solid ${t.sidebar}` }} />}
+              </button>
+              {showNotifs && (
+                <div style={{ position: "absolute", top: 44, right: 0, width: 360, background: t.card, border: `1px solid ${t.border}`, borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.14)", overflow: "hidden", zIndex: 300 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${t.border}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 15, fontWeight: 500, color: t.text }}>Notifications</span>
+                      {unreadCount > 0 && <span style={{ background: t.red, color: "#fff", fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 10 }}>{unreadCount}</span>}
+                    </div>
+                    {unreadCount > 0 && <button onClick={markAllRead} style={{ fontSize: 12, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Tout marquer lu</button>}
+                  </div>
+                  <div style={{ maxHeight: 360, overflowY: "auto" }}>
+                    {notifications.map((notif, i) => (
+                      <div key={notif.id}
+                        onClick={() => setNotifications(p => p.map(n => n.id === notif.id ? { ...n, read: true } : n))}
+                        style={{ display: "flex", gap: 12, padding: "14px 18px", borderBottom: i < notifications.length - 1 ? `1px solid ${t.border}` : "none", background: notif.read ? "transparent" : t.bgSecondary, cursor: "pointer" }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: notif.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Icon name={notif.icon} size={18} color={notif.color} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: notif.read ? 400 : 500, color: t.text, marginBottom: 2, lineHeight: 1.4 }}>{notif.title}</div>
+                          <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.4, marginBottom: 4 }}>{notif.sub}</div>
+                          <div style={{ fontSize: 11, color: t.textTert }}>{notif.time}</div>
+                        </div>
+                        {!notif.read && <div style={{ width: 8, height: 8, borderRadius: "50%", background: t.blue, flexShrink: 0, marginTop: 6 }} />}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button onClick={handleLogout} style={{ fontSize: 12, color: t.textSec, border: `1px solid ${t.border}`, background: "none", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: 6 }}>
+            <Icon name="logout" size={14} color={t.textSec} /> Déconnexion
+          </button>
+        </div>
       </div>
       <div style={{ display: "flex" }}>
         {!isPatron ? <>
-          <Sidebar items={empNav} active={empPage === "detail" ? "catalogue" : empPage} onSelect={id => { setEmpPage(id); setSelectedOffer(null); }} user={{ initials: activeEmployee.initials, name: `${activeEmployee.firstName} ${activeEmployee.lastName}`, sub: "Alpha Optique" }} role="Espace salarié" t={t} cartCount={cart.length} />
-          <div style={{ flex: 1, padding: "24px 32px", background: t.bg, overflowY: "auto", minHeight: "calc(100vh - 45px)" }}>{empViews[empPage]}</div>
+          <Sidebar items={empNav} active={currentEmpPage === "detail" ? "catalogue" : currentEmpPage === "confirmation" ? "cart" : currentEmpPage} onSelect={id => { setEmpPage(id); setSelectedOffer(null); setShowPaymentConfirm(false); }} user={{ initials: activeEmployee.initials, name: `${activeEmployee.firstName} ${activeEmployee.lastName}`, sub: "Alpha Optique" }} role="Espace salarié" t={t} cartCount={cart.length} />
+          <div style={{ flex: 1, padding: "24px 32px", background: t.bg, overflowY: "auto", minHeight: "calc(100vh - 45px)" }}>{empViews[currentEmpPage]}</div>
         </> : <>
           <Sidebar items={bossNav} active={bossPage} onSelect={setBossPage} user={{ initials: "AO", name: "Alpha Optique", sub: "Dirigeant" }} role="Espace dirigeant" t={t} cartCount={0} />
           <div style={{ flex: 1, padding: "24px 32px", background: t.bg, overflowY: "auto", minHeight: "calc(100vh - 45px)" }}>{bossViews[bossPage] || bossViews.home}</div>
