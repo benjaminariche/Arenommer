@@ -299,6 +299,14 @@ const CATEGORIES = [
 function Icon({ name, size = 18, color }) {
   return <i className={`ti ti-${name}`} style={{ fontSize: size, color }} aria-hidden="true" />;
 }
+function BellIcon({ size = 18, color }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
 function Badge({ text, variant = "blue", t }) {
   const c = { blue: [t.blueLighter, t.blue], green: [t.greenLight, t.green], amber: [t.amberLight, t.amber], red: [t.redLight, t.red] }[variant] || [t.blueLighter, t.blue];
   return <span style={{ fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 10, background: c[0], color: c[1] }}>{text}</span>;
@@ -987,6 +995,197 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
 }
 
 // ─── BOSS HOME ────────────────────────────────────────────────────────
+// ─── TEAM CALENDAR ────────────────────────────────────────────────────
+function TeamCalendar({ employees, t }) {
+  const today = new Date(2026, 4, 17); // 17 mai 2026
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [events, setEvents] = useState({
+    "2026-05-20": [{ empId: 2, type: "absent" }],
+    "2026-05-21": [{ empId: 2, type: "absent" }],
+    "2026-05-22": [{ empId: 3, type: "ecole" }],
+    "2026-05-26": [{ empId: 1, type: "absent" }],
+    "2026-06-02": [{ empId: 3, type: "ecole" }],
+    "2026-06-09": [{ empId: 3, type: "ecole" }],
+    "2026-06-15": [{ empId: 1, type: "absent" }, { empId: 2, type: "absent" }],
+  });
+  const [popover, setPopover] = useState(null); // { dateKey, x, y }
+
+  const active = employees.filter(e => e.active);
+
+  const PERKY_EVENTS = [
+    { dateKey: "2026-06-15", label: "Fête des pères — chèques cadeaux", color: "#185FA5" },
+    { dateKey: "2026-09-01", label: "Rentrée scolaire — chèques cadeaux", color: "#185FA5" },
+    { dateKey: "2026-11-30", label: "PPV 2026 — deadline versement", color: "#E24B4A" },
+    { dateKey: "2026-12-10", label: "Chèques cadeaux Noël — commander avant", color: "#BA7517" },
+    { dateKey: "2026-12-31", label: "Dernière exonération PPV max", color: "#E24B4A" },
+  ];
+
+  const TYPE_COLORS = { absent: "#E24B4A", ecole: "#8B5CF6" };
+  const TYPE_LABELS = { absent: "Absent", ecole: "École" };
+
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7; // Lundi = 0
+  const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
+  const prevMonth = () => { if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1); } else setCurrentMonth(m => m - 1); };
+  const nextMonth = () => { if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(y => y + 1); } else setCurrentMonth(m => m + 1); };
+
+  const getDateKey = (day) => `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  const toggleEvent = (dateKey, empId, type) => {
+    setEvents(prev => {
+      const current = prev[dateKey] || [];
+      const exists = current.find(e => e.empId === empId && e.type === type);
+      if (exists) return { ...prev, [dateKey]: current.filter(e => !(e.empId === empId && e.type === type)) };
+      return { ...prev, [dateKey]: [...current, { empId, type }] };
+    });
+  };
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  return (
+    <div>
+      {/* Header nav */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 500, color: t.text }}>{monthNames[currentMonth]} {currentYear}</div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={prevMonth} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.border}`, background: "none", cursor: "pointer", color: t.textSec, display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+          <button onClick={nextMonth} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.border}`, background: "none", cursor: "pointer", color: t.textSec, display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+        </div>
+      </div>
+
+      {/* Légende */}
+      <div style={{ display: "flex", gap: 14, marginBottom: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 10, height: 10, borderRadius: 3, background: "#E24B4A" }} /><span style={{ fontSize: 11, color: t.textSec }}>Absent</span></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 10, height: 10, borderRadius: 3, background: "#8B5CF6" }} /><span style={{ fontSize: 11, color: t.textSec }}>École</span></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 10, height: 10, borderRadius: 3, background: "#185FA5" }} /><span style={{ fontSize: 11, color: t.textSec }}>Échéance Perky</span></div>
+      </div>
+
+      {/* Jours semaine */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 4 }}>
+        {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
+          <div key={i} style={{ textAlign: "center", fontSize: 11, fontWeight: 500, color: t.textSec, padding: "4px 0" }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Grille jours */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />;
+          const dateKey = getDateKey(day);
+          const dayEvents = events[dateKey] || [];
+          const perkyEvent = PERKY_EVENTS.find(e => e.dateKey === dateKey);
+          const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+          const isWeekend = (i % 7) >= 5;
+
+          return (
+            <div key={i} onClick={(e) => { if (isWeekend) return; setPopover(popover?.dateKey === dateKey ? null : { dateKey, day }); e.stopPropagation(); }}
+              style={{ position: "relative", minHeight: 52, borderRadius: 6, padding: "4px 5px", background: isToday ? t.blueLighter : isWeekend ? t.bgSecondary : t.card, border: `1px solid ${isToday ? t.blue : t.border}`, cursor: isWeekend ? "default" : "pointer", transition: "background 0.1s" }}
+              onMouseEnter={e => { if (!isWeekend) e.currentTarget.style.background = t.bgSecondary; }}
+              onMouseLeave={e => { if (!isWeekend) e.currentTarget.style.background = isToday ? t.blueLighter : t.card; }}>
+              <div style={{ fontSize: 11, fontWeight: isToday ? 600 : 400, color: isToday ? t.blue : isWeekend ? t.textTert : t.text, marginBottom: 3 }}>{day}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                {dayEvents.map((ev, j) => {
+                  const emp = active.find(e => e.id === ev.empId);
+                  return emp ? (
+                    <div key={j} title={`${emp.initials} — ${TYPE_LABELS[ev.type]}`} style={{ width: 14, height: 14, borderRadius: "50%", background: TYPE_COLORS[ev.type], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 600 }}>
+                      {emp.initials[0]}
+                    </div>
+                  ) : null;
+                })}
+                {perkyEvent && <div style={{ width: "100%", height: 3, borderRadius: 2, background: perkyEvent.color, marginTop: 1 }} title={perkyEvent.label} />}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Popover saisie */}
+      {popover && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 400 }} onClick={() => setPopover(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", width: 240, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 401 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 12 }}>
+              {monthNames[currentMonth].slice(0, 3)} {popover.day}
+            </div>
+            {(() => {
+              const pk = PERKY_EVENTS.find(e => e.dateKey === popover.dateKey);
+              return pk ? <div style={{ background: t.blueLighter, borderRadius: 8, padding: "8px 10px", fontSize: 12, color: t.blue, marginBottom: 10 }}>📅 {pk.label}</div> : null;
+            })()}
+            {active.map(emp => {
+              const dayEvents = events[popover.dateKey] || [];
+              const absent = dayEvents.find(e => e.empId === emp.id && e.type === "absent");
+              const ecole = dayEvents.find(e => e.empId === emp.id && e.type === "ecole");
+              return (
+                <div key={emp.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 500, color: t.blue }}>{emp.initials}</div>
+                    <span style={{ fontSize: 12, color: t.text }}>{emp.firstName}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button onClick={() => toggleEvent(popover.dateKey, emp.id, "absent")} style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${absent ? "#E24B4A" : t.border}`, background: absent ? "#FCEBEB" : "none", color: absent ? "#E24B4A" : t.textSec, fontSize: 11, cursor: "pointer", fontFamily: font }}>Abs.</button>
+                    {emp.role?.includes("lternan") && (
+                      <button onClick={() => toggleEvent(popover.dateKey, emp.id, "ecole")} style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${ecole ? "#8B5CF6" : t.border}`, background: ecole ? "#EDE9FE" : "none", color: ecole ? "#8B5CF6" : t.textSec, fontSize: 11, cursor: "pointer", fontFamily: font }}>École</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <button onClick={() => setPopover(null)} style={{ width: "100%", marginTop: 6, padding: "7px", borderRadius: 8, border: "none", background: t.bgSecondary, color: t.textSec, fontSize: 12, cursor: "pointer", fontFamily: font }}>Fermer</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── PERKY DEADLINES ──────────────────────────────────────────────────
+function PerkyDeadlines({ t, onNav }) {
+  const today = new Date(2026, 4, 17);
+  const deadlines = [
+    { date: new Date(2026, 5, 15), label: "Fête des pères", desc: "Commandez vos chèques cadeaux avant le 15 juin", action: "cadeaux", icon: "gift" },
+    { date: new Date(2026, 8, 1), label: "Rentrée scolaire", desc: "Chèques cadeaux rentrée — pensez aux enfants de l'équipe", action: "cadeaux", icon: "school" },
+    { date: new Date(2026, 10, 30), label: "PPV 2026 — deadline", desc: "Dernier versement de l'année avant le 30 novembre conseillé", action: "ppv", icon: "coin" },
+    { date: new Date(2026, 11, 10), label: "Chèques cadeaux Noël", desc: "Commander avant le 10 décembre pour livraison garantie", action: "cadeaux", icon: "christmas-tree" },
+    { date: new Date(2026, 11, 31), label: "Exonération PPV max", desc: "Dernière année à 3 000€/salarié exonérés — ne pas passer à côté", action: "ppv", icon: "alert-triangle" },
+  ].filter(d => d.date >= today).slice(0, 4);
+
+  const daysUntil = (date) => Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+
+  const urgencyColor = (days) => {
+    if (days <= 30) return { bg: "#FCEBEB", color: "#E24B4A", label: `${days}j` };
+    if (days <= 60) return { bg: "#FAEEDA", color: "#BA7517", label: `${days}j` };
+    return { bg: "#E6F1FB", color: "#185FA5", label: `${days}j` };
+  };
+
+  return (
+    <div>
+      {deadlines.map((d, i) => {
+        const days = daysUntil(d.date);
+        const u = urgencyColor(days);
+        return (
+          <div key={i} onClick={() => onNav("scanner")} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, marginBottom: 8, cursor: "pointer", transition: "border-color 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = u.color}
+            onMouseLeave={e => e.currentTarget.style.borderColor = t.border}>
+            <div style={{ width: 34, height: 34, borderRadius: 8, background: u.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon name={d.icon} size={16} color={u.color} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{d.label}</div>
+              <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.4 }}>{d.desc}</div>
+            </div>
+            <div style={{ background: u.bg, color: u.color, fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 8, flexShrink: 0 }}>
+              {u.label}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function BossHome({ employees, scannerState, t, onNav }) {
   const active = employees.filter(e => e.active);
   const n = active.length;
@@ -999,53 +1198,115 @@ function BossHome({ employees, scannerState, t, onNav }) {
   const globalPct = Math.round([totalPPV > 0, totalNavigo > 0, totalCadeaux > 0, totalVacances > 0].filter(Boolean).length / 4 * 100);
 
   return <div>
-    <div style={{ marginBottom: 20 }}>
+    <div style={{ marginBottom: 16 }}>
       <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 4px" }}>Tableau de bord</h1>
       <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Alpha Optique — {n} bénéficiaire{n > 1 ? "s" : ""}</p>
     </div>
-    <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 16, position: "relative", height: 180 }}>
+
+    {/* Hero */}
+    <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 14, position: "relative", height: 160 }}>
       <img src={IMG.hero} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(24,95,165,0.92) 0%, rgba(12,68,124,0.88) 100%)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px" }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(24,95,165,0.92) 0%, rgba(12,68,124,0.88) 100%)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px" }}>
         <div style={{ color: "#fff" }}>
-          <div style={{ fontSize: 13, opacity: 0.8 }}>Pouvoir d'achat récupérable</div>
-          <div style={{ fontSize: 36, fontWeight: 600, margin: "4px 0" }}>{fmt(grandTotal)} €</div>
-          <div style={{ fontSize: 13, opacity: 0.7 }}>~{fmt(Math.round(grandTotal / Math.max(n, 1)))}€ par salarié/an</div>
+          <div style={{ fontSize: 12, opacity: 0.8 }}>Pouvoir d'achat récupérable</div>
+          <div style={{ fontSize: 32, fontWeight: 600, margin: "2px 0" }}>{fmt(grandTotal)} €</div>
+          <div style={{ fontSize: 12, opacity: 0.7 }}>~{fmt(Math.round(grandTotal / Math.max(n, 1)))}€ / salarié / an</div>
         </div>
         <div style={{ textAlign: "right", color: "#fff" }}>
-          <div style={{ fontSize: 40, fontWeight: 600 }}>{globalPct}%</div>
-          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>optimisé</div>
+          <div style={{ fontSize: 36, fontWeight: 600 }}>{globalPct}%</div>
+          <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4 }}>optimisé</div>
           <Bar pct={globalPct} color="rgba(255,255,255,0.4)" h={4} />
         </div>
       </div>
     </div>
-    <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-      {[{ icon: "users", v: `${n}`, l: "Salariés actifs", c: t.blue }, { icon: "chart-bar", v: "67%", l: "Utilisent Perky", c: t.green }, { icon: "coin", v: `${fmt(grandTotal)}€`, l: "Avantages configurés", c: t.amber }].map((s2, i) => (
-        <div key={i} style={{ flex: 1, background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px" }}>
-          <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}><Icon name={s2.icon} size={16} color={s2.c} /><span style={{ fontSize: 12, color: t.textSec }}>{s2.l}</span></div>
-          <div style={{ fontSize: 22, fontWeight: 500, color: t.text }}>{s2.v}</div>
+
+    {/* Stats */}
+    <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      {[{ icon: "users", v: `${n}`, l: "Salariés", c: t.blue }, { icon: "chart-bar", v: "67%", l: "Utilisent Perky", c: t.green }, { icon: "coin", v: `${fmt(grandTotal)}€`, l: "Avantages", c: t.amber }].map((s2, i) => (
+        <div key={i} style={{ flex: 1, background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, padding: "12px 14px" }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 6, alignItems: "center" }}><Icon name={s2.icon} size={14} color={s2.c} /><span style={{ fontSize: 11, color: t.textSec }}>{s2.l}</span></div>
+          <div style={{ fontSize: 20, fontWeight: 500, color: t.text }}>{s2.v}</div>
         </div>
       ))}
     </div>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-      <div style={{ fontSize: 15, fontWeight: 500, color: t.text, display: "flex", alignItems: "center", gap: 8 }}><Icon name="chart-bar" size={18} color={t.blue} /> Aperçu du scanner</div>
-      <button onClick={() => onNav("scanner")} style={{ fontSize: 13, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Tout configurer →</button>
-    </div>
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-      {[
-        { title: "PPV 2026", val: `${fmt(totalPPV)}€`, pct: Math.round((totalPPV / (3000 * n)) * 100), c: t.blue, badge: totalPPV > 0 ? "blue" : "amber", status: totalPPV > 0 ? "Configuré" : "À activer" },
-        { title: "Navigo", val: `${s.navigo.pct}%`, pct: Math.round(((s.navigo.pct - 50) / 25) * 100), c: t.amber, badge: s.navigo.pct > 50 ? "blue" : "amber", status: s.navigo.pct > 50 ? "Optimisé" : "Optimiser → 75%" },
-        { title: "Chèques cadeaux", val: totalCadeaux > 0 ? `${fmt(totalCadeaux)}€` : "—", pct: Math.round((s.cadeaux.amount / 193) * 100), c: t.amber, badge: s.cadeaux.amount > 0 ? "blue" : "amber", status: s.cadeaux.amount > 0 ? "Configuré" : "À activer" },
-        { title: "Titres-restaurant", val: `${s.resto.amount}€/billet`, pct: Math.round((s.resto.amount / s.resto.max) * 100), c: t.green, badge: "green", status: "Activé" },
-      ].map((it, i) => <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "14px 16px", borderLeft: `3px solid ${it.c}` }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{it.title}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: it.c }}>{it.val}</span>
-            <Badge text={it.status} variant={it.badge} t={t} />
+
+    {/* Décomposition avantages donnés */}
+    {grandTotal > 0 && <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
+      <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 4 }}>Ce que vous offrez à votre équipe</div>
+      <div style={{ fontSize: 13, color: t.textSec, marginBottom: 14 }}>Décomposition des avantages activés par vous cette année</div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+        <div style={{ flex: 1, background: t.greenLight, borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${t.green}22` }}>
+          <div style={{ fontSize: 11, color: t.green, marginBottom: 4 }}>Avantages en espèces</div>
+          <div style={{ fontSize: 22, fontWeight: 600, color: t.green }}>{fmt(totalPPV + totalCadeaux)} €</div>
+          <div style={{ fontSize: 11, color: t.green, opacity: 0.8, marginTop: 4 }}>PPV + chèques cadeaux</div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", fontSize: 18, color: t.textTert }}>+</div>
+        <div style={{ flex: 1, background: t.blueLighter, borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${t.blue}22` }}>
+          <div style={{ fontSize: 11, color: t.blue, marginBottom: 4 }}>Avantages en nature</div>
+          <div style={{ fontSize: 22, fontWeight: 600, color: t.blue }}>{fmt(totalNavigo + totalVacances + Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n))} €</div>
+          <div style={{ fontSize: 11, color: t.blue, opacity: 0.8, marginTop: 4 }}>Transport + resto + vacances</div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", fontSize: 18, color: t.textTert }}>=</div>
+        <div style={{ flex: 1.2, background: t.bgSecondary, borderRadius: 10, padding: "14px 16px", textAlign: "center" }}>
+          <div style={{ fontSize: 11, color: t.textSec, marginBottom: 4 }}>Total équipe / an</div>
+          <div style={{ fontSize: 22, fontWeight: 600, color: t.text }}>{fmt(grandTotal)} €</div>
+          <div style={{ fontSize: 11, color: t.textSec, marginTop: 4 }}>soit {fmt(Math.round(grandTotal / Math.max(n, 1)))}€ / pers.</div>
+        </div>
+      </div>
+      <div style={{ background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", fontSize: 12, color: t.textSec, lineHeight: 1.5 }}>
+        💡 Ces avantages représentent <strong style={{ color: t.text }}>{fmt(Math.round(grandTotal * 0.45))} €</strong> d'économies vs primes classiques chargées — pour un coût net Perky de <strong style={{ color: t.text }}>{n * 5 * 12 + 150}€/an</strong>.
+      </div>
+    </div>}
+
+    {/* Deux colonnes : calendrier + droite */}
+    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 14, alignItems: "start" }}>
+
+      {/* Colonne gauche — Calendrier */}
+      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "16px 18px" }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="calendar" size={16} color={t.blue} /> Agenda équipe
+        </div>
+        <TeamCalendar employees={active.length > 0 ? active : employees} t={t} />
+      </div>
+
+      {/* Colonne droite — Scanner aperçu + Échéances */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+        {/* Scanner aperçu */}
+        <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "14px 16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 500, color: t.text, display: "flex", alignItems: "center", gap: 8 }}><Icon name="chart-bar" size={16} color={t.blue} /> Scanner</div>
+            <button onClick={() => onNav("scanner")} style={{ fontSize: 12, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Configurer →</button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {[
+              { title: "PPV 2026", val: totalPPV > 0 ? `${fmt(totalPPV)}€` : "—", pct: Math.round((totalPPV / Math.max(3000 * n, 1)) * 100), c: t.blue, status: totalPPV > 0 ? "blue" : "amber", label: totalPPV > 0 ? "Configuré" : "À activer" },
+              { title: "Navigo", val: `${s.navigo.pct}%`, pct: Math.round(((s.navigo.pct - 50) / 25) * 100), c: t.amber, status: s.navigo.pct > 50 ? "blue" : "amber", label: s.navigo.pct > 50 ? "Optimisé" : "À optimiser" },
+              { title: "Chèques cadeaux", val: totalCadeaux > 0 ? `${fmt(totalCadeaux)}€` : "—", pct: Math.round((s.cadeaux.amount / 193) * 100), c: t.amber, status: s.cadeaux.amount > 0 ? "blue" : "amber", label: s.cadeaux.amount > 0 ? "Configuré" : "À activer" },
+              { title: "Titres-restaurant", val: `${s.resto.amount}€/billet`, pct: Math.round((s.resto.amount / s.resto.max) * 100), c: t.green, status: "green", label: "Activé" },
+            ].map((it, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                    <span style={{ fontSize: 12, color: t.text }}>{it.title}</span>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: it.c }}>{it.val}</span>
+                  </div>
+                  <Bar pct={it.pct} color={it.c} h={3} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <Bar pct={it.pct} color={it.c} h={4} />
-      </div>)}
+
+        {/* Échéances Perky */}
+        <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "14px 16px" }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <Icon name="bell" size={16} color={t.amber} /> Échéances Perky
+          </div>
+          <PerkyDeadlines t={t} onNav={onNav} />
+        </div>
+
+      </div>
     </div>
   </div>;
 }
@@ -1053,11 +1314,13 @@ function BossHome({ employees, scannerState, t, onNav }) {
 // ─── BOSS TEAM ────────────────────────────────────────────────────────
 function BossTeam({ employees, setEmployees, t }) {
   const [showAdd, setShowAdd] = useState(false);
-  const [showDetail, setShowDetail] = useState(null);
+  const [showDetail, setShowDetail] = useState(null); // slide-over
+  const [showEdit, setShowEdit] = useState(null);     // modal édition
   const [showConfirm, setShowConfirm] = useState(null);
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", role: "", seniority: 0 });
   const active = employees.filter(e => e.active);
-  const emp = showDetail ? employees.find(e => e.id === showDetail) : null;
+  const empDetail = showDetail ? employees.find(e => e.id === showDetail) : null;
+  const empEdit = showEdit ? employees.find(e => e.id === showEdit) : null;
 
   const addEmp = () => {
     if (!form.firstName || !form.email) return;
@@ -1066,9 +1329,8 @@ function BossTeam({ employees, setEmployees, t }) {
     setForm({ firstName: "", lastName: "", email: "", phone: "", role: "", seniority: 0 });
     setShowAdd(false);
   };
-
   const updateEmp = (id, field, val) => setEmployees(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
-  const removeEmp = (id) => { setEmployees(p => p.map(e => e.id === id ? { ...e, active: false } : e)); setShowConfirm(null); setShowDetail(null); };
+  const removeEmp = (id) => { setEmployees(p => p.map(e => e.id === id ? { ...e, active: false } : e)); setShowConfirm(null); setShowDetail(null); setShowEdit(null); };
 
   return <div>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -1077,27 +1339,122 @@ function BossTeam({ employees, setEmployees, t }) {
         <Icon name="plus" size={16} color="#fff" /> Ajouter
       </button>
     </div>
+
     <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 80px", padding: "10px 18px", background: t.bgSecondary, fontSize: 12, color: t.textSec, fontWeight: 500, borderBottom: `1px solid ${t.border}` }}>
-        <span>Salarié</span><span>Ancienneté</span><span>Statut</span><span>Abonnement</span><span></span>
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 80px 80px 140px", padding: "10px 18px", background: t.bgSecondary, fontSize: 12, color: t.textSec, fontWeight: 500, borderBottom: `1px solid ${t.border}` }}>
+        <span>Salarié</span><span>Ancienneté</span><span style={{ textAlign: "center" }}>Statut</span><span style={{ textAlign: "right" }}>Actions</span>
       </div>
       {active.length === 0 && <div style={{ padding: "32px", textAlign: "center", color: t.textSec }}>Aucun salarié actif.</div>}
-      {active.map((emp, i) => <div key={emp.id} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 80px", padding: "14px 18px", alignItems: "center", borderBottom: i < active.length - 1 ? `1px solid ${t.border}` : "none" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 500, color: t.blue }}>{emp.initials}</div>
-          <div><div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{emp.firstName} {emp.lastName}</div><div style={{ fontSize: 12, color: t.textSec }}>{emp.role || "—"}</div></div>
+      {active.map((emp, i) => (
+        <div key={emp.id} style={{ display: "grid", gridTemplateColumns: "2fr 80px 80px 140px", padding: "14px 18px", alignItems: "center", borderBottom: i < active.length - 1 ? `1px solid ${t.border}` : "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 500, color: t.blue }}>{emp.initials}</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{emp.firstName} {emp.lastName}</div>
+              <div style={{ fontSize: 12, color: t.textSec }}>{emp.role || "—"}</div>
+            </div>
+          </div>
+          <span style={{ fontSize: 13, color: t.textSec }}>{emp.seniority} mois</span>
+          <span style={{ display: "flex", justifyContent: "center" }}><Badge text="Actif" variant="green" t={t} /></span>
+          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+            <button onClick={() => { setShowDetail(emp.id); setShowEdit(null); }}
+              style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${t.border}`, background: "none", fontSize: 12, cursor: "pointer", fontFamily: font, color: t.blue }}>
+              Avantages
+            </button>
+            <button onClick={() => { setShowEdit(emp.id); setShowDetail(null); }}
+              style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${t.border}`, background: "none", fontSize: 12, cursor: "pointer", fontFamily: font, color: t.textSec }}>
+              Gérer
+            </button>
+          </div>
         </div>
-        <span style={{ fontSize: 13, color: t.textSec }}>{emp.seniority} mois</span>
-        <Badge text="Actif" variant="green" t={t} />
-        <span style={{ fontSize: 12, color: t.textSec }}>5€/mois</span>
-        <button onClick={() => setShowDetail(emp.id)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${t.border}`, background: "none", fontSize: 12, cursor: "pointer", fontFamily: font, color: t.textSec }}>Gérer</button>
-      </div>)}
+      ))}
     </div>
+
     <div style={{ marginTop: 10, padding: "12px 16px", background: t.bgSecondary, borderRadius: 10, display: "flex", justifyContent: "space-between", fontSize: 13, color: t.textSec }}>
       <span>{active.length} salarié{active.length > 1 ? "s" : ""} × 5€ = <span style={{ color: t.text, fontWeight: 500 }}>{active.length * 5}€/mois</span></span>
       <span>Prochaine facture : 01/06/2026</span>
     </div>
 
+    {/* SLIDE-OVER — avantages uniquement */}
+    {empDetail && (
+      <div style={{ position: "fixed", inset: 0, zIndex: 500 }} onClick={() => setShowDetail(null)}>
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)" }} />
+        <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: 400, background: t.card, boxShadow: "-8px 0 32px rgba(0,0,0,0.12)", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+          <div style={{ padding: "20px 24px 16px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 500, color: t.blue }}>{empDetail.initials}</div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 500, color: t.text }}>{empDetail.firstName} {empDetail.lastName}</div>
+                <div style={{ fontSize: 13, color: t.textSec }}>{empDetail.role || "—"}</div>
+              </div>
+            </div>
+            <button onClick={() => setShowDetail(null)} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 22, color: t.textSec, lineHeight: 1 }}>×</button>
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Informations</div>
+            <div style={{ background: t.bgSecondary, borderRadius: 12, marginBottom: 24 }}>
+              {[
+                { label: "Email", value: empDetail.email, icon: "mail" },
+                { label: "Téléphone", value: empDetail.phone || "—", icon: "phone" },
+                { label: "Ancienneté", value: `${empDetail.seniority} mois`, icon: "calendar" },
+              ].map((row, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: i < 2 ? `1px solid ${t.border}` : "none" }}>
+                  <Icon name={row.icon} size={15} color={t.textSec} />
+                  <span style={{ fontSize: 12, color: t.textSec, minWidth: 74 }}>{row.label}</span>
+                  <span style={{ fontSize: 13, color: t.text }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 500, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Avantages activés par vous</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                empDetail.ppv > 0 && { icon: "coin", label: "PPV 2026", value: `${empDetail.ppv.toLocaleString("fr-FR")} €`, color: t.blue, bg: t.blueLighter, desc: "Prime de partage de la valeur" },
+                { icon: "bus", label: "Transport", value: "75% du Navigo", color: t.amber, bg: t.amberLight, desc: "Remboursement mensuel" },
+                { icon: "tools-kitchen-2", label: "Titres-restaurant", value: "10€/jour", color: t.green, bg: t.greenLight, desc: "Pluxee — ~220 jours/an" },
+              ].filter(Boolean).map((a, i) => (
+                <div key={i} style={{ background: t.bgSecondary, borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: a.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icon name={a.icon} size={16} color={a.color} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{a.label}</div>
+                    <div style={{ fontSize: 11, color: t.textSec }}>{a.desc}</div>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: a.color }}>{a.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ padding: "16px 24px", borderTop: `1px solid ${t.border}` }}>
+            <button onClick={() => { setShowEdit(empDetail.id); setShowDetail(null); }}
+              style={{ width: "100%", padding: "11px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", cursor: "pointer", fontFamily: font, fontSize: 14, fontWeight: 500 }}>
+              Gérer ce salarié →
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* MODAL ÉDITION — gérer */}
+    {empEdit && <Modal open={!!showEdit} onClose={() => setShowEdit(null)} title={`Gérer — ${empEdit.firstName} ${empEdit.lastName}`} t={t}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <Inp label="Prénom" value={empEdit.firstName} onChange={v => updateEmp(empEdit.id, "firstName", v)} t={t} />
+        <Inp label="Nom" value={empEdit.lastName} onChange={v => updateEmp(empEdit.id, "lastName", v)} t={t} />
+      </div>
+      <Inp label="Email" type="email" value={empEdit.email} onChange={v => updateEmp(empEdit.id, "email", v)} t={t} />
+      <Inp label="Téléphone" value={empEdit.phone || ""} onChange={v => updateEmp(empEdit.id, "phone", v)} t={t} />
+      <Inp label="Poste / Contrat" value={empEdit.role || ""} onChange={v => updateEmp(empEdit.id, "role", v)} t={t} />
+      <Inp label="Ancienneté (mois)" type="number" value={empEdit.seniority || 0} onChange={v => updateEmp(empEdit.id, "seniority", parseInt(v))} t={t} />
+      <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+        <button onClick={() => setShowConfirm(empEdit.id)} style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid ${t.redLight}`, background: t.redLight, color: t.red, cursor: "pointer", fontFamily: font, fontSize: 13 }}>Retirer</button>
+        <Btn onClick={() => setShowEdit(null)} t={t} full>Enregistrer</Btn>
+      </div>
+    </Modal>}
+
+    {/* MODAL AJOUT */}
     <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Inviter un salarié" t={t}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <Inp label="Prénom *" value={form.firstName} onChange={v => setForm(p => ({ ...p, firstName: v }))} placeholder="Marie" t={t} />
@@ -1112,21 +1469,6 @@ function BossTeam({ employees, setEmployees, t }) {
         <Btn onClick={addEmp} disabled={!form.firstName || !form.email} t={t} full>Envoyer l'invitation</Btn>
       </div>
     </Modal>
-
-    {emp && <Modal open={!!showDetail} onClose={() => setShowDetail(null)} title={`${emp.firstName} ${emp.lastName}`} t={t}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <Inp label="Prénom" value={emp.firstName} onChange={v => updateEmp(emp.id, "firstName", v)} t={t} />
-        <Inp label="Nom" value={emp.lastName} onChange={v => updateEmp(emp.id, "lastName", v)} t={t} />
-      </div>
-      <Inp label="Email" type="email" value={emp.email} onChange={v => updateEmp(emp.id, "email", v)} t={t} />
-      <Inp label="Téléphone" value={emp.phone || ""} onChange={v => updateEmp(emp.id, "phone", v)} t={t} />
-      <Inp label="Poste / Contrat" value={emp.role || ""} onChange={v => updateEmp(emp.id, "role", v)} t={t} />
-      <Inp label="Ancienneté (mois)" type="number" value={emp.seniority || 0} onChange={v => updateEmp(emp.id, "seniority", parseInt(v))} t={t} />
-      <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-        <button onClick={() => setShowConfirm(emp.id)} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${t.redLight}`, background: t.redLight, color: t.red, cursor: "pointer", fontFamily: font, fontSize: 14 }}>Retirer</button>
-        <Btn onClick={() => setShowDetail(null)} t={t} full>Enregistrer</Btn>
-      </div>
-    </Modal>}
 
     <Modal open={!!showConfirm} onClose={() => setShowConfirm(null)} title="Confirmer le retrait" t={t}>
       <p style={{ fontSize: 14, color: t.textSec, lineHeight: 1.6, marginBottom: 20 }}>L'accès Perky de ce salarié sera désactivé immédiatement. L'abonnement sera ajusté dès le prochain cycle.</p>
@@ -1158,7 +1500,125 @@ function BossFactures({ t }) {
 }
 
 // ─── EMPLOYEE HOME ────────────────────────────────────────────────────
-function EmpHome({ employee, scannerState, t, onGoToCatalogue }) {
+// ─── CALENDAR EMP (sans échéances Perky) ─────────────────────────────
+function TeamCalendarEmp({ employees, currentEmployee, t }) {
+  const today = new Date(2026, 4, 17);
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [events, setEvents] = useState({
+    "2026-05-20": [{ empId: 2, type: "absent" }],
+    "2026-05-21": [{ empId: 2, type: "absent" }],
+    "2026-05-22": [{ empId: 3, type: "ecole" }],
+    "2026-05-26": [{ empId: 1, type: "absent" }],
+    "2026-06-09": [{ empId: 3, type: "ecole" }],
+    "2026-06-15": [{ empId: 1, type: "absent" }],
+  });
+  const [popover, setPopover] = useState(null);
+
+  const TYPE_COLORS = { absent: "#E24B4A", ecole: "#8B5CF6" };
+  const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
+  const getDateKey = (day) => `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  const toggleEvent = (dateKey, empId, type) => {
+    setEvents(prev => {
+      const current = prev[dateKey] || [];
+      const exists = current.find(e => e.empId === empId && e.type === type);
+      if (exists) return { ...prev, [dateKey]: current.filter(e => !(e.empId === empId && e.type === type)) };
+      return { ...prev, [dateKey]: [...current, { empId, type }] };
+    });
+  };
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: t.text }}>{monthNames[currentMonth]} {currentYear}</div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={() => { if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1); } else setCurrentMonth(m => m - 1); }} style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${t.border}`, background: "none", cursor: "pointer", color: t.textSec }}>‹</button>
+          <button onClick={() => { if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(y => y + 1); } else setCurrentMonth(m => m + 1); }} style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${t.border}`, background: "none", cursor: "pointer", color: t.textSec }}>›</button>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 9, height: 9, borderRadius: 2, background: "#E24B4A" }} /><span style={{ fontSize: 11, color: t.textSec }}>Absent</span></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 9, height: 9, borderRadius: 2, background: "#8B5CF6" }} /><span style={{ fontSize: 11, color: t.textSec }}>École</span></div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 4 }}>
+        {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => <div key={i} style={{ textAlign: "center", fontSize: 11, color: t.textSec, padding: "3px 0" }}>{d}</div>)}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />;
+          const dateKey = getDateKey(day);
+          const dayEvents = events[dateKey] || [];
+          const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+          const isWeekend = (i % 7) >= 5;
+          return (
+            <div key={i} onClick={(e) => { if (isWeekend) return; setPopover(popover?.dateKey === dateKey ? null : { dateKey, day }); e.stopPropagation(); }}
+              style={{ minHeight: 44, borderRadius: 6, padding: "3px 4px", background: isToday ? t.blueLighter : isWeekend ? t.bgSecondary : t.card, border: `1px solid ${isToday ? t.blue : t.border}`, cursor: isWeekend ? "default" : "pointer" }}>
+              <div style={{ fontSize: 11, fontWeight: isToday ? 600 : 400, color: isToday ? t.blue : isWeekend ? t.textTert : t.text, marginBottom: 2 }}>{day}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                {dayEvents.map((ev, j) => {
+                  const emp = employees.find(e => e.id === ev.empId);
+                  return emp ? <div key={j} style={{ width: 13, height: 13, borderRadius: "50%", background: TYPE_COLORS[ev.type], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, color: "#fff", fontWeight: 600 }}>{emp.initials[0]}</div> : null;
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {popover && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 400 }} onClick={() => setPopover(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", width: 220, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 401 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 12 }}>{monthNames[currentMonth].slice(0, 3)} {popover.day}</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 500, color: t.blue }}>{currentEmployee.initials}</div>
+                <span style={{ fontSize: 12, color: t.text }}>Moi</span>
+              </div>
+              <div style={{ display: "flex", gap: 4 }}>
+                {(() => {
+                  const dayEvents = events[popover.dateKey] || [];
+                  const absent = dayEvents.find(e => e.empId === currentEmployee.id && e.type === "absent");
+                  const ecole = dayEvents.find(e => e.empId === currentEmployee.id && e.type === "ecole");
+                  return <>
+                    <button onClick={() => toggleEvent(popover.dateKey, currentEmployee.id, "absent")} style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${absent ? "#E24B4A" : t.border}`, background: absent ? "#FCEBEB" : "none", color: absent ? "#E24B4A" : t.textSec, fontSize: 11, cursor: "pointer", fontFamily: font }}>Absent</button>
+                    {currentEmployee.role?.includes("lternan") && (
+                      <button onClick={() => toggleEvent(popover.dateKey, currentEmployee.id, "ecole")} style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${ecole ? "#8B5CF6" : t.border}`, background: ecole ? "#EDE9FE" : "none", color: ecole ? "#8B5CF6" : t.textSec, fontSize: 11, cursor: "pointer", fontFamily: font }}>École</button>
+                    )}
+                  </>;
+                })()}
+              </div>
+            </div>
+            {/* Voir les autres */}
+            {(events[popover.dateKey] || []).filter(e => e.empId !== currentEmployee.id).length > 0 && (
+              <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 8, marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: t.textSec, marginBottom: 6 }}>Équipe ce jour</div>
+                {(events[popover.dateKey] || []).filter(e => e.empId !== currentEmployee.id).map((ev, j) => {
+                  const emp = employees.find(e => e.id === ev.empId);
+                  return emp ? (
+                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                      <div style={{ width: 16, height: 16, borderRadius: "50%", background: TYPE_COLORS[ev.type] }} />
+                      <span style={{ fontSize: 12, color: t.textSec }}>{emp.firstName} — {ev.type === "absent" ? "Absent" : "École"}</span>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            )}
+            <button onClick={() => setPopover(null)} style={{ width: "100%", marginTop: 8, padding: "7px", borderRadius: 8, border: "none", background: t.bgSecondary, color: t.textSec, fontSize: 12, cursor: "pointer", fontFamily: font }}>Fermer</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EmpHome({ employee, employees, scannerState, t, onGoToCatalogue }) {
   const ppvNew = employee.ppv || 0;
   const ppvAlready = (scannerState.ppv_type?.value === "Versement complémentaire") ? (scannerState.ppv_already?.[employee.id] || 0) : 0;
   const ppv = ppvNew + ppvAlready;
@@ -1234,6 +1694,15 @@ function EmpHome({ employee, scannerState, t, onGoToCatalogue }) {
             <div style={{ fontSize: 12, color: t.textSec }}>{it.sub}</div>
           </div>;
         })}
+      </div>
+    </div>
+
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+        <Icon name="calendar" size={18} color={t.blue} /> Planning équipe
+      </div>
+      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "16px 18px" }}>
+        <TeamCalendarEmp employees={employees} currentEmployee={employee} t={t} />
       </div>
     </div>
 
@@ -1467,11 +1936,208 @@ function Settings({ dark, setDark, t }) {
 }
 
 // ─── NAV CONFIGS ─────────────────────────────────────────────────────
+// ─── GUIDE 100% SANTÉ ────────────────────────────────────────────────
+function Guide100Sante({ t, onBack }) {
+  const steps = [
+    { num: 1, title: "Vérifiez votre mutuelle", icon: "shield-check", color: t.green, content: "Votre employeur vous a affilié à une mutuelle d'entreprise. Connectez-vous sur le site de votre organisme (souvent Malakoff Humanis, AG2R, Harmonie) et vérifiez que la garantie « 100% Santé » est bien activée sur votre contrat. C'est gratuit et obligatoire depuis 2021." },
+    { num: 2, title: "Choisissez un opticien partenaire", icon: "eye", color: t.blue, content: "Rendez-vous chez un opticien qui affiche le label « Opticien partenaire 100% Santé ». Ils sont facilement identifiables par leur affichage en vitrine. Chez un opticien partenaire, vous accédez au catalogue de montures et verres inclus dans le dispositif." },
+    { num: 3, title: "Choisissez une monture du panier 100%", icon: "shopping-bag", color: t.amber, content: "Le catalogue 100% Santé comprend des montures à partir de 30€ (adulte) et 50€ (enfant). Les verres correcteurs sont inclus selon votre correction. Ces équipements sont intégralement remboursés : 150€ par la Sécurité sociale + le reste par votre mutuelle." },
+    { num: 4, title: "Remboursement intégral automatique", icon: "coin", color: t.green, content: "Vous n'avancez rien. L'opticien facture directement votre Sécurité sociale et votre mutuelle via la carte Vitale et l'attestation de droits mutuelle. Le reste à charge est 0€. Renouvelable tous les 2 ans (1 an si correction modifiée)." },
+  ];
+  const faqs = [
+    { q: "Puis-je choisir des lunettes hors catalogue ?", r: "Oui, mais vous aurez un reste à charge. Les lunettes « Panier Libre » sont remboursées partiellement selon votre mutuelle." },
+    { q: "Le 100% Santé concerne-t-il les lentilles ?", r: "Non. Les lentilles de contact sont hors du dispositif 100% Santé, leur remboursement dépend de votre contrat mutuelle." },
+    { q: "C'est valable aussi pour le dentaire et l'auditif ?", r: "Oui. Le 100% Santé couvre aussi les prothèses dentaires (couronnes, bridges) et les aides auditives — même principe, 0€ de reste à charge." },
+  ];
+  return (
+    <div style={{ maxWidth: 680 }}>
+      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", cursor: "pointer", fontSize: 13, color: t.blue, fontFamily: font, marginBottom: 16 }}>
+        <Icon name="arrow-left" size={16} color={t.blue} /> Retour
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: t.greenLight, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="heart" size={24} color={t.green} /></div>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: 0 }}>Guide 100% Santé</h1>
+          <p style={{ fontSize: 14, color: t.textSec, margin: "4px 0 0" }}>Optique, dentaire et auditif sans reste à charge</p>
+        </div>
+      </div>
+      <div style={{ background: t.greenLight, borderRadius: 12, padding: "14px 18px", marginBottom: 24, display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <Icon name="info-circle" size={18} color={t.green} />
+        <p style={{ fontSize: 13, color: t.green, margin: 0, lineHeight: 1.6 }}>Le 100% Santé vous permet d'accéder à des <strong>lunettes, prothèses dentaires ou aides auditives sans payer un centime</strong>, grâce à la combinaison Sécurité sociale + mutuelle d'entreprise.</p>
+      </div>
+      <h2 style={{ fontSize: 16, fontWeight: 500, color: t.text, marginBottom: 14 }}>Optique — Comment ça marche en 4 étapes</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+        {steps.map((s, i) => (
+          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={s.icon} size={18} color={s.color} /></div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 4 }}>{s.num}. {s.title}</div>
+              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>{s.content}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", marginBottom: 24 }}>
+        <div style={{ padding: "12px 18px", background: t.bgSecondary, fontSize: 13, fontWeight: 500, color: t.text, borderBottom: `1px solid ${t.border}` }}>Questions fréquentes</div>
+        {faqs.map((f, i) => (
+          <div key={i} style={{ padding: "14px 18px", borderBottom: i < faqs.length - 1 ? `1px solid ${t.border}` : "none" }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 4 }}>→ {f.q}</div>
+            <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.5 }}>{f.r}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>
+        💡 En tant que salarié d'Alpha Optique (un magasin d'optique), vous avez un accès privilégié aux conseils professionnels de votre équipe pour choisir le meilleur équipement 100% Santé.
+      </div>
+    </div>
+  );
+}
+
+// ─── GUIDE CPF ────────────────────────────────────────────────────────
+function GuideCPF({ t, onBack }) {
+  const steps = [
+    { num: 1, title: "Consultez votre solde CPF", icon: "wallet", color: t.blue, content: "Rendez-vous sur moncompteformation.gouv.fr ou téléchargez l'application \"Mon Compte Formation\". Connectez-vous avec FranceConnect (impôts.gouv.fr ou ameli.fr). Vous verrez votre solde disponible en euros : les salariés accumulent environ 500€/an, plafonné à 5 000€." },
+    { num: 2, title: "Choisissez une formation éligible", icon: "school", color: t.amber, content: "Sur la plateforme, recherchez une formation parmi les 500 000+ disponibles. Filtrez par thème, durée, lieu ou modalité (présentiel/distanciel). Les formations éligibles sont identifiées par le picto CPF. Vous pouvez chercher des formations en lien avec votre poste (optique, commerce, langues, bureautique...)." },
+    { num: 3, title: "Vérifiez le financement", icon: "calculator", color: t.green, content: "Si votre solde couvre 100% du coût : inscription immédiate, aucune démarche avec votre employeur nécessaire. Si le coût dépasse votre solde : vous pouvez compléter de votre poche ou demander un co-financement à votre employeur ou à votre OPCO (organisme financeur de branche)." },
+    { num: 4, title: "Inscrivez-vous et suivez la formation", icon: "certificate", color: t.blue, content: "Confirmez votre inscription directement en ligne, 11 jours ouvrés après la demande (délai de rétractation). Suivez la formation. À la fin, l'attestation de réussite est ajoutée à votre espace CPF et le montant est débité de votre solde." },
+  ];
+  const tips = [
+    { icon: "bolt", title: "Droit individuel", text: "Le CPF vous appartient. Votre employeur ne peut pas s'y opposer si vous suivez la formation hors temps de travail." },
+    { icon: "clock", title: "Formation pendant le travail", text: "Si la formation a lieu sur votre temps de travail, vous devez demander l'accord de votre employeur." },
+    { icon: "shield-check", title: "Vigilance arnaques", text: "Méfiez-vous des démarchages par SMS ou téléphone qui promettent de \"débloquer\" votre CPF. C'est gratuit et direct sur la plateforme officielle." },
+  ];
+  return (
+    <div style={{ maxWidth: 680 }}>
+      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", cursor: "pointer", fontSize: 13, color: t.blue, fontFamily: font, marginBottom: 16 }}>
+        <Icon name="arrow-left" size={16} color={t.blue} /> Retour
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="school" size={24} color={t.blue} /></div>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: 0 }}>Mon Compte Formation (CPF)</h1>
+          <p style={{ fontSize: 14, color: t.textSec, margin: "4px 0 0" }}>Utilisez vos droits formation facilement</p>
+        </div>
+      </div>
+      <div style={{ background: t.blueLighter, borderRadius: 12, padding: "14px 18px", marginBottom: 24, display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <Icon name="info-circle" size={18} color={t.blue} />
+        <p style={{ fontSize: 13, color: t.blue, margin: 0, lineHeight: 1.6 }}>Le CPF (Compte Personnel de Formation) vous permet de <strong>financer des formations professionnelles</strong> tout au long de votre carrière. Vous accumulez des droits en euros chaque année, indépendamment de votre employeur.</p>
+      </div>
+      <h2 style={{ fontSize: 16, fontWeight: 500, color: t.text, marginBottom: 14 }}>Comment utiliser votre CPF en 4 étapes</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+        {steps.map((s, i) => (
+          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={s.icon} size={18} color={s.color} /></div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 4 }}>{s.num}. {s.title}</div>
+              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>{s.content}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <h2 style={{ fontSize: 16, fontWeight: 500, color: t.text, marginBottom: 12 }}>Ce qu'il faut savoir</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 24 }}>
+        {tips.map((tip, i) => (
+          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "14px 16px" }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}><Icon name={tip.icon} size={16} color={t.blue} /></div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 4 }}>{tip.title}</div>
+            <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.5 }}>{tip.text}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
+        <Icon name="external-link" size={18} color={t.blue} />
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 2 }}>Accéder à mon compte formation</div>
+          <div style={{ fontSize: 12, color: t.textSec }}>moncompteformation.gouv.fr — Connexion via FranceConnect</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GUIDE D'UTILISATION PERKY ────────────────────────────────────────
+function GuidesHub({ t, onSelect }) {
+  const guides = [
+    { id: "sante", icon: "heart", color: t.green, bg: t.greenLight, title: "Guide 100% Santé", sub: "Lunettes, dentaire et auditif à 0€ de reste à charge — comment ça marche" },
+    { id: "cpf", icon: "school", color: t.blue, bg: t.blueLighter, title: "Mon Compte Formation", sub: "Utilisez vos droits CPF pour vous former gratuitement" },
+    { id: "perky", icon: "help-circle", color: t.amber, bg: t.amberLight, title: "Guide d'utilisation Perky", sub: "Comment naviguer dans l'application et profiter de toutes les fonctionnalités" },
+  ];
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 6px" }}>Aide & Guides</h1>
+      <p style={{ fontSize: 14, color: t.textSec, margin: "0 0 24px" }}>Tout ce dont vous avez besoin pour profiter de Perky</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+        {guides.map(g => (
+          <div key={g.id} onClick={() => onSelect(g.id)}
+            style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "20px", cursor: "pointer", transition: "border-color 0.15s, transform 0.15s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = g.color; e.currentTarget.style.transform = "translateY(-2px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.transform = "none"; }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: g.bg, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+              <Icon name={g.icon} size={22} color={g.color} />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 6 }}>{g.title}</div>
+            <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.5 }}>{g.sub}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "16px 18px" }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 6 }}>Besoin d'aide supplémentaire ?</div>
+        <div style={{ fontSize: 13, color: t.textSec }}>Contactez le support : <strong>support@perky.fr</strong></div>
+      </div>
+    </div>
+  );
+}
+
+function GuidePerky({ t, onBack }) {
+  const sections = [
+    { icon: "home", color: t.blue, title: "Accueil", text: "Votre tableau de bord personnel. Retrouvez en un coup d'œil les avantages activés par votre employeur, votre niveau de rémunération globale, et les offres du moment." },
+    { icon: "tag", color: t.amber, title: "Catalogue", text: "Parcourez +2 000 offres exclusives : cinéma, parcs, voyages, shopping, sport, beauté. Filtrez par catégorie ou recherchez une enseigne. Cliquez sur une offre pour voir les détails et l'ajouter à votre panier." },
+    { icon: "shopping-cart", color: t.blue, title: "Panier & Paiement", text: "Vos offres sélectionnées apparaissent ici. Payez en toute sécurité par carte bancaire. Vos billets sont envoyés instantanément dans votre wallet et par email." },
+    { icon: "wallet", color: t.green, title: "Mon Wallet", text: "Stockage sécurisé de tous vos billets et codes promo. Retrouvez vos billets actifs, téléchargez-les ou renvoyez-les par email si besoin." },
+    { icon: "gift", color: t.green, title: "Avantages employeur", text: "Les dispositifs activés par votre employeur (PPV, transport, chèques cadeaux...) apparaissent sur votre accueil. Ils contribuent à votre rémunération globale et sont mis à jour automatiquement." },
+  ];
+  return (
+    <div style={{ maxWidth: 680 }}>
+      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", cursor: "pointer", fontSize: 13, color: t.blue, fontFamily: font, marginBottom: 16 }}>
+        <Icon name="arrow-left" size={16} color={t.blue} /> Retour
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={t.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        </div>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: 0 }}>Guide d'utilisation Perky</h1>
+          <p style={{ fontSize: 14, color: t.textSec, margin: "4px 0 0" }}>Tout ce qu'il faut savoir pour bien utiliser votre espace</p>
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+        {sections.map((s, i) => (
+          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={s.icon} size={18} color={s.color} /></div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 4 }}>{s.title}</div>
+              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>{s.text}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "16px 18px" }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 8 }}>Une question ? Un problème ?</div>
+        <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>
+          Contactez le support Perky à <strong>support@perky.fr</strong> ou consultez la FAQ sur <strong>help.perky.fr</strong>.<br />
+          Pour les questions sur vos avantages employeur, adressez-vous directement à votre gestionnaire RH.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const empNav = [
   { id: "home", label: "Accueil", icon: "home" },
   { id: "catalogue", label: "Catalogue", icon: "tag" },
   { id: "cart", label: "Mon panier", icon: "shopping-cart" },
   { id: "wallet", label: "Mon wallet", icon: "wallet" },
+  { id: "guide", label: "Aide & Guides", icon: "help-circle" },
   { id: "settings", label: "Paramètres", icon: "settings" },
 ];
 const bossNav = [
@@ -1505,6 +2171,7 @@ export default function App() {
     { id: 4, icon: "bus", color: "#378ADD", title: "Transport remboursé à 75%", sub: "Votre employeur prend désormais en charge 75% de votre Navigo", time: "Il y a 2sem", read: true },
   ]);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [guidePage, setGuidePage] = useState("hub");
   const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
@@ -1560,12 +2227,13 @@ export default function App() {
   const isPatron = currentAccount?.role === "patron";
 
   const empViews = {
-    home: <EmpHome employee={activeEmployee} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />,
+    home: <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />,
     catalogue: <EmpCatalogue onOfferClick={o => { setSelectedOffer(o); setEmpPage("detail"); }} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
     detail: selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => { setSelectedOffer(null); setEmpPage("catalogue"); }} onAddToCart={addToCart} t={t} /> : null,
     cart: <CartPage cart={cart} onRemove={id => setCart(p => p.filter(i => i.id !== id))} onPay={handlePayment} t={t} />,
     confirmation: <PaymentConfirm orders={paidOrders} onGoToWallet={() => { setShowPaymentConfirm(false); setEmpPage("wallet"); }} onGoToCatalogue={() => { setShowPaymentConfirm(false); setEmpPage("catalogue"); }} t={t} />,
     wallet: <EmpWallet t={t} />,
+    guide: guidePage === "sante" ? <Guide100Sante t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "cpf" ? <GuideCPF t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "perky" ? <GuidePerky t={t} onBack={() => setGuidePage("hub")} /> : <GuidesHub t={t} onSelect={setGuidePage} />,
     settings: <Settings dark={dark} setDark={setDark} t={t} />,
   };
 
@@ -1596,7 +2264,7 @@ export default function App() {
           {!isPatron && (
             <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowNotifs(s => !s)} style={{ position: "relative", width: 36, height: 36, borderRadius: 10, border: `1px solid ${t.border}`, background: showNotifs ? t.blueLighter : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Icon name="bell" size={18} color={showNotifs ? t.blue : t.textSec} />
+                <BellIcon size={18} color={showNotifs ? t.blue : t.textSec} />
                 {unreadCount > 0 && <span style={{ position: "absolute", top: 7, right: 7, width: 8, height: 8, borderRadius: "50%", background: t.red, border: `2px solid ${t.sidebar}` }} />}
               </button>
               {showNotifs && (
