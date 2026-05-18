@@ -1,27 +1,142 @@
 import { useState, useEffect, useCallback } from "react";
 
+// ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const h = e => setIsMobile(e.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
+  return isMobile;
+}
+
 // ─── THEME ───────────────────────────────────────────────────────────
 const LIGHT = {
-  bg: "#FFFFFF", bgSecondary: "#F7F7F5", sidebar: "#FAFAF9",
-  border: "#EEEEEE", borderStrong: "#D5D5D0",
-  text: "#1A1A1A", textSec: "#888888", textTert: "#CCCCCC",
-  card: "#FFFFFF", blue: "#185FA5", blueLighter: "#E6F1FB", blueMid: "#378ADD",
-  green: "#1D9E75", greenLight: "#E1F5EE",
-  amber: "#BA7517", amberLight: "#FAEEDA",
-  red: "#E24B4A", redLight: "#FCEBEB",
+  bg: "#F4F5F7",           // fond gris-bleu doux, à la Pennylane
+  bgSecondary: "#EDEEF1",  // sections secondaires
+  bgTint: "#FBFBFC",       // surface très légère pour zébrures
+  sidebar: "#FFFFFF",      // sidebar blanche
+  appGrad: "radial-gradient(1200px 600px at 12% -5%, #EAF1FB 0%, rgba(234,241,251,0) 60%), radial-gradient(900px 500px at 100% 0%, #EDEBFA 0%, rgba(237,235,250,0) 55%), #F4F5F7",
+  border: "#E5E7EB",       // bordures neutres nettes
+  borderSoft: "#EEF0F3",
+  borderStrong: "#D3D6DC",
+  text: "#10131A",         // presque noir
+  textSec: "#5C6270",
+  textTert: "#9AA0AC",
+  card: "#FFFFFF",
+  // ombres en couches — relief premium, douceur Swile
+  cardShadow: "0 0 0 1px rgba(16,19,26,0.04), 0 1px 2px rgba(16,19,26,0.04), 0 8px 24px -8px rgba(16,19,26,0.10)",
+  cardShadowHover: "0 0 0 1px rgba(16,19,26,0.05), 0 4px 8px rgba(16,19,26,0.06), 0 20px 40px -12px rgba(16,19,26,0.16)",
+  cardShadowSoft: "0 1px 2px rgba(16,19,26,0.04), 0 4px 12px -4px rgba(16,19,26,0.06)",
+  popShadow: "0 0 0 1px rgba(16,19,26,0.05), 0 18px 48px -12px rgba(16,19,26,0.24)",
+  blue: "#2563EB",         // bleu vif et confiant
+  blueDeep: "#1D4FCB",
+  blueLighter: "#EAF1FE",
+  blueMid: "#5B8DEF",
+  blueGrad: "linear-gradient(135deg, #3B82F6 0%, #2563EB 55%, #1E40AF 100%)",
+  blueGradSoft: "linear-gradient(135deg, #EFF5FF 0%, #E4EDFE 100%)",
+  green: "#0EA371",
+  greenDeep: "#0A7E58",
+  greenLight: "#E3F7EF",
+  greenGrad: "linear-gradient(135deg, #14B981 0%, #0EA371 55%, #0A7E58 100%)",
+  amber: "#B26A07",
+  amberDeep: "#92560A",
+  amberLight: "#FCF1DD",
+  amberGrad: "linear-gradient(135deg, #F1A732 0%, #D88712 100%)",
+  red: "#DC2F36",
+  redLight: "#FDEBEC",
+  purple: "#7C3AED",
+  purpleLight: "#EFEAFD",
+  ring: "rgba(37,99,235,0.16)",
+  glass: "rgba(255,255,255,0.72)",
 };
 const DARK = {
-  bg: "#0F0F0F", bgSecondary: "#1A1A1A", sidebar: "#141414",
-  border: "#2A2A2A", borderStrong: "#3A3A3A",
-  text: "#F0F0F0", textSec: "#888888", textTert: "#444444",
-  card: "#1E1E1E", blue: "#4A9BE8", blueLighter: "#1A2E45", blueMid: "#378ADD",
-  green: "#2DC78F", greenLight: "#0D2E22",
-  amber: "#E8A020", amberLight: "#2E1F05",
-  red: "#E24B4A", redLight: "#2E1010",
+  bg: "#0C0E14",
+  bgSecondary: "#161922",
+  bgTint: "#12141C",
+  sidebar: "#10131B",
+  appGrad: "radial-gradient(1200px 600px at 12% -5%, #16203A 0%, rgba(22,32,58,0) 60%), radial-gradient(900px 500px at 100% 0%, #1E1A38 0%, rgba(30,26,56,0) 55%), #0C0E14",
+  border: "#252934",
+  borderSoft: "#1E222C",
+  borderStrong: "#363B49",
+  text: "#EEF0F4",
+  textSec: "#8B91A0",
+  textTert: "#565C6B",
+  card: "#161922",
+  cardShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.4), 0 12px 32px -10px rgba(0,0,0,0.6)",
+  cardShadowHover: "0 0 0 1px rgba(255,255,255,0.07), 0 4px 8px rgba(0,0,0,0.5), 0 24px 48px -12px rgba(0,0,0,0.7)",
+  cardShadowSoft: "0 1px 2px rgba(0,0,0,0.4), 0 6px 16px -6px rgba(0,0,0,0.5)",
+  popShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 20px 52px -12px rgba(0,0,0,0.8)",
+  blue: "#5B92F5",
+  blueDeep: "#3B82F6",
+  blueLighter: "#16213B",
+  blueMid: "#4C84EE",
+  blueGrad: "linear-gradient(135deg, #5B92F5 0%, #3B82F6 55%, #2563EB 100%)",
+  blueGradSoft: "linear-gradient(135deg, #16213B 0%, #1A2748 100%)",
+  green: "#2DCB92",
+  greenDeep: "#1FB07C",
+  greenLight: "#0D2A20",
+  greenGrad: "linear-gradient(135deg, #2DCB92 0%, #1FB07C 55%, #14935F 100%)",
+  amber: "#E8A93C",
+  amberDeep: "#CE8E1F",
+  amberLight: "#2A2008",
+  amberGrad: "linear-gradient(135deg, #EFB44E 0%, #D2901C 100%)",
+  red: "#E8534F",
+  redLight: "#2E1212",
+  purple: "#A179FF",
+  purpleLight: "#201746",
+  ring: "rgba(91,146,245,0.22)",
+  glass: "rgba(22,25,34,0.72)",
 };
 
-const font = "'DM Sans', 'Segoe UI', system-ui, sans-serif";
+const font = "'DM Sans', 'Inter', 'Segoe UI', system-ui, sans-serif";
 const fmt = (n) => Math.round(n).toLocaleString("fr-FR");
+
+// ─── STYLE HELPERS ────────────────────────────────────────────────────
+const card = (t, extra = {}) => ({
+  background: t.card,
+  borderRadius: 18,
+  boxShadow: t.cardShadow,
+  ...extra,
+});
+const cardHover = (t) => ({
+  ...card(t),
+  cursor: "pointer",
+  transition: "box-shadow 0.22s ease, transform 0.18s ease",
+});
+// élévation animée — relief Swile/Pennylane
+const lift = (t) => ({
+  onMouseEnter: e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = t.cardShadowHover; },
+  onMouseLeave: e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = t.cardShadow; },
+});
+// en-tête de section aéré
+function SectionTitle({ icon, iconColor, title, sub, action, t }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+        {icon && (
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: (iconColor || t.blue) + "1A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon name={icon} size={17} color={iconColor || t.blue} />
+          </div>
+        )}
+        <div>
+          <div style={{ fontSize: 15.5, fontWeight: 700, color: t.text, letterSpacing: -0.3, lineHeight: 1.2 }}>{title}</div>
+          {sub && <div style={{ fontSize: 12.5, color: t.textSec, marginTop: 2 }}>{sub}</div>}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+}
+// petit éclat lumineux décoratif pour les héros
+const glowDot = (color, size, opacity = 0.5) => ({
+  position: "absolute", width: size, height: size, borderRadius: "50%",
+  background: color, filter: "blur(60px)", opacity, pointerEvents: "none",
+});
+
 
 // ─── FAKE ACCOUNTS ────────────────────────────────────────────────────
 const ACCOUNTS = [
@@ -307,13 +422,27 @@ function BellIcon({ size = 18, color }) {
     </svg>
   );
 }
-function Badge({ text, variant = "blue", t }) {
-  const c = { blue: [t.blueLighter, t.blue], green: [t.greenLight, t.green], amber: [t.amberLight, t.amber], red: [t.redLight, t.red] }[variant] || [t.blueLighter, t.blue];
-  return <span style={{ fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 10, background: c[0], color: c[1] }}>{text}</span>;
+function Badge({ text, variant = "blue", t, dot }) {
+  const c = {
+    blue: [t.blueLighter, t.blue],
+    green: [t.greenLight, t.green],
+    amber: [t.amberLight, t.amber],
+    red: [t.redLight, t.red],
+    purple: [t.purpleLight, t.purple],
+  }[variant] || [t.blueLighter, t.blue];
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, padding: dot ? "4px 11px 4px 8px" : "4px 11px", borderRadius: 20, background: c[0], color: c[1], letterSpacing: 0.1, display: "inline-flex", alignItems: "center", gap: 6, lineHeight: 1, whiteSpace: "nowrap" }}>
+      {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: c[1] }} />}
+      {text}
+    </span>
+  );
 }
-function Bar({ pct, color, h = 4 }) {
-  return <div style={{ width: "100%", height: h, background: "#33333322", borderRadius: h / 2, overflow: "hidden" }}>
-    <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: "100%", background: color, borderRadius: h / 2, transition: "width 0.5s ease" }} /></div>;
+function Bar({ pct, color, h = 5 }) {
+  return (
+    <div style={{ width: "100%", height: h, background: color + "1F", borderRadius: h, overflow: "hidden" }}>
+      <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: "100%", background: `linear-gradient(90deg, ${color}CC, ${color})`, borderRadius: h, transition: "width 0.7s cubic-bezier(0.34, 1.2, 0.64, 1)", boxShadow: `0 0 8px ${color}55` }} />
+    </div>
+  );
 }
 function Tooltip({ text, t }) {
   const [show, setShow] = useState(false);
@@ -321,10 +450,10 @@ function Tooltip({ text, t }) {
     <div style={{ position: "relative", display: "inline-flex" }}>
       <div onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}
         style={{ width: 18, height: 18, borderRadius: "50%", background: t.bgSecondary, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "help", flexShrink: 0 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: t.textSec }}>i</span>
+        <span style={{ fontSize: 10, fontWeight: 700, color: t.textSec }}>i</span>
       </div>
       {show && (
-        <div style={{ position: "absolute", left: 24, top: -6, width: 280, background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, padding: "10px 14px", fontSize: 12, color: t.textSec, lineHeight: 1.6, zIndex: 100, boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+        <div style={{ position: "absolute", left: 24, top: -6, width: 280, background: t.card, borderRadius: 14, boxShadow: t.cardShadow, padding: "12px 16px", fontSize: 12, color: t.textSec, lineHeight: 1.7, zIndex: 100, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
           {text}
         </div>
       )}
@@ -332,30 +461,48 @@ function Tooltip({ text, t }) {
   );
 }
 function Inp({ label, value, onChange, type = "text", placeholder, t, hint }) {
-  return <div style={{ marginBottom: 14 }}>
-    <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: t.textSec, marginBottom: 4 }}>{label}</label>
-    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      style={{ width: "100%", padding: "11px 14px", border: `1px solid ${t.border}`, borderRadius: 10, fontSize: 14, fontFamily: font, outline: "none", background: t.bgSecondary, color: t.text, boxSizing: "border-box" }} />
-    {hint && <div style={{ fontSize: 11, color: t.textSec, marginTop: 4 }}>{hint}</div>}
-  </div>;
+  const [focused, setFocused] = useState(false);
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: t.textSec, marginBottom: 7, letterSpacing: 0.2 }}>{label}</label>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+        style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${focused ? t.blue : t.border}`, borderRadius: 12, fontSize: 14, fontFamily: font, outline: "none", background: focused ? t.card : t.bgTint, color: t.text, boxSizing: "border-box", transition: "border-color 0.16s, box-shadow 0.16s, background 0.16s", boxShadow: focused ? `0 0 0 4px ${t.ring}` : "none" }} />
+      {hint && <div style={{ fontSize: 11, color: t.textSec, marginTop: 6, lineHeight: 1.5 }}>{hint}</div>}
+    </div>
+  );
 }
 function Btn({ children, onClick, variant = "primary", disabled, t, full }) {
-  const bg = variant === "primary" ? t.blue : variant === "danger" ? t.red : "transparent";
-  const color = variant === "ghost" ? t.textSec : "#fff";
-  const border = variant === "ghost" ? `1px solid ${t.border}` : "none";
-  return <button onClick={onClick} disabled={disabled} style={{ width: full ? "100%" : "auto", padding: "11px 20px", borderRadius: 10, border, background: disabled ? t.border : bg, color: disabled ? t.textSec : color, fontSize: 14, fontWeight: 500, cursor: disabled ? "default" : "pointer", fontFamily: font, transition: "all 0.15s" }}>{children}</button>;
+  const styles = {
+    primary: { background: t.blueGrad, color: "#fff", border: "1px solid transparent", shadow: `0 2px 6px ${t.blue}33, 0 8px 20px -6px ${t.blue}66` },
+    ghost: { background: t.card, color: t.text, border: `1.5px solid ${t.border}`, shadow: t.cardShadowSoft },
+    danger: { background: t.red, color: "#fff", border: "1px solid transparent", shadow: `0 6px 16px -6px ${t.red}88` },
+  };
+  const s = styles[variant] || styles.primary;
+  return (
+    <button onClick={onClick} disabled={disabled}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = "translateY(-1px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; }}
+      style={{ width: full ? "100%" : "auto", padding: "11px 22px", borderRadius: 12, border: s.border, background: disabled ? t.bgSecondary : s.background, color: disabled ? t.textTert : s.color, fontSize: 14, fontWeight: 600, cursor: disabled ? "default" : "pointer", fontFamily: font, transition: "transform 0.14s ease, box-shadow 0.16s ease", boxShadow: disabled ? "none" : s.shadow }}>
+      {children}
+    </button>
+  );
 }
 function Modal({ open, onClose, title, children, t }) {
   if (!open) return null;
-  return <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-    <div style={{ background: t.card, borderRadius: 16, padding: "24px", width: 480, maxWidth: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }} onClick={e => e.stopPropagation()}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 500, color: t.text, margin: 0 }}>{title}</h2>
-        <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: t.textSec, fontSize: 22, lineHeight: 1 }}>×</button>
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(8,10,16,0.52)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", animation: "pkFade 0.18s ease" }} onClick={onClose}>
+      <div style={{ background: t.card, borderRadius: 22, padding: "28px", width: 480, maxWidth: "90vw", boxShadow: t.popShadow, border: `1px solid ${t.borderSoft}`, animation: "pkPop 0.24s cubic-bezier(0.34,1.3,0.64,1)" }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: t.text, margin: 0, letterSpacing: -0.3 }}>{title}</h2>
+          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: 10, border: `1px solid ${t.border}`, background: t.bgSecondary, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: t.textSec, fontSize: 18, transition: "background 0.14s" }}
+            onMouseEnter={e => e.currentTarget.style.background = t.bgTint}
+            onMouseLeave={e => e.currentTarget.style.background = t.bgSecondary}>×</button>
+        </div>
+        {children}
       </div>
-      {children}
     </div>
-  </div>;
+  );
 }
 
 // ─── LOGIN PAGE ───────────────────────────────────────────────────────
@@ -364,6 +511,7 @@ function LoginPage({ onLogin, t }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleLogin = () => {
     const acc = ACCOUNTS.find(a => a.email === email && a.password === password);
@@ -373,80 +521,169 @@ function LoginPage({ onLogin, t }) {
   };
 
   const hints = [
-    { role: "Patron", email: "patron@alphaoptique.fr", pass: "perky2026" },
-    { role: "Salarié", email: "benjamin@alphaoptique.fr", pass: "perky2026" },
+    { role: "Patron", email: "patron@alphaoptique.fr", pass: "perky2026", icon: "briefcase" },
+    { role: "Salarié", email: "benjamin@alphaoptique.fr", pass: "perky2026", icon: "user" },
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: t.bg }}>
-      {/* LEFT — image */}
-      <div style={{ flex: 1, position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#0C2340" }}>
-        <img src={IMG.login} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.3 }} />
-        <div style={{ position: "relative", zIndex: 1, padding: "48px", maxWidth: 480 }}>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#fff", letterSpacing: -1, marginBottom: 16 }}>Perky</div>
-          <div style={{ fontSize: 24, fontWeight: 500, color: "#fff", lineHeight: 1.4, marginBottom: 16 }}>
-            Les avantages des grands groupes, enfin accessibles aux TPE.
-          </div>
-          <div style={{ fontSize: 15, color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
-            PPV, chèques vacances, titres-restaurant, réductions exclusives — tout en un seul endroit.
-          </div>
-          <div style={{ display: "flex", gap: 20, marginTop: 40 }}>
-            {["5€ / salarié / mois", "Résiliable à tout moment", "100% conforme URSSAF"].map((s, i) => (
-              <div key={i} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>{s}</div>
+    <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", minHeight: "100vh", background: t.bg, fontFamily: font }}>
+      <style>{`
+        @keyframes pkFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pkPop { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes pkRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pkFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+        @keyframes pkDrift { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-20px) scale(1.12); } 100% { transform: translate(0,0) scale(1); } }
+        @keyframes pkShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { -webkit-text-size-adjust: 100%; }
+        body { margin: 0; }
+        input, button, select { -webkit-appearance: none; appearance: none; font-family: inherit; }
+      `}</style>
+
+      {/* LEFT — branding (hidden on mobile, shown as compact header instead) */}
+      {isMobile ? (
+        /* Mobile top hero strip */
+        <div style={{ position: "relative", overflow: "hidden", background: "#0A1A3A", padding: "36px 24px 32px" }}>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(150deg, #0A1A3A 0%, #122B5E 100%)" }} />
+          <div style={{ ...glowDot("#3B82F6", 260, 0.38), top: "-30%", left: "-10%", animation: "pkDrift 18s ease-in-out infinite" }} />
+          <div style={{ ...glowDot("#7C3AED", 200, 0.28), bottom: "-40%", right: "-5%", animation: "pkDrift 22s ease-in-out infinite reverse" }} />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06))", border: "1px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               </div>
-            ))}
+              <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.5 }}>Perky</span>
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "#fff", lineHeight: 1.2, letterSpacing: -0.6, marginBottom: 8 }}>
+              Les avantages des grands groupes,{" "}
+              <span style={{ background: "linear-gradient(110deg, #60A5FA, #A78BFA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>enfin accessibles.</span>
+            </div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)", borderRadius: 20, padding: "5px 12px" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34D399", boxShadow: "0 0 8px #34D399" }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>La plateforme avantages des TPE</span>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* Desktop left panel */
+        <div style={{ flex: 1.15, position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#0A1A3A" }}>
+          <img src={IMG.login} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.22 }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(150deg, #0A1A3A 0%, #122B5E 45%, #0D2350 100%)" }} />
+          <div style={{ ...glowDot("#3B82F6", 420, 0.42), top: "-8%", left: "-6%", animation: "pkDrift 18s ease-in-out infinite" }} />
+          <div style={{ ...glowDot("#7C3AED", 360, 0.32), bottom: "-12%", right: "-4%", animation: "pkDrift 22s ease-in-out infinite reverse" }} />
+          <div style={{ ...glowDot("#14B981", 280, 0.20), top: "44%", left: "52%", animation: "pkFloat 14s ease-in-out infinite" }} />
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "52px 52px", maskImage: "radial-gradient(circle at 40% 40%, #000 0%, transparent 75%)", WebkitMaskImage: "radial-gradient(circle at 40% 40%, #000 0%, transparent 75%)" }} />
+
+          <div style={{ position: "relative", zIndex: 1, padding: "60px", maxWidth: 540, width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 13, marginBottom: 56, animation: "pkRise 0.6s ease both" }}>
+              <div style={{ width: 46, height: 46, borderRadius: 14, background: "linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06))", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}>
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              </div>
+              <span style={{ fontSize: 25, fontWeight: 800, color: "#fff", letterSpacing: -0.6 }}>Perky</span>
+            </div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 30, padding: "6px 14px", marginBottom: 22, animation: "pkRise 0.6s ease 0.05s both" }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#34D399", boxShadow: "0 0 10px #34D399" }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)", letterSpacing: 0.2 }}>La plateforme avantages des TPE</span>
+            </div>
+            <div style={{ fontSize: 42, fontWeight: 800, color: "#fff", lineHeight: 1.14, marginBottom: 18, letterSpacing: -1.2, animation: "pkRise 0.6s ease 0.12s both" }}>
+              Les avantages des<br />grands groupes,{" "}
+              <span style={{ background: "linear-gradient(110deg, #60A5FA, #A78BFA 55%, #34D399)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                enfin accessibles<br />aux TPE.
+              </span>
+            </div>
+            <div style={{ fontSize: 16, color: "rgba(255,255,255,0.62)", lineHeight: 1.7, marginBottom: 44, maxWidth: 420, animation: "pkRise 0.6s ease 0.2s both" }}>
+              PPV, chèques vacances, titres-restaurant, réductions exclusives — tout en un seul endroit.
+            </div>
+            <div style={{ display: "flex", gap: 12, animation: "pkRise 0.6s ease 0.28s both" }}>
+              {[
+                { label: "5€ / salarié / mois", icon: "coin", c: "#60A5FA" },
+                { label: "100% conforme URSSAF", icon: "shield-check", c: "#34D399" },
+                { label: "Résiliable à tout moment", icon: "lock-open", c: "#A78BFA" },
+              ].map((f, i) => (
+                <div key={i} style={{ flex: 1, background: "linear-gradient(160deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03))", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 16, padding: "15px 14px", backdropFilter: "blur(8px)" }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, background: f.c + "26", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 9 }}>
+                    <Icon name={f.icon} size={15} color={f.c} />
+                  </div>
+                  <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.82)", lineHeight: 1.4, fontWeight: 500 }}>{f.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 40, animation: "pkRise 0.6s ease 0.36s both" }}>
+              <div style={{ display: "flex" }}>
+                {["#3B82F6", "#14B981", "#F59E0B", "#7C3AED"].map((c, i) => (
+                  <div key={i} style={{ width: 32, height: 32, borderRadius: "50%", background: c, border: "2.5px solid #122B5E", marginLeft: i ? -10 : 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon name="user" size={13} color="#fff" />
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.55)", lineHeight: 1.4 }}>
+                Déjà adopté par des dizaines<br />de TPE françaises
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* RIGHT — form */}
-      <div style={{ width: 440, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 48px" }}>
-        <div style={{ width: "100%", maxWidth: 360 }}>
-          <div style={{ fontSize: 24, fontWeight: 500, color: t.text, marginBottom: 6 }}>Connexion</div>
-          <div style={{ fontSize: 14, color: t.textSec, marginBottom: 32 }}>Accédez à votre espace Perky</div>
+      <div style={{ width: isMobile ? "100%" : 500, flex: isMobile ? 1 : "none", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: isMobile ? "32px 20px 40px" : "48px", background: t.sidebar, position: "relative" }}>
+        <div style={{ width: "100%", maxWidth: 372, animation: "pkRise 0.5s ease 0.1s both" }}>
+          <div style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, color: t.text, marginBottom: 6, letterSpacing: -0.6 }}>Bon retour 👋</div>
+          <div style={{ fontSize: 14.5, color: t.textSec, marginBottom: 28, lineHeight: 1.5 }}>Connectez-vous à votre espace Perky</div>
 
           <Inp label="Adresse email" value={email} onChange={setEmail} type="email" placeholder="vous@entreprise.fr" t={t} />
 
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: t.textSec, marginBottom: 4 }}>Mot de passe</label>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: t.textSec, marginBottom: 7, letterSpacing: 0.2 }}>Mot de passe</label>
             <div style={{ position: "relative" }}>
               <input type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleLogin()}
-                style={{ width: "100%", padding: "11px 40px 11px 14px", border: `1px solid ${t.border}`, borderRadius: 10, fontSize: 14, fontFamily: font, outline: "none", background: t.bgSecondary, color: t.text, boxSizing: "border-box" }} />
-              <button onClick={() => setShowPass(s => !s)} style={{ position: "absolute", right: 12, top: 11, border: "none", background: "none", cursor: "pointer", color: t.textSec }}>
+                style={{ width: "100%", padding: "12px 44px 12px 14px", border: `1.5px solid ${t.border}`, borderRadius: 12, fontSize: 16, fontFamily: font, outline: "none", background: t.bgTint, color: t.text, boxSizing: "border-box", transition: "border-color 0.16s, box-shadow 0.16s, background 0.16s" }}
+                onFocus={e => { e.target.style.borderColor = t.blue; e.target.style.boxShadow = `0 0 0 4px ${t.ring}`; e.target.style.background = t.card; }}
+                onBlur={e => { e.target.style.borderColor = t.border; e.target.style.boxShadow = "none"; e.target.style.background = t.bgTint; }} />
+              <button onClick={() => setShowPass(s => !s)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", border: "none", background: "none", cursor: "pointer", display: "flex", padding: 4 }}>
                 <Icon name={showPass ? "eye-off" : "eye"} size={18} color={t.textSec} />
               </button>
             </div>
           </div>
 
-          {error && <div style={{ background: t.redLight, color: t.red, padding: "10px 14px", borderRadius: 8, fontSize: 13, marginBottom: 16 }}>{error}</div>}
+          {error && (
+            <div style={{ background: t.redLight, color: t.red, padding: "11px 14px", borderRadius: 12, fontSize: 13, marginBottom: 16, display: "flex", alignItems: "center", gap: 8, fontWeight: 500, animation: "pkPop 0.2s ease" }}>
+              <Icon name="alert-circle" size={15} color={t.red} /> {error}
+            </div>
+          )}
 
-          <button onClick={handleLogin} disabled={!email || !password} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: !email || !password ? t.border : t.blue, color: !email || !password ? t.textSec : "#fff", fontSize: 15, fontWeight: 500, cursor: !email || !password ? "default" : "pointer", fontFamily: font, marginBottom: 16 }}>
-            Se connecter
+          <button onClick={handleLogin} disabled={!email || !password}
+            style={{ width: "100%", padding: "15px", borderRadius: 13, border: "none", background: !email || !password ? t.bgSecondary : t.blueGrad, color: !email || !password ? t.textTert : "#fff", fontSize: 16, fontWeight: 700, cursor: !email || !password ? "default" : "pointer", fontFamily: font, marginBottom: 14, boxShadow: !email || !password ? "none" : `0 4px 12px ${t.blue}40`, transition: "transform 0.14s ease" }}>
+            Se connecter →
           </button>
 
-          <div style={{ textAlign: "center", fontSize: 13, color: t.textSec, marginBottom: 32 }}>
-            <span style={{ color: t.blue, cursor: "pointer" }}>Mot de passe oublié ?</span>
+          <div style={{ textAlign: "center", fontSize: 13, color: t.textSec, marginBottom: 24 }}>
+            <span style={{ color: t.blue, cursor: "pointer", fontWeight: 600 }}>Mot de passe oublié ?</span>
           </div>
 
-          {/* DEMO HINTS */}
-          <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "16px" }}>
-            <div style={{ fontSize: 11, fontWeight: 500, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>Comptes de démonstration</div>
+          <div style={{ position: "relative", textAlign: "center", marginBottom: 16 }}>
+            <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: t.border }} />
+            <span style={{ position: "relative", background: t.sidebar, padding: "0 12px", fontSize: 11, fontWeight: 700, color: t.textTert, textTransform: "uppercase", letterSpacing: 0.8 }}>Comptes de démo</span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {hints.map((h, i) => (
               <button key={i} onClick={() => { setEmail(h.email); setPassword(h.pass); setError(""); }}
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "10px 12px", marginBottom: i < hints.length - 1 ? 6 : 0, borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, cursor: "pointer", fontFamily: font, transition: "border-color 0.15s" }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = t.blue}
-                onMouseLeave={e => e.currentTarget.style.borderColor = t.border}>
-                <div style={{ textAlign: "left" }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{h.role}</div>
-                  <div style={{ fontSize: 11, color: t.textSec }}>{h.email}</div>
+                style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 14px", borderRadius: 13, border: `1.5px solid ${t.border}`, background: t.card, cursor: "pointer", fontFamily: font }}>
+                <div style={{ width: 38, height: 38, borderRadius: 11, background: t.blueGradSoft, border: `1px solid ${t.blue}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon name={h.icon} size={16} color={t.blue} />
                 </div>
-                <Icon name="arrow-right" size={14} color={t.textSec} />
+                <div style={{ textAlign: "left", flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: t.text }}>{h.role}</div>
+                  <div style={{ fontSize: 11.5, color: t.textSec, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.email}</div>
+                </div>
+                <Icon name="arrow-right" size={15} color={t.textTert} />
               </button>
             ))}
           </div>
         </div>
+        {!isMobile && <div style={{ position: "absolute", bottom: 28, fontSize: 11.5, color: t.textTert }}>© 2026 Perky · Solution conforme URSSAF</div>}
+        {isMobile && <div style={{ marginTop: 28, fontSize: 11.5, color: t.textTert, textAlign: "center" }}>© 2026 Perky · Solution conforme URSSAF</div>}
       </div>
     </div>
   );
@@ -460,24 +697,36 @@ function EmployeeActivation({ onComplete, t }) {
   const match = password.length >= 6 && password === confirm;
 
   if (step === 1) return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: 440, padding: "48px" }}>
-        <div style={{ fontSize: 20, fontWeight: 600, color: t.blue, marginBottom: 32 }}>Perky</div>
-        <div style={{ background: t.greenLight, borderRadius: 12, padding: "16px 18px", marginBottom: 28, display: "flex", gap: 12, alignItems: "flex-start" }}>
-          <Icon name="mail-check" size={20} color={t.green} />
+    <div style={{ minHeight: "100vh", background: t.appGrad, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 460, padding: "48px", background: t.card, borderRadius: 24, boxShadow: t.popShadow, border: `1px solid ${t.borderSoft}` }}>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 12px ${t.blue}55` }}>
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: t.text, letterSpacing: -0.5 }}>Perky</div>
+        </div>
+
+        {/* Invitation banner */}
+        <div style={{ background: t.greenGrad, borderRadius: 14, padding: "14px 18px", marginBottom: 28, display: "flex", gap: 12, alignItems: "center", boxShadow: "0 4px 12px rgba(16,185,129,0.3)" }}>
+          <Icon name="mail-check" size={20} color="#fff" />
           <div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: t.green, marginBottom: 2 }}>Invitation reçue</div>
-            <div style={{ fontSize: 13, color: t.green, opacity: 0.8 }}>Alpha Optique vous a invité à rejoindre Perky</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Invitation reçue</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)" }}>Alpha Optique vous a invité à rejoindre Perky</div>
           </div>
         </div>
-        <div style={{ fontSize: 22, fontWeight: 500, color: t.text, marginBottom: 6 }}>Bienvenue, Benjamin 👋</div>
-        <div style={{ fontSize: 14, color: t.textSec, marginBottom: 28, lineHeight: 1.6 }}>
+
+        <div style={{ fontSize: 24, fontWeight: 800, color: t.text, marginBottom: 6, letterSpacing: -0.6 }}>Bienvenue, Benjamin 👋</div>
+        <div style={{ fontSize: 14, color: t.textSec, marginBottom: 28, lineHeight: 1.65 }}>
           Votre employeur vous offre accès à la plateforme d'avantages Perky. Créez votre mot de passe pour activer votre compte.
         </div>
         <Inp label="Mot de passe (6 caractères min.)" value={password} onChange={setPassword} type="password" placeholder="••••••••" t={t} />
         <Inp label="Confirmer le mot de passe" value={confirm} onChange={setConfirm} type="password" placeholder="••••••••" t={t}
           hint={confirm.length > 0 && !match ? "Les mots de passe ne correspondent pas." : ""} />
-        <button onClick={() => setStep(2)} disabled={!match} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: match ? t.blue : t.border, color: match ? "#fff" : t.textSec, fontSize: 15, fontWeight: 500, cursor: match ? "pointer" : "default", fontFamily: font }}>
+        <button onClick={() => setStep(2)} disabled={!match}
+          style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: match ? t.blueGrad : t.borderSoft, color: match ? "#fff" : t.textSec, fontSize: 15, fontWeight: 700, cursor: match ? "pointer" : "default", fontFamily: font, boxShadow: match ? "0 4px 14px rgba(37,99,235,0.4)" : "none", transition: "transform 0.15s" }}
+          onMouseEnter={e => { if (match) e.currentTarget.style.transform = "translateY(-2px)"; }}
+          onMouseLeave={e => e.currentTarget.style.transform = "none"}>
           Activer mon compte
         </button>
       </div>
@@ -485,31 +734,38 @@ function EmployeeActivation({ onComplete, t }) {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: 440, padding: "48px", textAlign: "center" }}>
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: t.greenLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
-          <Icon name="check" size={32} color={t.green} />
+    <div style={{ minHeight: "100vh", background: t.appGrad, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 460, padding: "48px", background: t.card, borderRadius: 24, boxShadow: t.popShadow, border: `1px solid ${t.borderSoft}`, textAlign: "center", animation: "pkPop 0.4s ease" }}>
+        {/* Success icon */}
+        <div style={{ width: 80, height: 80, borderRadius: "50%", background: t.greenGrad, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(16,185,129,0.35)" }}>
+          <Icon name="check" size={36} color="#fff" />
         </div>
-        <div style={{ fontSize: 22, fontWeight: 500, color: t.text, marginBottom: 8 }}>Compte activé !</div>
-        <div style={{ fontSize: 14, color: t.textSec, lineHeight: 1.6, marginBottom: 32 }}>
+        <div style={{ fontSize: 26, fontWeight: 800, color: t.text, marginBottom: 8, letterSpacing: -0.6 }}>Compte activé !</div>
+        <div style={{ fontSize: 14, color: t.textSec, lineHeight: 1.65, marginBottom: 28 }}>
           Votre compte Perky est prêt. Vous avez accès au catalogue d'avantages et aux informations partagées par votre employeur.
         </div>
-        <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "16px 20px", marginBottom: 28, textAlign: "left" }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 12 }}>Ce qui vous attend</div>
+
+        {/* What awaits */}
+        <div style={{ background: t.bgTint, borderRadius: 14, padding: "18px 20px", marginBottom: 28, textAlign: "left", border: `1px solid ${t.borderSoft}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 12 }}>Ce qui vous attend</div>
           {[
-            { icon: "gift", text: "Les avantages activés par Alpha Optique" },
-            { icon: "tag", text: "+2 000 offres en billetterie et réductions" },
-            { icon: "wallet", text: "Votre wallet pour stocker vos billets" },
+            { icon: "gift", text: "Les avantages activés par Alpha Optique", color: t.green },
+            { icon: "tag", text: "+2 000 offres en billetterie et réductions", color: t.blue },
+            { icon: "wallet", text: "Votre wallet pour stocker vos billets", color: t.amber },
           ].map((it, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: i < 2 ? 10 : 0 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Icon name={it.icon} size={14} color={t.blue} />
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: i < 2 ? 10 : 0 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: it.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Icon name={it.icon} size={15} color={it.color} />
               </div>
               <span style={{ fontSize: 13, color: t.textSec }}>{it.text}</span>
             </div>
           ))}
         </div>
-        <button onClick={onComplete} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", fontSize: 15, fontWeight: 500, cursor: "pointer", fontFamily: font }}>
+
+        <button onClick={onComplete}
+          style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: t.blueGrad, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font, boxShadow: "0 4px 14px rgba(37,99,235,0.4)", transition: "transform 0.15s" }}
+          onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+          onMouseLeave={e => e.currentTarget.style.transform = "none"}>
           Accéder à mon espace →
         </button>
       </div>
@@ -542,23 +798,34 @@ function PatronOnboarding({ onComplete, t }) {
   const steps = ["Votre entreprise", "Votre équipe", "Récapitulatif"];
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px" }}>
-      <div style={{ width: 580, maxWidth: "100%" }}>
-        {/* STEPS */}
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 40 }}>
-          <div style={{ fontSize: 20, fontWeight: 600, color: t.blue, marginRight: 32 }}>Perky</div>
-          {steps.map((s, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, background: i + 1 <= step ? t.blue : t.bgSecondary, color: i + 1 <= step ? "#fff" : t.textSec, border: i + 1 === step ? `2px solid ${t.blue}` : "none", transition: "all 0.3s" }}>
-                  {i + 1 < step ? <Icon name="check" size={14} color="#fff" /> : i + 1}
-                </div>
-                <span style={{ fontSize: 13, color: i + 1 === step ? t.text : t.textSec, fontWeight: i + 1 === step ? 500 : 400 }}>{s}</span>
-              </div>
-              {i < steps.length - 1 && <div style={{ width: 40, height: 1, background: t.border, margin: "0 12px" }} />}
+    <div style={{ minHeight: "100vh", background: t.appGrad, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px" }}>
+      <div style={{ width: 600, maxWidth: "100%" }}>
+        {/* Header with logo + steps */}
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 40, gap: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 10px ${t.blue}55` }}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
-          ))}
+            <div style={{ fontSize: 18, fontWeight: 800, color: t.text, letterSpacing: -0.5 }}>Perky</div>
+          </div>
+          {/* Stepper */}
+          <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
+            {steps.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, background: i + 1 <= step ? t.blueGrad : t.bgTint, color: i + 1 <= step ? "#fff" : t.textTert, boxShadow: i + 1 <= step ? `0 2px 8px ${t.blue}44` : "none", border: `1.5px solid ${i + 1 === step ? t.blue : t.borderSoft}`, transition: "all 0.3s" }}>
+                    {i + 1 < step ? <Icon name="check" size={14} color="#fff" /> : i + 1}
+                  </div>
+                  <span style={{ fontSize: 13, color: i + 1 === step ? t.text : t.textTert, fontWeight: i + 1 === step ? 700 : 400 }}>{s}</span>
+                </div>
+                {i < steps.length - 1 && <div style={{ width: 36, height: 1.5, background: i + 1 < step ? t.blue : t.borderSoft, margin: "0 10px", borderRadius: 2, transition: "background 0.3s" }} />}
+              </div>
+            ))}
+          </div>
         </div>
+
+        {/* Card wrapper for all steps */}
+        <div style={{ background: t.card, borderRadius: 24, boxShadow: t.popShadow, border: `1px solid ${t.borderSoft}`, padding: "36px 40px" }}>
 
         {/* STEP 1 — COMPANY */}
         {step === 1 && (
@@ -587,14 +854,14 @@ function PatronOnboarding({ onComplete, t }) {
             <div style={{ fontSize: 14, color: t.textSec, marginBottom: 20 }}>
               Chaque salarié recevra un email d'invitation pour activer son compte Perky.
             </div>
-            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
+            <div style={{ background: t.card, borderRadius: 14, boxShadow: t.cardShadow, overflow: "hidden", marginBottom: 12 }}>
               {invites.map((inv, i) => (
                 <div key={inv.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: i < invites.length - 1 ? `1px solid ${t.border}` : "none" }}>
                   <div style={{ width: 32, height: 32, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 500, color: t.blue, flexShrink: 0 }}>
                     {(inv.firstName[0] + (inv.lastName?.[0] || "")).toUpperCase()}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{inv.firstName} {inv.lastName}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{inv.firstName} {inv.lastName}</div>
                     <div style={{ fontSize: 12, color: t.textSec }}>{inv.email} {inv.role && `— ${inv.role}`}</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -644,11 +911,11 @@ function PatronOnboarding({ onComplete, t }) {
             <div style={{ fontSize: 22, fontWeight: 500, color: t.text, marginBottom: 6 }}>Récapitulatif</div>
             <div style={{ fontSize: 14, color: t.textSec, marginBottom: 24 }}>Vérifiez les informations avant d'activer Perky pour votre équipe.</div>
 
-            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
+            <div style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, overflow: "hidden", marginBottom: 16 }}>
               <div style={{ padding: "16px 20px", borderBottom: `1px solid ${t.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={{ fontSize: 11, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>Entreprise</div>
-                  <div style={{ fontSize: 15, fontWeight: 500, color: t.text }}>{company.name}</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: t.text }}>{company.name}</div>
                   <div style={{ fontSize: 13, color: t.textSec }}>{company.sector}</div>
                 </div>
                 <button onClick={() => setStep(1)} style={{ fontSize: 12, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Modifier</button>
@@ -656,7 +923,7 @@ function PatronOnboarding({ onComplete, t }) {
               <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={{ fontSize: 11, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>Équipe</div>
-                  <div style={{ fontSize: 15, fontWeight: 500, color: t.text }}>{invites.length} salarié{invites.length > 1 ? "s" : ""} à inviter</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: t.text }}>{invites.length} salarié{invites.length > 1 ? "s" : ""} à inviter</div>
                   <div style={{ fontSize: 13, color: t.textSec }}>{invites.map(i => i.firstName).join(", ")}</div>
                 </div>
                 <button onClick={() => setStep(2)} style={{ fontSize: 12, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Modifier</button>
@@ -664,36 +931,40 @@ function PatronOnboarding({ onComplete, t }) {
             </div>
 
             {/* PRICING */}
-            <div style={{ background: t.bgSecondary, borderRadius: 14, padding: "20px", marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 14 }}>Détail de la facturation</div>
+            <div style={{ background: t.bgTint, borderRadius: 16, padding: "20px", marginBottom: 20, border: `1px solid ${t.borderSoft}` }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 14, letterSpacing: -0.3 }}>Détail de la facturation</div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: t.textSec, marginBottom: 8 }}>
                 <span>Frais d'implantation (une fois)</span>
-                <span style={{ fontWeight: 500, color: t.text }}>{SETUP} €</span>
+                <span style={{ fontWeight: 700, color: t.text }}>{SETUP} €</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: t.textSec, marginBottom: 8 }}>
                 <span>{invites.length} salarié{invites.length > 1 ? "s" : ""} × 5€/mois</span>
-                <span style={{ fontWeight: 500, color: t.text }}>{monthly} €/mois</span>
+                <span style={{ fontWeight: 700, color: t.text }}>{monthly} €/mois</span>
               </div>
-              <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 14, fontWeight: 500, color: t.text }}>Total aujourd'hui</span>
-                <span style={{ fontSize: 18, fontWeight: 600, color: t.blue }}>{SETUP + monthly} € HT</span>
+              <div style={{ borderTop: `1px solid ${t.borderSoft}`, paddingTop: 14, marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: t.text }}>Total aujourd'hui</span>
+                <span style={{ fontSize: 22, fontWeight: 800, color: t.blue, letterSpacing: -0.5 }}>{SETUP + monthly} € HT</span>
               </div>
-              <div style={{ fontSize: 11, color: t.textSec, marginTop: 6 }}>puis {monthly}€/mois — résiliable à tout moment</div>
+              <div style={{ fontSize: 11, color: t.textTert, marginTop: 6 }}>puis {monthly}€/mois — résiliable à tout moment</div>
             </div>
 
-            <div style={{ background: t.greenLight, borderRadius: 10, padding: "12px 16px", fontSize: 13, color: t.green, lineHeight: 1.5, marginBottom: 24, display: "flex", gap: 8 }}>
-              <Icon name="shield-check" size={16} color={t.green} />
+            <div style={{ background: t.greenGrad, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: "#fff", lineHeight: 1.55, marginBottom: 24, display: "flex", gap: 10, boxShadow: "0 4px 12px rgba(16,185,129,0.3)" }}>
+              <Icon name="shield-check" size={16} color="#fff" />
               Solution 100% conforme URSSAF. Les invitations seront envoyées immédiatement après activation.
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>
               <Btn onClick={() => setStep(2)} variant="ghost" t={t}>← Retour</Btn>
-              <button onClick={() => onComplete({ name: company.name, sector: company.sector, siret: company.siret })} style={{ flex: 1, padding: "13px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", fontSize: 15, fontWeight: 500, cursor: "pointer", fontFamily: font }}>
+              <button onClick={() => onComplete({ name: company.name, sector: company.sector, siret: company.siret })}
+                style={{ flex: 1, padding: "14px", borderRadius: 12, border: "none", background: t.blueGrad, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font, boxShadow: "0 4px 14px rgba(37,99,235,0.4)", transition: "transform 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                onMouseLeave={e => e.currentTarget.style.transform = "none"}>
                 Activer Perky — {SETUP + monthly}€
               </button>
             </div>
           </div>
         )}
+        </div>{/* end card wrapper */}
       </div>
     </div>
   );
@@ -701,30 +972,74 @@ function PatronOnboarding({ onComplete, t }) {
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────
 function Sidebar({ items, active, onSelect, user, role, t, cartCount }) {
-  return <div style={{ width: 220, background: t.sidebar, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", minHeight: "100vh", flexShrink: 0 }}>
-    <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${t.border}` }}>
-      <div style={{ fontSize: 20, fontWeight: 600, color: t.blue, letterSpacing: -0.5 }}>Perky</div>
-      <div style={{ fontSize: 11, color: t.textSec, marginTop: 2 }}>{role}</div>
-    </div>
-    <div style={{ flex: 1, padding: "12px 10px" }}>
-      {items.map(it => <button key={it.id} onClick={() => onSelect(it.id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", borderRadius: 8, border: "none", background: active === it.id ? t.blueLighter : "transparent", color: active === it.id ? t.blue : t.textSec, cursor: "pointer", fontSize: 13, fontWeight: active === it.id ? 500 : 400, fontFamily: font, marginBottom: 2, textAlign: "left" }}>
-        <Icon name={it.icon} size={18} color={active === it.id ? t.blue : t.textSec} />
-        {it.label}
-        {it.id === "cart" && cartCount > 0 && <span style={{ marginLeft: "auto", background: t.blue, color: "#fff", fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 10 }}>{cartCount}</span>}
-      </button>)}
-    </div>
-    <div style={{ padding: "14px 16px", borderTop: `1px solid ${t.border}`, display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ width: 32, height: 32, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 500, color: t.blue }}>{user.initials}</div>
-      <div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{user.name}</div>
-        <div style={{ fontSize: 11, color: t.textSec }}>{user.sub}</div>
+  return (
+    <div style={{ width: 248, background: t.sidebar, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", minHeight: "100vh", flexShrink: 0, position: "relative" }}>
+      {/* Logo */}
+      <div style={{ padding: "22px 20px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 12px -2px ${t.blue}66`, position: "relative" }}>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 19, fontWeight: 800, color: t.text, letterSpacing: -0.6, lineHeight: 1 }}>Perky</div>
+            <div style={{ fontSize: 10, color: t.textTert, marginTop: 3, letterSpacing: 0.3, fontWeight: 600, textTransform: "uppercase" }}>{role}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ height: 1, background: t.borderSoft, margin: "0 16px 8px" }} />
+
+      {/* Nav */}
+      <div style={{ flex: 1, padding: "6px 12px" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: t.textTert, letterSpacing: 0.9, textTransform: "uppercase", padding: "8px 12px 6px" }}>Menu</div>
+        {items.map(it => {
+          const isActive = active === it.id;
+          return (
+            <button key={it.id} onClick={() => onSelect(it.id)} style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", padding: "10px 12px", borderRadius: 12, border: "none", background: isActive ? t.blueGradSoft : "transparent", color: isActive ? t.blue : t.textSec, cursor: "pointer", fontSize: 13.5, fontWeight: isActive ? 700 : 500, fontFamily: font, marginBottom: 3, textAlign: "left", transition: "background 0.14s, color 0.14s", position: "relative" }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = t.bgSecondary; }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
+              {isActive && <div style={{ position: "absolute", left: -12, top: "50%", transform: "translateY(-50%)", width: 4, height: 22, borderRadius: "0 4px 4px 0", background: t.blueGrad }} />}
+              <div style={{ width: 30, height: 30, borderRadius: 9, background: isActive ? t.blue + "1F" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.14s" }}>
+                <Icon name={it.icon} size={17} color={isActive ? t.blue : t.textTert} />
+              </div>
+              <span style={{ flex: 1 }}>{it.label}</span>
+              {it.id === "cart" && cartCount > 0 && (
+                <span style={{ background: t.blueGrad, color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 20, boxShadow: `0 2px 6px ${t.blue}55` }}>{cartCount}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Encart aide */}
+      <div style={{ padding: "0 14px 10px" }}>
+        <div style={{ background: t.blueGradSoft, border: `1px solid ${t.blue}1F`, borderRadius: 14, padding: "13px 14px", position: "relative", overflow: "hidden" }}>
+          <div style={{ ...glowDot(t.blue, 90, 0.25), top: -30, right: -20 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, position: "relative" }}>
+            <Icon name="sparkles" size={14} color={t.blue} />
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: t.text }}>Besoin d'aide ?</span>
+          </div>
+          <div style={{ fontSize: 11.5, color: t.textSec, lineHeight: 1.5, position: "relative" }}>Notre équipe répond sous 24h à support@perky.fr</div>
+        </div>
+      </div>
+
+      {/* User */}
+      <div style={{ padding: "10px 14px 16px", borderTop: `1px solid ${t.borderSoft}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 10px", borderRadius: 13, background: t.bgSecondary, border: `1px solid ${t.borderSoft}` }}>
+          <div style={{ width: 38, height: 38, borderRadius: "50%", background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#fff", flexShrink: 0, boxShadow: `0 3px 8px -2px ${t.blue}66` }}>{user.initials}</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
+            <div style={{ fontSize: 11, color: t.textSec }}>{user.sub}</div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>;
+  );
 }
 
 // ─── BOSS SCANNER ─────────────────────────────────────────────────────
 function BossScanner({ employees, scannerState, setScannerState, onUpdateEmployeePPV, t, company }) {
+  const isMobile = useIsMobile();
   const [openItem, setOpenItem] = useState(null);
   const s = scannerState;
   const activeEmp = employees.filter(e => e.active);
@@ -752,19 +1067,31 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
     { id: "resto", title: "Titres-restaurant", icon: "tools-kitchen-2", color: "green", loi: "Art. L3262-1 CT — exo part patronale 50-60%", total: restoTotal, pct: Math.round((s.resto.amount / s.resto.max) * 100), perEmployee: false, isResto: true },
   ];
 
-  return <div>
-    <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 4px" }}>Scanner avantages</h1>
-    <p style={{ fontSize: 14, color: t.textSec, margin: "0 0 20px" }}>Configurez chaque dispositif — le calcul se met à jour en temps réel</p>
-    <div style={{ background: `linear-gradient(135deg, ${t.blue} 0%, #0C447C 100%)`, borderRadius: 14, padding: "20px 24px", color: "#fff", marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div>
-        <div style={{ fontSize: 13, opacity: 0.8 }}>Pouvoir d'achat total configuré</div>
-        <div style={{ fontSize: 36, fontWeight: 600 }}>{fmt(grandTotal)} €</div>
-        <div style={{ fontSize: 13, opacity: 0.7 }}>pour {n} salarié{n > 1 ? "s" : ""} — ~{fmt(Math.round(grandTotal / Math.max(n, 1)))}€/pers.</div>
+  return <div style={{ maxWidth: 880, animation: "pkRise 0.4s ease both" }}>
+    <div style={{ marginBottom: 18 }}>
+      <Badge text="Configuration" variant="blue" t={t} dot />
+      <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Scanner avantages</h1>
+      <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Configurez chaque dispositif — le calcul se met à jour en temps réel</p>
+    </div>
+    <div style={{ background: "linear-gradient(135deg, #1D4FCB 0%, #2563EB 50%, #1E3A8A 100%)", borderRadius: 20, padding: isMobile ? "20px" : "24px 28px", color: "#fff", marginBottom: 22, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, position: "relative", overflow: "hidden", boxShadow: `0 12px 32px -10px ${t.blue}77` }}>
+      <div style={{ ...glowDot("#60A5FA", 280, 0.45), top: "-50%", right: "16%" }} />
+      <div style={{ ...glowDot("#A78BFA", 200, 0.3), bottom: "-60%", left: "8%" }} />
+      <div style={{ position: "relative" }}>
+        <div style={{ fontSize: 12.5, opacity: 0.82, fontWeight: 600, marginBottom: 6 }}>Pouvoir d'achat total configuré</div>
+        <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.4, lineHeight: 1 }}>{fmt(grandTotal)} €</div>
+        <div style={{ fontSize: 12.5, opacity: 0.72, marginTop: 7 }}>pour {n} salarié{n > 1 ? "s" : ""} — ~{fmt(Math.round(grandTotal / Math.max(n, 1)))} €/pers.</div>
       </div>
-      <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 40, fontWeight: 600 }}>{globalPct}%</div>
-        <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>optimisé</div>
-        <Bar pct={globalPct} color="rgba(255,255,255,0.4)" h={4} />
+      <div style={{ position: "relative", width: 120, height: 120 }}>
+        <svg width={120} height={120} style={{ transform: "rotate(-90deg)" }}>
+          <circle cx={60} cy={60} r={52} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={9} />
+          <circle cx={60} cy={60} r={52} fill="none" stroke="#fff" strokeWidth={9} strokeLinecap="round"
+            strokeDasharray={2 * Math.PI * 52} strokeDashoffset={2 * Math.PI * 52 * (1 - globalPct / 100)}
+            style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.34,1.2,0.64,1)" }} />
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1 }}>{globalPct}%</div>
+          <div style={{ fontSize: 10.5, opacity: 0.75, marginTop: 3, fontWeight: 600 }}>optimisé</div>
+        </div>
       </div>
     </div>
 
@@ -775,26 +1102,28 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
       const isOpen = openItem === item.id;
       const sv = s[item.id];
 
-      return <div key={item.id} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, marginBottom: 10, borderLeft: `3px solid ${c}`, overflow: "hidden" }}>
-        <div onClick={() => setOpenItem(isOpen ? null : item.id)} style={{ padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: cl, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={item.icon} size={16} color={c} /></div>
+      return <div key={item.id} {...lift(t)} style={{ background: t.card, borderRadius: 16, boxShadow: isOpen ? t.cardShadowHover : t.cardShadow, marginBottom: 12, overflow: "hidden", transition: "box-shadow 0.18s, transform 0.18s" }}>
+        <div onClick={() => setOpenItem(isOpen ? null : item.id)} style={{ padding: "16px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 13, borderLeft: `3px solid ${c}` }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${c}26, ${c}12)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${c}26` }}><Icon name={item.icon} size={18} color={c} /></div>
           <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 500, color: t.text }}>{item.title}</span>
+                <span style={{ fontSize: 14.5, fontWeight: 700, color: t.text }}>{item.title}</span>
                 <Tooltip text={INFO_TEXTS[item.id]} t={t} />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {item.total > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: c }}>{fmt(item.total)}€ équipe</span>}
-                <Badge text={item.done ? "Activé" : item.total > 0 ? "Configuré" : "À activer"} variant={item.done ? "green" : item.total > 0 ? "blue" : "amber"} t={t} />
-                <Icon name={isOpen ? "chevron-up" : "chevron-down"} size={16} color={t.textSec} />
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                {item.total > 0 && <span style={{ fontSize: 13, fontWeight: 800, color: c }}>{fmt(item.total)} € équipe</span>}
+                <Badge text={item.done ? "Activé" : item.total > 0 ? "Configuré" : "À activer"} variant={item.done ? "green" : item.total > 0 ? "blue" : "amber"} t={t} dot />
+                <div style={{ width: 26, height: 26, borderRadius: 8, background: t.bgSecondary, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}>
+                  <Icon name="chevron-down" size={15} color={t.textSec} />
+                </div>
               </div>
             </div>
-            <Bar pct={item.pct} color={c} h={3} />
+            <Bar pct={item.pct} color={c} h={5} />
           </div>
         </div>
-        {isOpen && <div style={{ borderTop: `1px solid ${t.border}`, padding: "16px 18px" }}>
-          <span style={{ fontSize: 11, color: t.textSec, fontFamily: "monospace", background: t.bgSecondary, padding: "3px 10px", borderRadius: 6, display: "inline-block", marginBottom: 12 }}>{item.loi}</span>
+        {isOpen && <div style={{ borderTop: `1px solid ${t.borderSoft}`, padding: "18px 18px" }}>
+          <span style={{ fontSize: 11, color: t.textSec, fontFamily: "monospace", background: t.bgSecondary, padding: "4px 11px", borderRadius: 7, display: "inline-block", marginBottom: 14, border: `1px solid ${t.borderSoft}` }}>{item.loi}</span>
 
           {item.perEmployee ? (
             <div>
@@ -814,7 +1143,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
                   <div style={{ background: t.amberLight, borderRadius: 8, padding: "10px 14px", fontSize: 12, color: t.amber, marginBottom: 14, lineHeight: 1.5 }}>
                     ⚠️ Un versement complémentaire nécessite une <strong>DUE modificative</strong> faisant référence à la DUE initiale. Renseignez les montants déjà versés pour calculer le reliquat disponible.
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 10 }}>Montants déjà versés cette année par salarié</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 10 }}>Montants déjà versés cette année par salarié</div>
                   {activeEmp.map(emp => {
                     const already = s.ppv_already?.[emp.id] || 0;
                     const reliquat = Math.max(0, 3000 - already);
@@ -822,7 +1151,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
                       <div key={emp.id} style={{ display: "flex", alignItems: "center", gap: 12, background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", marginBottom: 6 }}>
                         <div style={{ width: 28, height: 28, borderRadius: "50%", background: t.amberLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, color: t.amber, flexShrink: 0 }}>{emp.initials}</div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{emp.firstName} {emp.lastName}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{emp.firstName} {emp.lastName}</div>
                           <div style={{ fontSize: 11, color: t.textSec }}>Reliquat : <strong style={{ color: reliquat > 0 ? t.green : t.red }}>{fmt(reliquat)}€</strong> disponibles</div>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -837,7 +1166,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
                 </div>
               )}
 
-              <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 10 }}>
                 {(s.ppv_type?.value || "Premier versement") === "Versement complémentaire" ? "Nouveau versement à configurer" : "Montant par salarié"}
                 <span style={{ fontSize: 12, color: t.textSec, fontWeight: 400, marginLeft: 6 }}>(modulable par ancienneté ou classification)</span>
               </div>
@@ -852,7 +1181,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 30, height: 30, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, color: t.blue, flexShrink: 0 }}>{emp.initials}</div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{emp.firstName} {emp.lastName}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{emp.firstName} {emp.lastName}</div>
                         <div style={{ fontSize: 11, color: t.textSec }}>{emp.seniority} mois d'ancienneté</div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -884,7 +1213,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
                 const totalAnnual = totalAlready + totalNew;
                 return (
                   <div style={{ background: cl, borderRadius: 10, padding: "12px 16px", marginTop: 10 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: isComplement ? "1fr 1fr 1fr" : "1fr 1fr", gap: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : (isComplement ? "1fr 1fr 1fr" : "1fr 1fr"), gap: 12 }}>
                       {isComplement && (
                         <div style={{ textAlign: "center" }}>
                           <div style={{ fontSize: 11, color: c, marginBottom: 2 }}>Déjà versé (année)</div>
@@ -923,7 +1252,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
               {/* RESTO — double slider */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: t.text }}>Montant facial du billet</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Montant facial du billet</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: c }}>{sv.amount}€</span>
                 </div>
                 <input type="range" min={8} max={15} step={0.5} value={sv.amount}
@@ -935,7 +1264,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
               </div>
               <div style={{ marginBottom: 14 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: t.text }}>Part prise en charge par l'entreprise</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Part prise en charge par l'entreprise</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: c }}>{sv.pct}%</span>
                     <span style={{ fontSize: 12, color: t.textSec }}>({(sv.amount * sv.pct / 100).toFixed(2)}€/billet)</span>
@@ -954,7 +1283,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
               </div>
               {sv.amount > 0 && (
                 <div style={{ background: cl, borderRadius: 10, padding: "12px 16px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>
                     <div><div style={{ fontSize: 11, color: c }}>Part patronale/billet</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{(sv.amount * sv.pct / 100).toFixed(2)}€</div></div>
                     <div><div style={{ fontSize: 11, color: c }}>Part salarié/billet</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{(sv.amount * (1 - sv.pct / 100)).toFixed(2)}€</div></div>
                     <div><div style={{ fontSize: 11, color: c }}>Pouvoir d'achat équipe/an</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{fmt(restoTotal)}€</div></div>
@@ -966,7 +1295,7 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
           ) : (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{item.id === "navigo" ? `${sv.pct}% remboursés` : `${fmt(sv.amount || 0)}€/salarié`}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{item.id === "navigo" ? `${sv.pct}% remboursés` : `${fmt(sv.amount || 0)}€/salarié`}</span>
                 <span style={{ fontSize: 12, color: t.textSec }}>Plafond : {item.id === "navigo" ? "75%" : `${fmt(s[item.id]?.max || 0)}€`}</span>
               </div>
               <input type="range" min={item.id === "navigo" ? 50 : 0} max={item.id === "navigo" ? 75 : (s[item.id]?.max || 500)} step={item.id === "navigo" ? 5 : item.id === "vacances" ? 50 : 10}
@@ -988,8 +1317,9 @@ function BossScanner({ employees, scannerState, setScannerState, onUpdateEmploye
         </div>}
       </div>;
     })}
-    <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "12px 16px", fontSize: 12, color: t.textSec, lineHeight: 1.6, borderLeft: `3px solid ${t.blue}`, marginTop: 4 }}>
-      ⚠️ Estimations indicatives basées sur les plafonds légaux 2026. Valider avec votre expert-comptable.
+    <div style={{ background: t.amberLight, borderRadius: 14, padding: "14px 16px", fontSize: 12.5, color: t.amberDeep, lineHeight: 1.6, display: "flex", gap: 9, alignItems: "flex-start", border: `1px solid ${t.amber}26`, marginTop: 4 }}>
+      <Icon name="alert-triangle" size={16} color={t.amber} />
+      <span>Estimations indicatives basées sur les plafonds légaux 2026. À valider avec votre expert-comptable.</span>
     </div>
   </div>;
 }
@@ -1050,7 +1380,7 @@ function TeamCalendar({ employees, t }) {
     <div>
       {/* Header nav */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 500, color: t.text }}>{monthNames[currentMonth]} {currentYear}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: t.text }}>{monthNames[currentMonth]} {currentYear}</div>
         <div style={{ display: "flex", gap: 6 }}>
           <button onClick={prevMonth} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.border}`, background: "none", cursor: "pointer", color: t.textSec, display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
           <button onClick={nextMonth} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.border}`, background: "none", cursor: "pointer", color: t.textSec, display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
@@ -1106,8 +1436,8 @@ function TeamCalendar({ employees, t }) {
       {/* Popover saisie */}
       {popover && (
         <div style={{ position: "fixed", inset: 0, zIndex: 400 }} onClick={() => setPopover(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", width: 240, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 401 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 12 }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: t.card, borderRadius: 14, boxShadow: t.cardShadow, padding: "16px 18px", width: 240, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 401 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 12 }}>
               {monthNames[currentMonth].slice(0, 3)} {popover.day}
             </div>
             {(() => {
@@ -1161,22 +1491,22 @@ function PerkyDeadlines({ t, onNav }) {
   };
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {deadlines.map((d, i) => {
         const days = daysUntil(d.date);
         const u = urgencyColor(days);
         return (
-          <div key={i} onClick={() => onNav("scanner")} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, marginBottom: 8, cursor: "pointer", transition: "border-color 0.15s" }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = u.color}
-            onMouseLeave={e => e.currentTarget.style.borderColor = t.border}>
-            <div style={{ width: 34, height: 34, borderRadius: 8, background: u.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Icon name={d.icon} size={16} color={u.color} />
+          <div key={i} onClick={() => onNav("scanner")} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 13px", background: t.bgTint, borderRadius: 13, border: `1px solid ${t.borderSoft}`, cursor: "pointer", transition: "background 0.14s, transform 0.14s" }}
+            onMouseEnter={e => { e.currentTarget.style.background = t.bgSecondary; e.currentTarget.style.transform = "translateX(2px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = t.bgTint; e.currentTarget.style.transform = "translateX(0)"; }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: u.color + "1A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon name={d.icon} size={17} color={u.color} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{d.label}</div>
-              <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.4 }}>{d.desc}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: t.text }}>{d.label}</div>
+              <div style={{ fontSize: 11.5, color: t.textSec, lineHeight: 1.4, marginTop: 1 }}>{d.desc}</div>
             </div>
-            <div style={{ background: u.bg, color: u.color, fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 8, flexShrink: 0 }}>
+            <div style={{ background: u.color, color: "#fff", fontSize: 11.5, fontWeight: 800, padding: "5px 10px", borderRadius: 9, flexShrink: 0, boxShadow: `0 3px 8px -3px ${u.color}` }}>
               {u.label}
             </div>
           </div>
@@ -1187,6 +1517,7 @@ function PerkyDeadlines({ t, onNav }) {
 }
 
 function BossHome({ employees, scannerState, t, onNav }) {
+  const isMobile = useIsMobile();
   const active = employees.filter(e => e.active);
   const n = active.length;
   const s = scannerState;
@@ -1197,113 +1528,145 @@ function BossHome({ employees, scannerState, t, onNav }) {
   const grandTotal = totalPPV + totalNavigo + totalCadeaux + totalVacances;
   const globalPct = Math.round([totalPPV > 0, totalNavigo > 0, totalCadeaux > 0, totalVacances > 0].filter(Boolean).length / 4 * 100);
 
-  return <div>
-    <div style={{ marginBottom: 16 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 4px" }}>Tableau de bord</h1>
-      <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Alpha Optique — {n} bénéficiaire{n > 1 ? "s" : ""}</p>
+  return <div style={{ maxWidth: 1180, animation: "pkRise 0.4s ease both" }}>
+    {/* En-tête de page */}
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <Badge text="Espace dirigeant" variant="blue" t={t} dot />
+        <span style={{ fontSize: 12.5, color: t.textTert }}>17 mai 2026</span>
+      </div>
+      <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "0 0 4px", letterSpacing: -0.8 }}>Tableau de bord</h1>
+      <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Alpha Optique — {n} bénéficiaire{n > 1 ? "s" : ""} actif{n > 1 ? "s" : ""}</p>
     </div>
 
-    {/* Hero */}
-    <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 14, position: "relative", height: 160 }}>
-      <img src={IMG.hero} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(24,95,165,0.92) 0%, rgba(12,68,124,0.88) 100%)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px" }}>
+    {/* HERO — pouvoir d'achat */}
+    <div style={{ borderRadius: 22, overflow: "hidden", marginBottom: 16, position: "relative", background: "linear-gradient(135deg, #1D4FCB 0%, #2563EB 48%, #1E3A8A 100%)", boxShadow: `0 12px 36px -10px ${t.blue}77` }}>
+      <div style={{ ...glowDot("#60A5FA", 320, 0.5), top: "-40%", right: "8%" }} />
+      <div style={{ ...glowDot("#A78BFA", 240, 0.35), bottom: "-50%", left: "12%" }} />
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)", backgroundSize: "22px 22px", opacity: 0.6 }} />
+      <div style={{ position: "relative", padding: isMobile ? "20px" : "26px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
         <div style={{ color: "#fff" }}>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Pouvoir d'achat récupérable</div>
-          <div style={{ fontSize: 32, fontWeight: 600, margin: "2px 0" }}>{fmt(grandTotal)} €</div>
-          <div style={{ fontSize: 12, opacity: 0.7 }}>~{fmt(Math.round(grandTotal / Math.max(n, 1)))}€ / salarié / an</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, opacity: 0.85, marginBottom: 8, fontWeight: 600 }}>
+            <Icon name="trending-up" size={15} color="#fff" /> Pouvoir d'achat récupérable
+          </div>
+          <div style={{ fontSize: 46, fontWeight: 800, letterSpacing: -1.5, lineHeight: 1, marginBottom: 8 }}>{fmt(grandTotal)} €</div>
+          <div style={{ fontSize: 13, opacity: 0.78 }}>~{fmt(Math.round(grandTotal / Math.max(n, 1)))} € par salarié et par an</div>
         </div>
-        <div style={{ textAlign: "right", color: "#fff" }}>
-          <div style={{ fontSize: 36, fontWeight: 600 }}>{globalPct}%</div>
-          <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4 }}>optimisé</div>
-          <Bar pct={globalPct} color="rgba(255,255,255,0.4)" h={4} />
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {/* anneau de progression */}
+          <div style={{ position: "relative", width: 116, height: 116 }}>
+            <svg width={116} height={116} style={{ transform: "rotate(-90deg)" }}>
+              <circle cx={58} cy={58} r={50} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={9} />
+              <circle cx={58} cy={58} r={50} fill="none" stroke="#fff" strokeWidth={9} strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 50} strokeDashoffset={2 * Math.PI * 50 * (1 - globalPct / 100)}
+                style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.34,1.2,0.64,1)" }} />
+            </svg>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+              <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{globalPct}%</div>
+              <div style={{ fontSize: 10, opacity: 0.75, marginTop: 3, fontWeight: 600 }}>optimisé</div>
+            </div>
+          </div>
+          <button onClick={() => onNav("scanner")} style={{ padding: "11px 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.14)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: font, backdropFilter: "blur(8px)", display: "flex", alignItems: "center", gap: 7, transition: "background 0.14s" }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.24)"}
+            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.14)"}>
+            Configurer <Icon name="arrow-right" size={14} color="#fff" />
+          </button>
         </div>
       </div>
     </div>
 
-    {/* Stats */}
-    <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-      {[{ icon: "users", v: `${n}`, l: "Salariés", c: t.blue }, { icon: "chart-bar", v: "67%", l: "Utilisent Perky", c: t.green }, { icon: "coin", v: `${fmt(grandTotal)}€`, l: "Avantages", c: t.amber }].map((s2, i) => (
-        <div key={i} style={{ flex: 1, background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, padding: "12px 14px" }}>
-          <div style={{ display: "flex", gap: 6, marginBottom: 6, alignItems: "center" }}><Icon name={s2.icon} size={14} color={s2.c} /><span style={{ fontSize: 11, color: t.textSec }}>{s2.l}</span></div>
-          <div style={{ fontSize: 20, fontWeight: 500, color: t.text }}>{s2.v}</div>
+    {/* Stats — cartes en relief */}
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
+      {[
+        { icon: "users", v: `${n}`, l: "Salariés actifs", c: t.blue, sub: "bénéficiaires Perky" },
+        { icon: "chart-bar", v: "67%", l: "Taux d'usage", c: t.green, sub: "utilisent la plateforme" },
+        { icon: "coin", v: `${fmt(grandTotal)} €`, l: "Avantages activés", c: t.amber, sub: "valeur annuelle totale" },
+      ].map((s2, i) => (
+        <div key={i} {...lift(t)} style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "18px 20px", transition: "transform 0.18s, box-shadow 0.18s", cursor: "default", position: "relative", overflow: "hidden" }}>
+          <div style={{ ...glowDot(s2.c, 70, 0.16), top: -28, right: -16 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12, position: "relative" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 11, background: s2.c + "1A", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name={s2.icon} size={17} color={s2.c} />
+            </div>
+            <span style={{ fontSize: 12.5, color: t.textSec, fontWeight: 600 }}>{s2.l}</span>
+          </div>
+          <div style={{ fontSize: 27, fontWeight: 800, color: t.text, letterSpacing: -0.7, position: "relative" }}>{s2.v}</div>
+          <div style={{ fontSize: 11.5, color: t.textTert, marginTop: 3, position: "relative" }}>{s2.sub}</div>
         </div>
       ))}
     </div>
 
-    {/* Décomposition avantages donnés */}
-    {grandTotal > 0 && <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
-      <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 4 }}>Ce que vous offrez à votre équipe</div>
-      <div style={{ fontSize: 13, color: t.textSec, marginBottom: 14 }}>Décomposition des avantages activés par vous cette année</div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-        <div style={{ flex: 1, background: t.greenLight, borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${t.green}22` }}>
-          <div style={{ fontSize: 11, color: t.green, marginBottom: 4 }}>Avantages en espèces</div>
-          <div style={{ fontSize: 22, fontWeight: 600, color: t.green }}>{fmt(totalPPV + totalCadeaux)} €</div>
-          <div style={{ fontSize: 11, color: t.green, opacity: 0.8, marginTop: 4 }}>PPV + chèques cadeaux</div>
+    {/* SECTION — Ce que vous offrez */}
+    {grandTotal > 0 && <div style={{ marginBottom: 28 }}>
+      <SectionTitle icon="gift" iconColor={t.green} title="Ce que vous offrez à votre équipe" sub="Décomposition des avantages activés cette année" t={t} />
+      <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, marginBottom: 16, alignItems: isMobile ? "stretch" : "stretch" }}>
+          <div style={{ flex: 1, background: t.greenLight, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.green}26` }}>
+            <div style={{ fontSize: 11.5, color: t.green, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En espèces</div>
+            <div style={{ fontSize: 25, fontWeight: 800, color: t.green, letterSpacing: -0.6 }}>{fmt(totalPPV + totalCadeaux)} €</div>
+            <div style={{ fontSize: 11.5, color: t.green, opacity: 0.78, marginTop: 5 }}>PPV + chèques cadeaux</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>
+          <div style={{ flex: 1, background: t.blueLighter, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.blue}26` }}>
+            <div style={{ fontSize: 11.5, color: t.blue, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En nature</div>
+            <div style={{ fontSize: 25, fontWeight: 800, color: t.blue, letterSpacing: -0.6 }}>{fmt(totalNavigo + totalVacances + Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n))} €</div>
+            <div style={{ fontSize: 11.5, color: t.blue, opacity: 0.78, marginTop: 5 }}>Transport + resto + vacances</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>=</div>
+          <div style={{ flex: 1.25, background: t.blueGrad, borderRadius: 14, padding: "16px 18px", textAlign: "center", position: "relative", overflow: "hidden", boxShadow: `0 8px 20px -8px ${t.blue}88` }}>
+            <div style={{ ...glowDot("#fff", 80, 0.2), top: -30, right: -10 }} />
+            <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.85)", marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4, position: "relative" }}>Total équipe / an</div>
+            <div style={{ fontSize: 25, fontWeight: 800, color: "#fff", letterSpacing: -0.6, position: "relative" }}>{fmt(grandTotal)} €</div>
+            <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.78)", marginTop: 5, position: "relative" }}>soit {fmt(Math.round(grandTotal / Math.max(n, 1)))} € / pers.</div>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", fontSize: 18, color: t.textTert }}>+</div>
-        <div style={{ flex: 1, background: t.blueLighter, borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${t.blue}22` }}>
-          <div style={{ fontSize: 11, color: t.blue, marginBottom: 4 }}>Avantages en nature</div>
-          <div style={{ fontSize: 22, fontWeight: 600, color: t.blue }}>{fmt(totalNavigo + totalVacances + Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n))} €</div>
-          <div style={{ fontSize: 11, color: t.blue, opacity: 0.8, marginTop: 4 }}>Transport + resto + vacances</div>
+        <div style={{ background: t.amberLight, borderRadius: 12, padding: "13px 16px", fontSize: 12.5, color: t.amberDeep, lineHeight: 1.6, display: "flex", gap: 9, alignItems: "flex-start", border: `1px solid ${t.amber}22` }}>
+          <Icon name="bulb" size={16} color={t.amber} />
+          <span>Ces avantages représentent <strong style={{ color: t.text }}>{fmt(Math.round(grandTotal * 0.45))} €</strong> d'économies vs primes classiques chargées — pour un coût net Perky de <strong style={{ color: t.text }}>{n * 5 * 12 + 150} €/an</strong>.</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", fontSize: 18, color: t.textTert }}>=</div>
-        <div style={{ flex: 1.2, background: t.bgSecondary, borderRadius: 10, padding: "14px 16px", textAlign: "center" }}>
-          <div style={{ fontSize: 11, color: t.textSec, marginBottom: 4 }}>Total équipe / an</div>
-          <div style={{ fontSize: 22, fontWeight: 600, color: t.text }}>{fmt(grandTotal)} €</div>
-          <div style={{ fontSize: 11, color: t.textSec, marginTop: 4 }}>soit {fmt(Math.round(grandTotal / Math.max(n, 1)))}€ / pers.</div>
-        </div>
-      </div>
-      <div style={{ background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", fontSize: 12, color: t.textSec, lineHeight: 1.5 }}>
-        💡 Ces avantages représentent <strong style={{ color: t.text }}>{fmt(Math.round(grandTotal * 0.45))} €</strong> d'économies vs primes classiques chargées — pour un coût net Perky de <strong style={{ color: t.text }}>{n * 5 * 12 + 150}€/an</strong>.
       </div>
     </div>}
 
-    {/* Deux colonnes : calendrier + droite */}
-    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 14, alignItems: "start" }}>
+    {/* SECTION — Agenda + Scanner + Échéances */}
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.45fr 1fr", gap: 16, alignItems: "start" }}>
 
-      {/* Colonne gauche — Calendrier */}
-      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "16px 18px" }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-          <Icon name="calendar" size={16} color={t.blue} /> Agenda équipe
+      <div>
+        <SectionTitle icon="calendar" iconColor={t.blue} title="Agenda de l'équipe" sub="Absences et événements à venir" t={t} />
+        <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "20px 22px" }}>
+          <TeamCalendar employees={active.length > 0 ? active : employees} t={t} />
         </div>
-        <TeamCalendar employees={active.length > 0 ? active : employees} t={t} />
       </div>
 
-      {/* Colonne droite — Scanner aperçu + Échéances */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
-        {/* Scanner aperçu */}
-        <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "14px 16px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 500, color: t.text, display: "flex", alignItems: "center", gap: 8 }}><Icon name="chart-bar" size={16} color={t.blue} /> Scanner</div>
-            <button onClick={() => onNav("scanner")} style={{ fontSize: 12, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Configurer →</button>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {[
-              { title: "PPV 2026", val: totalPPV > 0 ? `${fmt(totalPPV)}€` : "—", pct: Math.round((totalPPV / Math.max(3000 * n, 1)) * 100), c: t.blue, status: totalPPV > 0 ? "blue" : "amber", label: totalPPV > 0 ? "Configuré" : "À activer" },
-              { title: "Navigo", val: `${s.navigo.pct}%`, pct: Math.round(((s.navigo.pct - 50) / 25) * 100), c: t.amber, status: s.navigo.pct > 50 ? "blue" : "amber", label: s.navigo.pct > 50 ? "Optimisé" : "À optimiser" },
-              { title: "Chèques cadeaux", val: totalCadeaux > 0 ? `${fmt(totalCadeaux)}€` : "—", pct: Math.round((s.cadeaux.amount / 193) * 100), c: t.amber, status: s.cadeaux.amount > 0 ? "blue" : "amber", label: s.cadeaux.amount > 0 ? "Configuré" : "À activer" },
-              { title: "Titres-restaurant", val: `${s.resto.amount}€/billet`, pct: Math.round((s.resto.amount / s.resto.max) * 100), c: t.green, status: "green", label: "Activé" },
-            ].map((it, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                    <span style={{ fontSize: 12, color: t.text }}>{it.title}</span>
-                    <span style={{ fontSize: 12, fontWeight: 500, color: it.c }}>{it.val}</span>
+        <div>
+          <SectionTitle icon="chart-bar" iconColor={t.blue} title="Scanner" t={t}
+            action={<button onClick={() => onNav("scanner")} style={{ fontSize: 12.5, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font, fontWeight: 700, display: "flex", alignItems: "center", gap: 3 }}>Configurer →</button>} />
+          <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "18px 18px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                { title: "PPV 2026", val: totalPPV > 0 ? `${fmt(totalPPV)} €` : "—", pct: Math.round((totalPPV / Math.max(3000 * n, 1)) * 100), c: t.blue },
+                { title: "Navigo", val: `${s.navigo.pct}%`, pct: Math.round(((s.navigo.pct - 50) / 25) * 100), c: t.amber },
+                { title: "Chèques cadeaux", val: totalCadeaux > 0 ? `${fmt(totalCadeaux)} €` : "—", pct: Math.round((s.cadeaux.amount / 193) * 100), c: t.amber },
+                { title: "Titres-restaurant", val: `${s.resto.amount} €/billet`, pct: Math.round((s.resto.amount / s.resto.max) * 100), c: t.green },
+              ].map((it, i) => (
+                <div key={i}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ fontSize: 12.5, color: t.text, fontWeight: 600 }}>{it.title}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: it.c }}>{it.val}</span>
                   </div>
-                  <Bar pct={it.pct} color={it.c} h={3} />
+                  <Bar pct={it.pct} color={it.c} h={6} />
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Échéances Perky */}
-        <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "14px 16px" }}>
-          <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-            <Icon name="bell" size={16} color={t.amber} /> Échéances Perky
+        <div>
+          <SectionTitle icon="bell" iconColor={t.amber} title="Échéances Perky" t={t} />
+          <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "16px 16px" }}>
+            <PerkyDeadlines t={t} onNav={onNav} />
           </div>
-          <PerkyDeadlines t={t} onNav={onNav} />
         </div>
 
       </div>
@@ -1313,6 +1676,7 @@ function BossHome({ employees, scannerState, t, onNav }) {
 
 // ─── BOSS TEAM ────────────────────────────────────────────────────────
 function BossTeam({ employees, setEmployees, t }) {
+  const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
   const [showDetail, setShowDetail] = useState(null); // slide-over
   const [showEdit, setShowEdit] = useState(null);     // modal édition
@@ -1332,54 +1696,89 @@ function BossTeam({ employees, setEmployees, t }) {
   const updateEmp = (id, field, val) => setEmployees(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
   const removeEmp = (id) => { setEmployees(p => p.map(e => e.id === id ? { ...e, active: false } : e)); setShowConfirm(null); setShowDetail(null); setShowEdit(null); };
 
-  return <div>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: 0 }}>Équipe</h1>
-      <button onClick={() => setShowAdd(true)} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: t.blue, color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: font, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
-        <Icon name="plus" size={16} color="#fff" /> Ajouter
+  return <div style={{ maxWidth: 900, animation: "pkRise 0.4s ease both" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-end", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+      <div>
+        <Badge text="Gestion" variant="blue" t={t} dot />
+        <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Équipe</h1>
+        <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>{active.length} salarié{active.length > 1 ? "s" : ""} bénéficiaire{active.length > 1 ? "s" : ""}</p>
+      </div>
+      <button onClick={() => setShowAdd(true)} style={{ padding: "11px 18px", borderRadius: 12, border: "none", background: t.blueGrad, color: "#fff", fontSize: 13.5, cursor: "pointer", fontFamily: font, fontWeight: 700, display: "flex", alignItems: "center", gap: 7, boxShadow: `0 4px 12px -3px ${t.blue}88` }}>
+        <Icon name="plus" size={16} color="#fff" /> Ajouter un salarié
       </button>
     </div>
 
-    <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 80px 80px 140px", padding: "10px 18px", background: t.bgSecondary, fontSize: 12, color: t.textSec, fontWeight: 500, borderBottom: `1px solid ${t.border}` }}>
-        <span>Salarié</span><span>Ancienneté</span><span style={{ textAlign: "center" }}>Statut</span><span style={{ textAlign: "right" }}>Actions</span>
-      </div>
-      {active.length === 0 && <div style={{ padding: "32px", textAlign: "center", color: t.textSec }}>Aucun salarié actif.</div>}
-      {active.map((emp, i) => (
-        <div key={emp.id} style={{ display: "grid", gridTemplateColumns: "2fr 80px 80px 140px", padding: "14px 18px", alignItems: "center", borderBottom: i < active.length - 1 ? `1px solid ${t.border}` : "none" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 500, color: t.blue }}>{emp.initials}</div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{emp.firstName} {emp.lastName}</div>
-              <div style={{ fontSize: 12, color: t.textSec }}>{emp.role || "—"}</div>
+    {/* Desktop: table — Mobile: cards */}
+    {isMobile ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
+        {active.length === 0 && <div style={{ padding: "40px", textAlign: "center", color: t.textSec, background: t.card, borderRadius: 16, boxShadow: t.cardShadow }}>Aucun salarié actif.</div>}
+        {active.map((emp) => (
+          <div key={emp.id} style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, padding: "16px 18px", border: `1px solid ${t.borderSoft}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 42, height: 42, borderRadius: "50%", background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#fff", boxShadow: `0 3px 8px -3px ${t.blue}88`, flexShrink: 0 }}>{emp.initials}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: t.text }}>{emp.firstName} {emp.lastName}</div>
+                <div style={{ fontSize: 12, color: t.textSec }}>{emp.role || "—"} · {emp.seniority} mois</div>
+              </div>
+              <Badge text="Actif" variant="green" t={t} dot />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { setShowDetail(emp.id); setShowEdit(null); }}
+                style={{ flex: 1, padding: "9px", borderRadius: 10, border: `1px solid ${t.blue}33`, background: t.blueLighter, fontSize: 13, cursor: "pointer", fontFamily: font, color: t.blue, fontWeight: 700 }}>
+                Avantages
+              </button>
+              <button onClick={() => { setShowEdit(emp.id); setShowDetail(null); }}
+                style={{ flex: 1, padding: "9px", borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, fontSize: 13, cursor: "pointer", fontFamily: font, color: t.textSec, fontWeight: 600 }}>
+                Gérer
+              </button>
             </div>
           </div>
-          <span style={{ fontSize: 13, color: t.textSec }}>{emp.seniority} mois</span>
-          <span style={{ display: "flex", justifyContent: "center" }}><Badge text="Actif" variant="green" t={t} /></span>
-          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-            <button onClick={() => { setShowDetail(emp.id); setShowEdit(null); }}
-              style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${t.border}`, background: "none", fontSize: 12, cursor: "pointer", fontFamily: font, color: t.blue }}>
-              Avantages
-            </button>
-            <button onClick={() => { setShowEdit(emp.id); setShowDetail(null); }}
-              style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${t.border}`, background: "none", fontSize: 12, cursor: "pointer", fontFamily: font, color: t.textSec }}>
-              Gérer
-            </button>
-          </div>
+        ))}
+      </div>
+    ) : (
+      <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, overflow: "hidden", marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 90px 90px 150px", padding: "12px 20px", background: t.bgSecondary, fontSize: 11, color: t.textSec, fontWeight: 700, borderBottom: `1px solid ${t.borderSoft}`, textTransform: "uppercase", letterSpacing: 0.4 }}>
+          <span>Salarié</span><span>Ancienneté</span><span style={{ textAlign: "center" }}>Statut</span><span style={{ textAlign: "right" }}>Actions</span>
         </div>
-      ))}
-    </div>
+        {active.length === 0 && <div style={{ padding: "40px", textAlign: "center", color: t.textSec }}>Aucun salarié actif.</div>}
+        {active.map((emp, i) => (
+          <div key={emp.id} style={{ display: "grid", gridTemplateColumns: "2fr 90px 90px 150px", padding: "15px 20px", alignItems: "center", borderBottom: i < active.length - 1 ? `1px solid ${t.borderSoft}` : "none", transition: "background 0.12s" }}
+            onMouseEnter={e => e.currentTarget.style.background = t.bgTint}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+            <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12.5, fontWeight: 800, color: "#fff", boxShadow: `0 3px 8px -3px ${t.blue}88` }}>{emp.initials}</div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: t.text }}>{emp.firstName} {emp.lastName}</div>
+                <div style={{ fontSize: 12, color: t.textSec }}>{emp.role || "—"}</div>
+              </div>
+            </div>
+            <span style={{ fontSize: 13, color: t.textSec }}>{emp.seniority} mois</span>
+            <span style={{ display: "flex", justifyContent: "center" }}><Badge text="Actif" variant="green" t={t} dot /></span>
+            <div style={{ display: "flex", gap: 7, justifyContent: "flex-end" }}>
+              <button onClick={() => { setShowDetail(emp.id); setShowEdit(null); }}
+                style={{ padding: "6px 12px", borderRadius: 9, border: `1px solid ${t.blue}33`, background: t.blueLighter, fontSize: 12, cursor: "pointer", fontFamily: font, color: t.blue, fontWeight: 600 }}>
+                Avantages
+              </button>
+              <button onClick={() => { setShowEdit(emp.id); setShowDetail(null); }}
+                style={{ padding: "6px 12px", borderRadius: 9, border: `1px solid ${t.border}`, background: t.card, fontSize: 12, cursor: "pointer", fontFamily: font, color: t.textSec, fontWeight: 600 }}>
+                Gérer
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
 
-    <div style={{ marginTop: 10, padding: "12px 16px", background: t.bgSecondary, borderRadius: 10, display: "flex", justifyContent: "space-between", fontSize: 13, color: t.textSec }}>
-      <span>{active.length} salarié{active.length > 1 ? "s" : ""} × 5€ = <span style={{ color: t.text, fontWeight: 500 }}>{active.length * 5}€/mois</span></span>
-      <span>Prochaine facture : 01/06/2026</span>
+    <div style={{ marginTop: 12, padding: "14px 18px", background: t.card, borderRadius: 14, boxShadow: t.cardShadowSoft, display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 8, fontSize: 13, color: t.textSec, border: `1px solid ${t.borderSoft}` }}>
+      <span style={{ display: "flex", alignItems: "center", gap: 7 }}><Icon name="receipt" size={15} color={t.textSec} />{active.length} salarié{active.length > 1 ? "s" : ""} × 5 € = <span style={{ color: t.text, fontWeight: 700 }}>{active.length * 5} €/mois</span></span>
+      <span style={{ display: "flex", alignItems: "center", gap: 7 }}><Icon name="calendar" size={15} color={t.textSec} />Prochaine facture : 01/06/2026</span>
     </div>
 
     {/* SLIDE-OVER — avantages uniquement */}
     {empDetail && (
       <div style={{ position: "fixed", inset: 0, zIndex: 500 }} onClick={() => setShowDetail(null)}>
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)" }} />
-        <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: 400, background: t.card, boxShadow: "-8px 0 32px rgba(0,0,0,0.12)", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: isMobile ? "100%" : 400, background: t.card, boxShadow: "-8px 0 32px rgba(0,0,0,0.12)", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
           <div style={{ padding: "20px 24px 16px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 44, height: 44, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 500, color: t.blue }}>{empDetail.initials}</div>
@@ -1419,7 +1818,7 @@ function BossTeam({ employees, setEmployees, t }) {
                     <Icon name={a.icon} size={16} color={a.color} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{a.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{a.label}</div>
                     <div style={{ fontSize: 11, color: t.textSec }}>{a.desc}</div>
                   </div>
                   <span style={{ fontSize: 13, fontWeight: 600, color: a.color }}>{a.value}</span>
@@ -1482,20 +1881,67 @@ function BossTeam({ employees, setEmployees, t }) {
 
 // ─── BOSS FACTURES ────────────────────────────────────────────────────
 function BossFactures({ t }) {
-  return <div>
-    <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 16px" }}>Factures</h1>
-    <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 80px", padding: "10px 18px", background: t.bgSecondary, fontSize: 12, color: t.textSec, fontWeight: 500, borderBottom: `1px solid ${t.border}` }}>
-        <span>Période</span><span>Montant</span><span>Salariés</span><span>Statut</span><span></span>
-      </div>
-      {[{ p: "Mai 2026", a: "15,00€", c: "3", s: "En cours" }, { p: "Avril 2026", a: "15,00€", c: "3", s: "Payée" }, { p: "Setup initial", a: "150,00€", c: "—", s: "Payée" }].map((f, i) => <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 80px", padding: "12px 18px", alignItems: "center", borderBottom: `1px solid ${t.border}` }}>
-        <span style={{ fontSize: 13, color: t.text }}>{f.p}</span>
-        <span style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{f.a}</span>
-        <span style={{ fontSize: 13, color: t.textSec }}>{f.c}</span>
-        <Badge text={f.s} variant={f.s === "Payée" ? "green" : "blue"} t={t} />
-        <button style={{ padding: "4px 10px", borderRadius: 6, border: `1px solid ${t.border}`, background: "none", fontSize: 12, cursor: "pointer", fontFamily: font, color: t.textSec }}>PDF</button>
-      </div>)}
+  const isMobile = useIsMobile();
+  const factures = [
+    { p: "Mai 2026", a: "15,00 €", c: "3", s: "En cours", ic: "calendar" },
+    { p: "Avril 2026", a: "15,00 €", c: "3", s: "Payée", ic: "calendar" },
+    { p: "Setup initial", a: "150,00 €", c: "—", s: "Payée", ic: "rocket" }
+  ];
+  return <div style={{ maxWidth: 820, animation: "pkRise 0.4s ease both" }}>
+    <div style={{ marginBottom: 20 }}>
+      <Badge text="Facturation" variant="blue" t={t} dot />
+      <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Factures</h1>
+      <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Historique de vos paiements Perky</p>
     </div>
+
+    {isMobile ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {factures.map((f, i) => (
+          <div key={i} style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, padding: "16px 18px", border: `1px solid ${t.borderSoft}` }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name={f.ic} size={16} color={t.blue} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: t.text }}>{f.p}</div>
+                  <div style={{ fontSize: 12, color: t.textSec }}>{f.c !== "—" ? `${f.c} salariés` : "Frais fixes"}</div>
+                </div>
+              </div>
+              <Badge text={f.s} variant={f.s === "Payée" ? "green" : "amber"} t={t} dot />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 18, fontWeight: 800, color: t.text }}>{f.a}</span>
+              <button style={{ padding: "7px 14px", borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, fontSize: 13, cursor: "pointer", fontFamily: font, color: t.textSec, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+                <Icon name="download" size={14} color={t.textSec} /> PDF
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr 90px", padding: "12px 20px", background: t.bgSecondary, fontSize: 11, color: t.textSec, fontWeight: 700, borderBottom: `1px solid ${t.borderSoft}`, textTransform: "uppercase", letterSpacing: 0.4 }}>
+          <span>Période</span><span>Montant</span><span>Salariés</span><span>Statut</span><span></span>
+        </div>
+        {factures.map((f, i) => (
+          <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr 90px", padding: "15px 20px", alignItems: "center", borderBottom: i < factures.length - 1 ? `1px solid ${t.borderSoft}` : "none", transition: "background 0.12s" }}
+            onMouseEnter={e => e.currentTarget.style.background = t.bgTint}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+            <span style={{ fontSize: 13.5, color: t.text, fontWeight: 600, display: "flex", alignItems: "center", gap: 9 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={f.ic} size={15} color={t.blue} /></div>
+              {f.p}
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: t.text }}>{f.a}</span>
+            <span style={{ fontSize: 13, color: t.textSec }}>{f.c}</span>
+            <Badge text={f.s} variant={f.s === "Payée" ? "green" : "amber"} t={t} dot />
+            <button style={{ padding: "6px 12px", borderRadius: 9, border: `1px solid ${t.border}`, background: t.card, fontSize: 12, cursor: "pointer", fontFamily: font, color: t.textSec, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+              <Icon name="download" size={13} color={t.textSec} /> PDF
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
   </div>;
 }
 
@@ -1537,7 +1983,7 @@ function TeamCalendarEmp({ employees, currentEmployee, t }) {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: t.text }}>{monthNames[currentMonth]} {currentYear}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: t.text }}>{monthNames[currentMonth]} {currentYear}</div>
         <div style={{ display: "flex", gap: 6 }}>
           <button onClick={() => { if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1); } else setCurrentMonth(m => m - 1); }} style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${t.border}`, background: "none", cursor: "pointer", color: t.textSec }}>‹</button>
           <button onClick={() => { if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(y => y + 1); } else setCurrentMonth(m => m + 1); }} style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${t.border}`, background: "none", cursor: "pointer", color: t.textSec }}>›</button>
@@ -1574,8 +2020,8 @@ function TeamCalendarEmp({ employees, currentEmployee, t }) {
 
       {popover && (
         <div style={{ position: "fixed", inset: 0, zIndex: 400 }} onClick={() => setPopover(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", width: 220, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 401 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 12 }}>{monthNames[currentMonth].slice(0, 3)} {popover.day}</div>
+          <div onClick={e => e.stopPropagation()} style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: t.card, borderRadius: 14, boxShadow: t.cardShadow, padding: "16px 18px", width: 220, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 401 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 12 }}>{monthNames[currentMonth].slice(0, 3)} {popover.day}</div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 22, height: 22, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 500, color: t.blue }}>{currentEmployee.initials}</div>
@@ -1619,6 +2065,7 @@ function TeamCalendarEmp({ employees, currentEmployee, t }) {
 }
 
 function EmpHome({ employee, employees, scannerState, t, onGoToCatalogue }) {
+  const isMobile = useIsMobile();
   const ppvNew = employee.ppv || 0;
   const ppvAlready = (scannerState.ppv_type?.value === "Versement complémentaire") ? (scannerState.ppv_already?.[employee.id] || 0) : 0;
   const ppv = ppvNew + ppvAlready;
@@ -1630,67 +2077,77 @@ function EmpHome({ employee, employees, scannerState, t, onGoToCatalogue }) {
   const naturePerks = navigoExtra + restoYear + vacances;
   const totalPerks = cashPerks + naturePerks;
 
-  return <div>
-    <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 4px" }}>Bonjour {employee.firstName}</h1>
-    <p style={{ fontSize: 14, color: t.textSec, margin: "0 0 20px" }}>Bienvenue sur votre espace avantages — Alpha Optique</p>
-    <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 20, position: "relative", height: 190 }}>
-      <img src={IMG.hero} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(24,95,165,0.92) 0%, rgba(12,68,124,0.88) 100%)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px" }}>
+  return <div style={{ maxWidth: 1080, animation: "pkRise 0.4s ease both" }}>
+    <div style={{ marginBottom: 20 }}>
+      <Badge text="Espace salarié" variant="blue" t={t} dot />
+      <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Bonjour {employee.firstName} 👋</h1>
+      <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Bienvenue sur votre espace avantages — Alpha Optique</p>
+    </div>
+    <div style={{ borderRadius: 22, overflow: "hidden", marginBottom: 24, position: "relative", background: "linear-gradient(135deg, #1D4FCB 0%, #2563EB 48%, #1E3A8A 100%)", boxShadow: `0 12px 36px -10px ${t.blue}77` }}>
+      <div style={{ ...glowDot("#60A5FA", 320, 0.5), top: "-40%", right: "20%" }} />
+      <div style={{ ...glowDot("#34D399", 220, 0.3), bottom: "-50%", left: "10%" }} />
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)", backgroundSize: "22px 22px", opacity: 0.6 }} />
+      <div style={{ position: "relative", padding: "30px 34px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
         <div style={{ color: "#fff" }}>
-          <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 6 }}>Votre entreprise fait partie des</div>
-          <div style={{ fontSize: 34, fontWeight: 600 }}>Top 12% des TPE</div>
-          <div style={{ fontSize: 14, opacity: 0.8, marginTop: 6 }}>en matière d'avantages salariés</div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20, padding: "5px 12px", marginBottom: 14, fontSize: 11.5, fontWeight: 600 }}>
+            <Icon name="award" size={13} color="#fff" /> Performance entreprise
+          </div>
+          <div style={{ fontSize: 13, opacity: 0.82, marginBottom: 4 }}>Votre entreprise fait partie des</div>
+          <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: -1.2, lineHeight: 1 }}>Top 12% des TPE</div>
+          <div style={{ fontSize: 13.5, opacity: 0.78, marginTop: 8 }}>en matière d'avantages salariés</div>
         </div>
-        <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 14, padding: "18px 24px", textAlign: "center", color: "#fff" }}>
-          <div style={{ fontSize: 28, fontWeight: 600 }}>{fmt(totalPerks)} €</div>
-          <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>d'avantages actifs / an</div>
+        <div style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 18, padding: "22px 28px", textAlign: "center", color: "#fff", backdropFilter: "blur(8px)" }}>
+          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1 }}>{fmt(totalPerks)} €</div>
+          <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>d'avantages actifs / an</div>
         </div>
       </div>
     </div>
 
-    {totalPerks > 0 && <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "20px 22px", marginBottom: 24 }}>
-      <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 4 }}>Votre rémunération globale</div>
-      <div style={{ fontSize: 13, color: t.textSec, marginBottom: 16 }}>Ce que votre employeur vous apporte au-delà de votre salaire net</div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-        <div style={{ flex: 1.2, background: t.bgSecondary, borderRadius: 10, padding: "14px 16px", textAlign: "center" }}>
-          <div style={{ fontSize: 11, color: t.textSec, marginBottom: 6 }}>Votre salaire</div>
-          <div style={{ fontSize: 20, letterSpacing: 4, color: t.textTert }}>●●●●</div>
-          <div style={{ fontSize: 11, color: t.textTert, marginTop: 6 }}>Connu de vous</div>
+    {totalPerks > 0 && <div style={{ marginBottom: 28 }}>
+      <SectionTitle icon="wallet" iconColor={t.green} title="Votre rémunération globale" sub="Ce que votre employeur vous apporte au-delà de votre salaire net" t={t} />
+      <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, marginBottom: 14, alignItems: "stretch" }}>
+          <div style={{ flex: 1.2, background: t.bgSecondary, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px dashed ${t.borderStrong}` }}>
+            <div style={{ fontSize: 11.5, color: t.textSec, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>Votre salaire</div>
+            <div style={{ fontSize: 22, letterSpacing: 5, color: t.textTert }}>●●●●</div>
+            <div style={{ fontSize: 11, color: t.textTert, marginTop: 8 }}>Connu de vous</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>
+          <div style={{ flex: 1, background: t.greenLight, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.green}26` }}>
+            <div style={{ fontSize: 11.5, color: t.green, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En espèces</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: t.green, letterSpacing: -0.6 }}>{fmt(cashPerks)} €</div>
+            <div style={{ fontSize: 11.5, color: t.green, opacity: 0.78, marginTop: 5 }}>PPV + chèques</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>
+          <div style={{ flex: 1, background: t.blueLighter, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.blue}26` }}>
+            <div style={{ fontSize: 11.5, color: t.blue, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En nature</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: t.blue, letterSpacing: -0.6 }}>{fmt(naturePerks)} €</div>
+            <div style={{ fontSize: 11.5, color: t.blue, opacity: 0.78, marginTop: 5 }}>Transport + resto</div>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", fontSize: 18, color: t.textTert }}>+</div>
-        <div style={{ flex: 1, background: t.greenLight, borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${t.green}22` }}>
-          <div style={{ fontSize: 11, color: t.green, marginBottom: 4 }}>En espèces</div>
-          <div style={{ fontSize: 22, fontWeight: 600, color: t.green }}>{fmt(cashPerks)} €</div>
-          <div style={{ fontSize: 11, color: t.green, opacity: 0.8, marginTop: 4 }}>PPV + chèques</div>
+        <div style={{ background: t.blueGrad, borderRadius: 13, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", overflow: "hidden", boxShadow: `0 8px 20px -8px ${t.blue}88` }}>
+          <div style={{ ...glowDot("#fff", 70, 0.18), top: -26, right: 40 }} />
+          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.88)", fontWeight: 600, position: "relative" }}>Total avantages offerts par votre employeur</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: -0.5, position: "relative" }}>{fmt(totalPerks)} €/an</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", fontSize: 18, color: t.textTert }}>+</div>
-        <div style={{ flex: 1, background: t.blueLighter, borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${t.blue}22` }}>
-          <div style={{ fontSize: 11, color: t.blue, marginBottom: 4 }}>En nature</div>
-          <div style={{ fontSize: 22, fontWeight: 600, color: t.blue }}>{fmt(naturePerks)} €</div>
-          <div style={{ fontSize: 11, color: t.blue, opacity: 0.8, marginTop: 4 }}>Transport + resto</div>
-        </div>
-      </div>
-      <div style={{ background: t.bgSecondary, borderRadius: 10, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 13, color: t.textSec }}>Total avantages offerts par votre employeur</span>
-        <span style={{ fontSize: 18, fontWeight: 600, color: t.text }}>{fmt(totalPerks)} €/an</span>
       </div>
     </div>}
 
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}><Icon name="gift" size={18} color={t.blue} /> Ce que Alpha Optique vous offre</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+    <div style={{ marginBottom: 28 }}>
+      <SectionTitle icon="gift" iconColor={t.blue} title="Ce que Alpha Optique vous offre" t={t} />
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 14 }}>
         {[
           ppv > 0 && { title: "PPV 2026", sub: ppvAlready > 0 ? `${fmt(ppv)}€ au total (${fmt(ppvAlready)}€ + ${fmt(ppvNew)}€)` : `${fmt(ppv)}€ nets versés`, icon: "coin", type: "cash" },
           navigoExtra > 0 && { title: `Transport ${scannerState.navigo.pct}%`, sub: `+${fmt(navigoExtra)}€/an`, icon: "bus", type: "nature" },
           scannerState.resto.amount > 0 && { title: "Titres-restaurant", sub: `${scannerState.resto.amount}€/jour`, icon: "tools-kitchen-2", type: "nature" },
         ].filter(Boolean).map((it, i) => {
           const isCash = it.type === "cash";
-          return <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", borderTop: `3px solid ${isCash ? t.green : t.blue}` }}>
+          return <div key={i} style={{ background: t.card, borderRadius: 14, boxShadow: t.cardShadow, padding: "16px 18px", borderTop: `3px solid ${isCash ? t.green : t.blue}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: isCash ? t.greenLight : t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={it.icon} size={16} color={isCash ? t.green : t.blue} /></div>
               <Badge text={isCash ? "Espèces" : "Nature"} variant={isCash ? "green" : "blue"} t={t} />
             </div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 2 }}>{it.title}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: t.text, marginBottom: 2 }}>{it.title}</div>
             <div style={{ fontSize: 12, color: t.textSec }}>{it.sub}</div>
           </div>;
         })}
@@ -1698,25 +2155,25 @@ function EmpHome({ employee, employees, scannerState, t, onGoToCatalogue }) {
     </div>
 
     <div style={{ marginBottom: 24 }}>
-      <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ fontSize: 15, fontWeight: 600, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
         <Icon name="calendar" size={18} color={t.blue} /> Planning équipe
       </div>
-      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "16px 18px" }}>
+      <div style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, padding: "16px 18px" }}>
         <TeamCalendarEmp employees={employees} currentEmployee={employee} t={t} />
       </div>
     </div>
 
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 500, color: t.text, display: "flex", alignItems: "center", gap: 8 }}><Icon name="flame" size={18} color={t.amber} /> Offres du moment</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: t.text, display: "flex", alignItems: "center", gap: 8 }}><Icon name="flame" size={18} color={t.amber} /> Offres du moment</div>
         <button onClick={onGoToCatalogue} style={{ fontSize: 13, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Voir tout →</button>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
-        {OFFERS.slice(0, 4).map(o => <div key={o.id} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 12 }}>
+        {OFFERS.slice(0, 4).map(o => <div key={o.id} style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, overflow: "hidden" }}>
           <img src={o.img} alt="" style={{ width: "100%", height: 100, objectFit: "cover", display: "block" }} />
           <div style={{ padding: "10px 12px" }}>
             <div style={{ fontSize: 11, color: t.textSec }}>{o.cat}</div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, margin: "2px 0 4px" }}>{o.name}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: t.text, margin: "2px 0 4px" }}>{o.name}</div>
             <span style={{ fontSize: 15, fontWeight: 500, color: t.blue }}>{o.display}</span>
           </div>
         </div>)}
@@ -1727,80 +2184,152 @@ function EmpHome({ employee, employees, scannerState, t, onGoToCatalogue }) {
 
 // ─── EMP CATALOGUE ────────────────────────────────────────────────────
 function EmpCatalogue({ onOfferClick, onAddToCart, selectedCat, setSelectedCat, t }) {
+  const isMobile = useIsMobile();
   const filtered = selectedCat ? OFFERS.filter(o => o.cat === selectedCat) : OFFERS;
-  return <div>
-    <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 16px" }}>Catalogue</h1>
-    <div style={{ position: "relative", marginBottom: 20 }}>
-      <input placeholder="Rechercher une enseigne, un parc, une marque..." style={{ width: "100%", padding: "12px 16px 12px 42px", fontSize: 14, border: `1px solid ${t.border}`, borderRadius: 12, outline: "none", boxSizing: "border-box", fontFamily: font, background: t.bgSecondary, color: t.text }} />
-      <div style={{ position: "absolute", left: 14, top: 13 }}><Icon name="search" size={18} color={t.textTert} /></div>
-    </div>
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 24 }}>
-      {CATEGORIES.map((c, i) => <div key={i} onClick={() => setSelectedCat(selectedCat === c.label ? null : c.label)} style={{ borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative", height: 90, border: selectedCat === c.label ? `2px solid ${t.blue}` : `1px solid ${t.border}` }}>
-        <img src={c.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.1))", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "10px 12px" }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>{c.label}</div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{c.count} offres</div>
-        </div>
-      </div>)}
-    </div>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-      <div style={{ fontSize: 15, fontWeight: 500, color: t.text }}>{selectedCat || "Toutes les offres"}</div>
-      {selectedCat && <button onClick={() => setSelectedCat(null)} style={{ fontSize: 12, color: t.blue, border: "none", background: t.blueLighter, padding: "4px 12px", borderRadius: 8, cursor: "pointer", fontFamily: font }}>Tout afficher</button>}
-    </div>
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
-      {filtered.map(o => <div key={o.id} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden", cursor: "pointer" }}
-        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.06)"; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
-        <div onClick={() => onOfferClick(o)} style={{ position: "relative" }}>
-          <img src={o.img} alt="" style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />
-          <span style={{ position: "absolute", top: 10, right: 10, background: t.blue, color: "#fff", fontSize: 12, fontWeight: 500, padding: "4px 10px", borderRadius: 8 }}>{o.discount}</span>
-        </div>
-        <div style={{ padding: "12px 14px 14px" }}>
-          <div onClick={() => onOfferClick(o)}>
-            <div style={{ fontSize: 11, color: t.textSec, marginBottom: 2 }}>{o.cat}</div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 6 }}>{o.name}</div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: o.price > 0 ? 10 : 0 }}>
-              <span style={{ fontSize: 18, fontWeight: 500, color: t.blue }}>{o.display}</span>
-              <span style={{ fontSize: 12, color: t.textSec, textDecoration: "line-through" }}>{o.old}</span>
+  return (
+    <div style={{ maxWidth: 1100, animation: "pkRise 0.4s ease" }}>
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <Badge text="Catalogue" variant="blue" t={t} />
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Vos offres exclusives</h1>
+        <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>+2 000 enseignes — cinéma, parcs, voyages, shopping, sport</p>
+      </div>
+
+      {/* Search */}
+      <div style={{ position: "relative", marginBottom: 24 }}>
+        <input placeholder="Rechercher une enseigne, un parc, une marque..." style={{ width: "100%", padding: "14px 18px 14px 48px", fontSize: 14, border: `1.5px solid ${t.borderSoft}`, borderRadius: 16, outline: "none", boxSizing: "border-box", fontFamily: font, background: t.bgTint, color: t.text, boxShadow: t.cardShadowSoft, transition: "border-color 0.2s, box-shadow 0.2s" }}
+          onFocus={e => { e.target.style.borderColor = t.blue; e.target.style.boxShadow = `0 0 0 4px ${t.ring}`; }}
+          onBlur={e => { e.target.style.borderColor = t.borderSoft; e.target.style.boxShadow = t.cardShadowSoft; }} />
+        <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }}><Icon name="search" size={18} color={t.textTert} /></div>
+      </div>
+
+      {/* Categories */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12, marginBottom: 28 }}>
+        {CATEGORIES.map((c, i) => (
+          <div key={i} onClick={() => setSelectedCat(selectedCat === c.label ? null : c.label)}
+            style={{ borderRadius: 16, overflow: "hidden", cursor: "pointer", position: "relative", height: 100, border: selectedCat === c.label ? `2.5px solid ${t.blue}` : `1.5px solid ${t.borderSoft}`, boxShadow: selectedCat === c.label ? `0 0 0 4px ${t.ring}` : t.cardShadowSoft, transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = t.cardShadow; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = selectedCat === c.label ? `0 0 0 4px ${t.ring}` : t.cardShadowSoft; }}>
+            <img src={c.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.15) 60%)", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "10px 14px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", letterSpacing: -0.2 }}>{c.label}</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>{c.count} offres</div>
+            </div>
+            {selectedCat === c.label && (
+              <div style={{ position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: "50%", background: t.blue, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon name="check" size={12} color="#fff" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Section header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: t.text, letterSpacing: -0.4 }}>{selectedCat || "Toutes les offres"}</div>
+        {selectedCat && (
+          <button onClick={() => setSelectedCat(null)} style={{ fontSize: 12, fontWeight: 600, color: t.blue, border: "none", background: t.blueGradSoft, padding: "5px 14px", borderRadius: 20, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: 4 }}>
+            <Icon name="x" size={12} color={t.blue} /> Tout afficher
+          </button>
+        )}
+      </div>
+
+      {/* Offers grid */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 16 }}>
+        {filtered.map(o => (
+          <div key={o.id} style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, overflow: "hidden", cursor: "pointer", border: `1px solid ${t.borderSoft}`, transition: "transform 0.18s, box-shadow 0.18s" }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = t.cardShadowHover; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = t.cardShadow; }}>
+            <div onClick={() => onOfferClick(o)} style={{ position: "relative" }}>
+              <img src={o.img} alt="" style={{ width: "100%", height: 148, objectFit: "cover", display: "block" }} />
+              <span style={{ position: "absolute", top: 10, right: 10, background: t.blueGrad, color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, boxShadow: "0 2px 8px rgba(37,99,235,0.4)" }}>{o.discount}</span>
+            </div>
+            <div style={{ padding: "14px 16px 16px" }}>
+              <div onClick={() => onOfferClick(o)}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: t.textTert, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>{o.cat}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 8, letterSpacing: -0.2 }}>{o.name}</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: o.price > 0 ? 12 : 0 }}>
+                  <span style={{ fontSize: 19, fontWeight: 800, color: t.blue, letterSpacing: -0.5 }}>{o.display}</span>
+                  <span style={{ fontSize: 12, color: t.textTert, textDecoration: "line-through" }}>{o.old}</span>
+                </div>
+              </div>
+              {o.price > 0 && (
+                <button onClick={() => onAddToCart(o)} style={{ width: "100%", padding: "9px", borderRadius: 10, border: "none", background: t.blueGradSoft, color: t.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: font, transition: "background 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = t.blueLighter}
+                  onMouseLeave={e => e.currentTarget.style.background = t.blueGradSoft}>
+                  + Ajouter au panier
+                </button>
+              )}
             </div>
           </div>
-          {o.price > 0 && <button onClick={() => onAddToCart(o)} style={{ width: "100%", padding: "8px", borderRadius: 8, border: "none", background: t.blueLighter, color: t.blue, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: font }}>+ Ajouter au panier</button>}
-        </div>
-      </div>)}
+        ))}
+      </div>
     </div>
-  </div>;
+  );
 }
 
 // ─── OFFER DETAIL ─────────────────────────────────────────────────────
 function OfferDetail({ offer, onBack, onAddToCart, t }) {
-  return <div>
-    <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", cursor: "pointer", fontSize: 13, color: t.blue, fontFamily: font, marginBottom: 16 }}>
-      <Icon name="arrow-left" size={16} color={t.blue} /> Retour
-    </button>
-    <div style={{ display: "flex", gap: 28 }}>
-      <div style={{ flex: 1 }}><img src={offer.img} alt="" style={{ width: "100%", height: 300, objectFit: "cover", borderRadius: 14 }} /></div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12, color: t.textSec, marginBottom: 4 }}>{offer.cat}</div>
-        <h1 style={{ fontSize: 24, fontWeight: 500, color: t.text, margin: "0 0 10px" }}>{offer.name}</h1>
-        <div style={{ display: "flex", gap: 10, alignItems: "baseline", marginBottom: 20 }}>
-          <span style={{ fontSize: 28, fontWeight: 500, color: t.blue }}>{offer.display}</span>
-          <span style={{ fontSize: 15, color: t.textSec, textDecoration: "line-through" }}>{offer.old}</span>
-          <span style={{ background: t.blueLighter, color: t.blue, fontSize: 13, fontWeight: 500, padding: "4px 12px", borderRadius: 8 }}>{offer.discount}</span>
+  const isMobile = useIsMobile();
+  return (
+    <div style={{ maxWidth: 1000, animation: "pkRise 0.4s ease" }}>
+      <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "none", background: t.bgTint, borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, color: t.textSec, fontFamily: font, marginBottom: 24, boxShadow: t.cardShadowSoft }}>
+        <Icon name="arrow-left" size={16} color={t.textSec} /> Retour au catalogue
+      </button>
+
+      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 20 : 32 }}>
+        {/* Left: image */}
+        <div style={{ flex: 1.2 }}>
+          <div style={{ borderRadius: 20, overflow: "hidden", boxShadow: t.cardShadow }}>
+            <img src={offer.img} alt="" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
+          </div>
         </div>
-        <p style={{ fontSize: 14, color: t.textSec, lineHeight: 1.7, margin: "0 0 16px" }}>{offer.desc}</p>
-        <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "14px 18px", marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 6 }}>Conditions</div>
-          <p style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6, margin: 0 }}>{offer.conditions}</p>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          {offer.price > 0
-            ? <button onClick={() => onAddToCart(offer)} style={{ flex: 1, padding: "13px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: font }}>Ajouter au panier</button>
-            : <button style={{ flex: 1, padding: "13px", borderRadius: 10, border: "none", background: t.greenLight, color: t.green, fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: font }}>Accéder à l'offre</button>}
-          <button style={{ padding: "13px 16px", borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, cursor: "pointer" }}><Icon name="heart" size={18} color={t.textSec} /></button>
+
+        {/* Right: info */}
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: t.bgTint, border: `1px solid ${t.borderSoft}`, borderRadius: 20, padding: "4px 12px", marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: t.textTert, textTransform: "uppercase", letterSpacing: 0.6 }}>{offer.cat}</span>
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: t.text, margin: "0 0 16px", letterSpacing: -0.7 }}>{offer.name}</h1>
+
+          <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
+            <span style={{ fontSize: 32, fontWeight: 800, color: t.blue, letterSpacing: -1 }}>{offer.display}</span>
+            <span style={{ fontSize: 16, color: t.textTert, textDecoration: "line-through" }}>{offer.old}</span>
+            <span style={{ background: t.blueGrad, color: "#fff", fontSize: 13, fontWeight: 700, padding: "4px 12px", borderRadius: 20, boxShadow: "0 2px 8px rgba(37,99,235,0.35)" }}>{offer.discount}</span>
+          </div>
+
+          <p style={{ fontSize: 14, color: t.textSec, lineHeight: 1.75, margin: "0 0 20px" }}>{offer.desc}</p>
+
+          <div style={{ background: t.bgTint, borderRadius: 14, padding: "16px 18px", marginBottom: 20, border: `1px solid ${t.borderSoft}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <div style={{ width: 24, height: 24, borderRadius: 8, background: t.amberLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon name="info-circle" size={14} color={t.amber} />
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.text }}>Conditions</div>
+            </div>
+            <p style={{ fontSize: 13, color: t.textSec, lineHeight: 1.65, margin: 0 }}>{offer.conditions}</p>
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            {offer.price > 0
+              ? <button onClick={() => onAddToCart(offer)} style={{ flex: 1, padding: "14px", borderRadius: 12, border: "none", background: t.blueGrad, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font, boxShadow: "0 4px 14px rgba(37,99,235,0.4)", transition: "transform 0.15s, box-shadow 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 20px rgba(37,99,235,0.45)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(37,99,235,0.4)"; }}>
+                  Ajouter au panier
+                </button>
+              : <button style={{ flex: 1, padding: "14px", borderRadius: 12, border: "none", background: t.greenGrad, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font, boxShadow: "0 4px 14px rgba(16,185,129,0.35)" }}>
+                  Accéder à l'offre
+                </button>}
+            <button style={{ padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${t.borderSoft}`, background: t.card, cursor: "pointer", boxShadow: t.cardShadowSoft, transition: "border-color 0.15s" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "#f43f5e"}
+              onMouseLeave={e => e.currentTarget.style.borderColor = t.borderSoft}>
+              <Icon name="heart" size={18} color={t.textSec} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>;
+  );
 }
 
 // ─── CART ─────────────────────────────────────────────────────────────
@@ -1809,44 +2338,56 @@ function PaymentConfirm({ orders, onGoToWallet, onGoToCatalogue, t }) {
   const orderNum = orders[0]?.orderNum || "000000";
   const email = "benjamin@alphaoptique.fr";
   return (
-    <div style={{ maxWidth: 540, margin: "60px auto 0", textAlign: "center" }}>
-      <div style={{ width: 80, height: 80, borderRadius: "50%", background: t.greenLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
-        <Icon name="circle-check" size={40} color={t.green} />
+    <div style={{ maxWidth: 520, margin: "48px auto 0", animation: "pkPop 0.4s ease" }}>
+      {/* Success icon */}
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ width: 88, height: 88, borderRadius: "50%", background: t.greenGrad, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", boxShadow: "0 8px 24px rgba(16,185,129,0.35)" }}>
+          <Icon name="circle-check" size={44} color="#fff" />
+        </div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: t.text, margin: "0 0 6px", letterSpacing: -0.7 }}>Paiement confirmé !</h1>
+        <div style={{ fontSize: 13, color: t.textSec }}>Commande #{orderNum} · <strong style={{ color: t.green }}>{total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</strong></div>
       </div>
-      <h1 style={{ fontSize: 24, fontWeight: 500, color: t.text, margin: "0 0 8px" }}>Paiement confirmé !</h1>
-      <div style={{ fontSize: 14, color: t.textSec, marginBottom: 28 }}>Commande #{orderNum} — {total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</div>
 
-      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "20px 24px", marginBottom: 16, textAlign: "left" }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 14 }}>Vos billets</div>
+      {/* Tickets card */}
+      <div style={{ ...card(t), padding: "20px 24px", marginBottom: 14 }}>
+        <SectionTitle icon="ticket" iconColor={t.blue} iconBg={t.blueGradSoft} title="Vos billets" t={t} />
         {orders.map((item, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: i < orders.length - 1 ? 12 : 0 }}>
-            <img src={item.img} alt="" style={{ width: 52, height: 38, borderRadius: 8, objectFit: "cover" }} />
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 0", borderTop: i > 0 ? `1px solid ${t.borderSoft}` : "none" }}>
+            <img src={item.img} alt="" style={{ width: 56, height: 42, borderRadius: 10, objectFit: "cover", boxShadow: t.cardShadowSoft }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{item.name}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.text }}>{item.name}</div>
               <div style={{ fontSize: 12, color: t.textSec }}>{item.cat}</div>
             </div>
-            <span style={{ fontSize: 14, fontWeight: 500, color: t.green }}>✓ Ajouté au wallet</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, color: t.green }}>
+              <Icon name="circle-check" size={14} color={t.green} /> Wallet
+            </div>
           </div>
         ))}
       </div>
 
-      <div style={{ background: t.blueLighter, borderRadius: 14, padding: "16px 20px", marginBottom: 24, textAlign: "left" }}>
+      {/* Email notice */}
+      <div style={{ background: t.blueGradSoft, borderRadius: 14, padding: "16px 20px", marginBottom: 24, border: `1px solid ${t.borderSoft}` }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: t.blue, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 3px 10px rgba(37,99,235,0.35)" }}>
             <Icon name="mail" size={18} color="#fff" />
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: t.blue, marginBottom: 4 }}>Un email de confirmation vous a été envoyé</div>
-            <div style={{ fontSize: 13, color: t.blue, opacity: 0.8 }}>Vos billets sont également disponibles à l'adresse <strong>{email}</strong>. Retrouvez-les à tout moment dans votre wallet Perky.</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.blue, marginBottom: 3 }}>Email de confirmation envoyé</div>
+            <div style={{ fontSize: 12, color: t.blue, opacity: 0.8, lineHeight: 1.5 }}>Billets disponibles à <strong>{email}</strong> et dans votre wallet Perky.</div>
           </div>
         </div>
       </div>
 
+      {/* Actions */}
       <div style={{ display: "flex", gap: 10 }}>
-        <button onClick={onGoToCatalogue} style={{ flex: 1, padding: "12px", borderRadius: 10, border: `1px solid ${t.border}`, background: "none", color: t.textSec, fontSize: 14, cursor: "pointer", fontFamily: font }}>
+        <button onClick={onGoToCatalogue} style={{ flex: 1, padding: "13px", borderRadius: 12, border: `1.5px solid ${t.borderSoft}`, background: t.card, color: t.textSec, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: font, transition: "border-color 0.15s" }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = t.blue}
+          onMouseLeave={e => e.currentTarget.style.borderColor = t.borderSoft}>
           Continuer mes achats
         </button>
-        <button onClick={onGoToWallet} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <button onClick={onGoToWallet} style={{ flex: 1, padding: "13px", borderRadius: 12, border: "none", background: t.blueGrad, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, boxShadow: "0 4px 14px rgba(37,99,235,0.4)", transition: "transform 0.15s" }}
+          onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+          onMouseLeave={e => e.currentTarget.style.transform = "none"}>
           <Icon name="wallet" size={16} color="#fff" /> Voir mon wallet
         </button>
       </div>
@@ -1855,84 +2396,151 @@ function PaymentConfirm({ orders, onGoToWallet, onGoToCatalogue, t }) {
 }
 
 function CartPage({ cart, onRemove, onPay, t }) {
+  const isMobile = useIsMobile();
   const total = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
-  if (!cart.length) return <div style={{ textAlign: "center", padding: "80px 0" }}>
-    <Icon name="shopping-cart" size={48} color={t.textTert} />
-    <div style={{ fontSize: 18, fontWeight: 500, color: t.text, marginTop: 16, marginBottom: 8 }}>Panier vide</div>
-    <div style={{ fontSize: 14, color: t.textSec }}>Parcourez le catalogue pour ajouter des offres</div>
-  </div>;
-  return <div>
-    <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 20px" }}>Mon panier</h1>
-    <div style={{ display: "flex", gap: 24 }}>
-      <div style={{ flex: 1 }}>
-        {cart.map((item, i) => <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "14px 18px", marginBottom: 10, display: "flex", alignItems: "center", gap: 16 }}>
-          <img src={item.img} alt="" style={{ width: 68, height: 50, borderRadius: 8, objectFit: "cover" }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 500, color: t.text }}>{item.name}</div>
-            <div style={{ fontSize: 12, color: t.textSec }}>{item.cat}</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{ fontSize: 15, fontWeight: 500, color: t.blue }}>{item.display}</span>
-            <button onClick={() => onRemove(item.id)} style={{ border: "none", background: "none", cursor: "pointer" }}><Icon name="trash" size={16} color={t.textSec} /></button>
-          </div>
-        </div>)}
+  if (!cart.length) return (
+    <div style={{ textAlign: "center", padding: "80px 0", animation: "pkRise 0.4s ease" }}>
+      <div style={{ width: 80, height: 80, borderRadius: "50%", background: t.bgTint, border: `1.5px solid ${t.borderSoft}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+        <Icon name="shopping-cart" size={36} color={t.textTert} />
       </div>
-      <div style={{ width: 260 }}>
-        <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "20px" }}>
-          <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 14 }}>Résumé</div>
-          {cart.map((item, i) => <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: t.textSec, marginBottom: 8 }}><span>{item.name}</span><span>{item.display}</span></div>)}
-          <div style={{ borderTop: `1px solid ${t.border}`, marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 16 }}>
-            <span>Total</span><span>{total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
-          </div>
-          <button onClick={onPay} style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: t.blue, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: font }}>
-            Procéder au paiement
-          </button>
-          <div style={{ fontSize: 11, color: t.textSec, textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
-            Billets envoyés dans votre wallet et par email
+      <div style={{ fontSize: 20, fontWeight: 800, color: t.text, marginBottom: 8, letterSpacing: -0.5 }}>Panier vide</div>
+      <div style={{ fontSize: 14, color: t.textSec }}>Parcourez le catalogue pour ajouter des offres</div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 1000, animation: "pkRise 0.4s ease" }}>
+      <div style={{ marginBottom: 24 }}>
+        <Badge text="Panier" variant="blue" t={t} />
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: t.text, margin: "8px 0 0", letterSpacing: -0.8 }}>Mon panier</h1>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 24 }}>
+        {/* Items */}
+        <div style={{ flex: 1 }}>
+          {cart.map((item, i) => (
+            <div key={i} style={{ ...card(t), padding: "16px 20px", marginBottom: 12, display: "flex", alignItems: "center", gap: 16, transition: "transform 0.18s, box-shadow 0.18s" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = t.cardShadowHover; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = t.cardShadow; }}>
+              <img src={item.img} alt="" style={{ width: 72, height: 54, borderRadius: 12, objectFit: "cover", boxShadow: t.cardShadowSoft }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: t.textTert, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 }}>{item.cat}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: t.text, letterSpacing: -0.3 }}>{item.name}</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ fontSize: 17, fontWeight: 800, color: t.blue, letterSpacing: -0.5 }}>{item.display}</span>
+                <button onClick={() => onRemove(item.id)} style={{ width: 32, height: 32, borderRadius: 10, border: `1px solid ${t.borderSoft}`, background: t.bgTint, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "border-color 0.15s, background 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#f43f5e"; e.currentTarget.style.background = "#fff1f2"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = t.borderSoft; e.currentTarget.style.background = t.bgTint; }}>
+                  <Icon name="trash" size={15} color={t.textSec} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Summary */}
+        <div style={{ width: isMobile ? "100%" : 280, flexShrink: 0 }}>
+          <div style={{ ...card(t), padding: "22px", position: "sticky", top: 24 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: t.text, marginBottom: 16, letterSpacing: -0.4 }}>Résumé</div>
+            {cart.map((item, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: t.textSec, marginBottom: 8 }}>
+                <span style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
+                <span style={{ fontWeight: 600, color: t.text }}>{item.display}</span>
+              </div>
+            ))}
+            <div style={{ borderTop: `1px solid ${t.borderSoft}`, margin: "14px 0", paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: t.text }}>Total</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: t.blue, letterSpacing: -0.5 }}>{total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
+            </div>
+            <button onClick={onPay} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: t.blueGrad, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font, boxShadow: "0 4px 14px rgba(37,99,235,0.4)", transition: "transform 0.15s, box-shadow 0.15s" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 20px rgba(37,99,235,0.45)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(37,99,235,0.4)"; }}>
+              Procéder au paiement
+            </button>
+            <div style={{ fontSize: 11, color: t.textTert, textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
+              🔒 Billets envoyés dans votre wallet et par email
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>;
+  );
 }
 
 // ─── WALLET ───────────────────────────────────────────────────────────
 function EmpWallet({ t }) {
-  return <div>
-    <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 16px" }}>Mon wallet</h1>
-    <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 10 }}>Billets actifs</div>
-    {[{ name: "2x Places UGC", date: "Valable jusqu'au 30/06/2026", img: IMG.ugc }, { name: "Disneyland — 28/05", date: "Billet pour 2 personnes", img: IMG.disney }].map((it, i) => <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <img src={it.img} alt="" style={{ width: 54, height: 40, borderRadius: 8, objectFit: "cover" }} />
-        <div><div style={{ fontSize: 13, fontWeight: 500, color: t.text }}>{it.name}</div><div style={{ fontSize: 12, color: t.textSec }}>{it.date}</div></div>
+  const tickets = [
+    { name: "2x Places UGC", date: "Valable jusqu'au 30/06/2026", img: IMG.ugc },
+    { name: "Disneyland — 28/05", date: "Billet pour 2 personnes", img: IMG.disney }
+  ];
+  return (
+    <div style={{ maxWidth: 720, animation: "pkRise 0.4s ease" }}>
+      <div style={{ marginBottom: 24 }}>
+        <Badge text="Wallet" variant="green" t={t} />
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Mon wallet</h1>
+        <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Tous vos billets et codes promo en un endroit</p>
       </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <Badge text="Actif" variant="green" t={t} />
-        <button style={{ padding: "5px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: "none", fontSize: 12, cursor: "pointer", fontFamily: font, color: t.textSec }}>Renvoyer</button>
+
+      <SectionTitle icon="ticket" iconColor={t.green} iconBg={t.greenGrad} title="Billets actifs" sub={`${tickets.length} billets disponibles`} t={t} />
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
+        {tickets.map((it, i) => (
+          <div key={i} style={{ ...card(t), padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "transform 0.18s, box-shadow 0.18s" }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = t.cardShadowHover; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = t.cardShadow; }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ borderRadius: 12, overflow: "hidden", boxShadow: t.cardShadowSoft }}>
+                <img src={it.img} alt="" style={{ width: 64, height: 48, objectFit: "cover", display: "block" }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 3, letterSpacing: -0.2 }}>{it.name}</div>
+                <div style={{ fontSize: 12, color: t.textSec }}>{it.date}</div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <Badge text="Actif" variant="green" dot t={t} />
+              <button style={{ padding: "6px 14px", borderRadius: 20, border: `1.5px solid ${t.borderSoft}`, background: t.bgTint, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font, color: t.textSec, transition: "border-color 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = t.blue}
+                onMouseLeave={e => e.currentTarget.style.borderColor = t.borderSoft}>
+                Renvoyer
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
-    </div>)}
-  </div>;
+    </div>
+  );
 }
 
 // ─── SETTINGS ────────────────────────────────────────────────────────
 function Settings({ dark, setDark, t }) {
-  return <div>
-    <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 20px" }}>Paramètres</h1>
-    <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden" }}>
-      <div style={{ padding: "14px 20px", borderBottom: `1px solid ${t.border}` }}>
-        <div style={{ fontSize: 12, fontWeight: 500, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.5 }}>Apparence</div>
+  return (
+    <div style={{ maxWidth: 600, animation: "pkRise 0.4s ease" }}>
+      <div style={{ marginBottom: 28 }}>
+        <Badge text="Paramètres" variant="blue" t={t} />
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: t.text, margin: "8px 0 0", letterSpacing: -0.8 }}>Paramètres</h1>
       </div>
-      <div style={{ padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: t.text }}>Mode sombre</div>
-          <div style={{ fontSize: 12, color: t.textSec, marginTop: 2 }}>S'adapte aussi automatiquement à votre système</div>
+
+      <div style={{ ...card(t), overflow: "hidden" }}>
+        <div style={{ padding: "14px 22px", borderBottom: `1px solid ${t.borderSoft}`, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: t.blueGradSoft, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="palette" size={15} color={t.blue} />
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: t.textTert, textTransform: "uppercase", letterSpacing: 0.8 }}>Apparence</div>
         </div>
-        <button onClick={() => setDark(d => !d)} style={{ width: 44, height: 24, borderRadius: 12, border: "none", background: dark ? t.blue : t.border, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
-          <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: dark ? 23 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-        </button>
+        <div style={{ padding: "20px 22px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: t.text, marginBottom: 3, letterSpacing: -0.3 }}>Mode sombre</div>
+            <div style={{ fontSize: 13, color: t.textSec }}>S'adapte aussi automatiquement à votre système</div>
+          </div>
+          <button onClick={() => setDark(d => !d)} style={{ width: 50, height: 28, borderRadius: 14, border: "none", background: dark ? t.blueGrad : t.borderSoft, cursor: "pointer", position: "relative", transition: "background 0.25s", boxShadow: dark ? "0 3px 10px rgba(37,99,235,0.4)" : "none", flexShrink: 0 }}>
+            <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: dark ? 25 : 3, transition: "left 0.25s", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }} />
+          </button>
+        </div>
       </div>
     </div>
-  </div>;
+  );
 }
 
 // ─── NAV CONFIGS ─────────────────────────────────────────────────────
@@ -1950,43 +2558,53 @@ function Guide100Sante({ t, onBack }) {
     { q: "C'est valable aussi pour le dentaire et l'auditif ?", r: "Oui. Le 100% Santé couvre aussi les prothèses dentaires (couronnes, bridges) et les aides auditives — même principe, 0€ de reste à charge." },
   ];
   return (
-    <div style={{ maxWidth: 680 }}>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", cursor: "pointer", fontSize: 13, color: t.blue, fontFamily: font, marginBottom: 16 }}>
-        <Icon name="arrow-left" size={16} color={t.blue} /> Retour
+    <div style={{ maxWidth: 700, animation: "pkRise 0.4s ease" }}>
+      <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "none", background: t.bgTint, borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, color: t.textSec, fontFamily: font, marginBottom: 24, boxShadow: t.cardShadowSoft }}
+        onMouseEnter={e => e.currentTarget.style.background = t.bgSecondary}
+        onMouseLeave={e => e.currentTarget.style.background = t.bgTint}>
+        <Icon name="arrow-left" size={16} color={t.textSec} /> Retour
       </button>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 14, background: t.greenLight, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="heart" size={24} color={t.green} /></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 16, background: t.greenGrad, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(16,185,129,0.35)" }}>
+          <Icon name="heart" size={26} color="#fff" />
+        </div>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: 0 }}>Guide 100% Santé</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: t.text, margin: 0, letterSpacing: -0.7 }}>Guide 100% Santé</h1>
           <p style={{ fontSize: 14, color: t.textSec, margin: "4px 0 0" }}>Optique, dentaire et auditif sans reste à charge</p>
         </div>
       </div>
-      <div style={{ background: t.greenLight, borderRadius: 12, padding: "14px 18px", marginBottom: 24, display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <Icon name="info-circle" size={18} color={t.green} />
-        <p style={{ fontSize: 13, color: t.green, margin: 0, lineHeight: 1.6 }}>Le 100% Santé vous permet d'accéder à des <strong>lunettes, prothèses dentaires ou aides auditives sans payer un centime</strong>, grâce à la combinaison Sécurité sociale + mutuelle d'entreprise.</p>
+      <div style={{ background: t.greenGrad, borderRadius: 14, padding: "16px 20px", marginBottom: 28, display: "flex", gap: 12, alignItems: "flex-start", boxShadow: "0 4px 14px rgba(16,185,129,0.25)" }}>
+        <Icon name="info-circle" size={18} color="#fff" />
+        <p style={{ fontSize: 13, color: "#fff", margin: 0, lineHeight: 1.65 }}>Le 100% Santé vous permet d'accéder à des <strong>lunettes, prothèses dentaires ou aides auditives sans payer un centime</strong>, grâce à la combinaison Sécurité sociale + mutuelle d'entreprise.</p>
       </div>
-      <h2 style={{ fontSize: 16, fontWeight: 500, color: t.text, marginBottom: 14 }}>Optique — Comment ça marche en 4 étapes</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 14, letterSpacing: -0.3 }}>Optique — Comment ça marche en 4 étapes</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
         {steps.map((s, i) => (
-          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={s.icon} size={18} color={s.color} /></div>
+          <div key={i} style={{ ...card(t), padding: "18px 20px", display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div style={{ width: 38, height: 38, borderRadius: 12, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${s.color}33` }}>
+              <Icon name={s.icon} size={18} color={s.color} />
+            </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 4 }}>{s.num}. {s.title}</div>
-              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>{s.content}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 4 }}>{s.num}. {s.title}</div>
+              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.65 }}>{s.content}</div>
             </div>
           </div>
         ))}
       </div>
-      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", marginBottom: 24 }}>
-        <div style={{ padding: "12px 18px", background: t.bgSecondary, fontSize: 13, fontWeight: 500, color: t.text, borderBottom: `1px solid ${t.border}` }}>Questions fréquentes</div>
+      <div style={{ ...card(t), overflow: "hidden", marginBottom: 24 }}>
+        <div style={{ padding: "14px 20px", background: t.bgTint, fontSize: 13, fontWeight: 700, color: t.text, borderBottom: `1px solid ${t.borderSoft}`, display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="help-circle" size={15} color={t.textTert} /> Questions fréquentes
+        </div>
         {faqs.map((f, i) => (
-          <div key={i} style={{ padding: "14px 18px", borderBottom: i < faqs.length - 1 ? `1px solid ${t.border}` : "none" }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 4 }}>→ {f.q}</div>
-            <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.5 }}>{f.r}</div>
+          <div key={i} style={{ padding: "16px 20px", borderBottom: i < faqs.length - 1 ? `1px solid ${t.borderSoft}` : "none" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 5, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: t.blue }}>→</span> {f.q}
+            </div>
+            <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.55 }}>{f.r}</div>
           </div>
         ))}
       </div>
-      <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "14px 18px", fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>
+      <div style={{ background: t.bgTint, borderRadius: 14, padding: "16px 20px", fontSize: 13, color: t.textSec, lineHeight: 1.65, border: `1px solid ${t.borderSoft}` }}>
         💡 En tant que salarié d'Alpha Optique (un magasin d'optique), vous avez un accès privilégié aux conseils professionnels de votre équipe pour choisir le meilleur équipement 100% Santé.
       </div>
     </div>
@@ -1995,6 +2613,7 @@ function Guide100Sante({ t, onBack }) {
 
 // ─── GUIDE CPF ────────────────────────────────────────────────────────
 function GuideCPF({ t, onBack }) {
+  const isMobile = useIsMobile();
   const steps = [
     { num: 1, title: "Consultez votre solde CPF", icon: "wallet", color: t.blue, content: "Rendez-vous sur moncompteformation.gouv.fr ou téléchargez l'application \"Mon Compte Formation\". Connectez-vous avec FranceConnect (impôts.gouv.fr ou ameli.fr). Vous verrez votre solde disponible en euros : les salariés accumulent environ 500€/an, plafonné à 5 000€." },
     { num: 2, title: "Choisissez une formation éligible", icon: "school", color: t.amber, content: "Sur la plateforme, recherchez une formation parmi les 500 000+ disponibles. Filtrez par thème, durée, lieu ou modalité (présentiel/distanciel). Les formations éligibles sont identifiées par le picto CPF. Vous pouvez chercher des formations en lien avec votre poste (optique, commerce, langues, bureautique...)." },
@@ -2007,48 +2626,58 @@ function GuideCPF({ t, onBack }) {
     { icon: "shield-check", title: "Vigilance arnaques", text: "Méfiez-vous des démarchages par SMS ou téléphone qui promettent de \"débloquer\" votre CPF. C'est gratuit et direct sur la plateforme officielle." },
   ];
   return (
-    <div style={{ maxWidth: 680 }}>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", cursor: "pointer", fontSize: 13, color: t.blue, fontFamily: font, marginBottom: 16 }}>
-        <Icon name="arrow-left" size={16} color={t.blue} /> Retour
+    <div style={{ maxWidth: 700, animation: "pkRise 0.4s ease" }}>
+      <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "none", background: t.bgTint, borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, color: t.textSec, fontFamily: font, marginBottom: 24, boxShadow: t.cardShadowSoft }}
+        onMouseEnter={e => e.currentTarget.style.background = t.bgSecondary}
+        onMouseLeave={e => e.currentTarget.style.background = t.bgTint}>
+        <Icon name="arrow-left" size={16} color={t.textSec} /> Retour
       </button>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 14, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="school" size={24} color={t.blue} /></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 16, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(37,99,235,0.35)" }}>
+          <Icon name="school" size={26} color="#fff" />
+        </div>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: 0 }}>Mon Compte Formation (CPF)</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: t.text, margin: 0, letterSpacing: -0.7 }}>Mon Compte Formation (CPF)</h1>
           <p style={{ fontSize: 14, color: t.textSec, margin: "4px 0 0" }}>Utilisez vos droits formation facilement</p>
         </div>
       </div>
-      <div style={{ background: t.blueLighter, borderRadius: 12, padding: "14px 18px", marginBottom: 24, display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <Icon name="info-circle" size={18} color={t.blue} />
-        <p style={{ fontSize: 13, color: t.blue, margin: 0, lineHeight: 1.6 }}>Le CPF (Compte Personnel de Formation) vous permet de <strong>financer des formations professionnelles</strong> tout au long de votre carrière. Vous accumulez des droits en euros chaque année, indépendamment de votre employeur.</p>
+      <div style={{ background: t.blueGrad, borderRadius: 14, padding: "16px 20px", marginBottom: 28, display: "flex", gap: 12, alignItems: "flex-start", boxShadow: "0 4px 14px rgba(37,99,235,0.25)" }}>
+        <Icon name="info-circle" size={18} color="#fff" />
+        <p style={{ fontSize: 13, color: "#fff", margin: 0, lineHeight: 1.65 }}>Le CPF (Compte Personnel de Formation) vous permet de <strong>financer des formations professionnelles</strong> tout au long de votre carrière. Vous accumulez des droits en euros chaque année, indépendamment de votre employeur.</p>
       </div>
-      <h2 style={{ fontSize: 16, fontWeight: 500, color: t.text, marginBottom: 14 }}>Comment utiliser votre CPF en 4 étapes</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 14, letterSpacing: -0.3 }}>Comment utiliser votre CPF en 4 étapes</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
         {steps.map((s, i) => (
-          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={s.icon} size={18} color={s.color} /></div>
+          <div key={i} style={{ ...card(t), padding: "18px 20px", display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div style={{ width: 38, height: 38, borderRadius: 12, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${s.color}33` }}>
+              <Icon name={s.icon} size={18} color={s.color} />
+            </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 4 }}>{s.num}. {s.title}</div>
-              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>{s.content}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 4 }}>{s.num}. {s.title}</div>
+              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.65 }}>{s.content}</div>
             </div>
           </div>
         ))}
       </div>
-      <h2 style={{ fontSize: 16, fontWeight: 500, color: t.text, marginBottom: 12 }}>Ce qu'il faut savoir</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 24 }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 12, letterSpacing: -0.3 }}>Ce qu'il faut savoir</h2>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
         {tips.map((tip, i) => (
-          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "14px 16px" }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}><Icon name={tip.icon} size={16} color={t.blue} /></div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 4 }}>{tip.title}</div>
-            <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.5 }}>{tip.text}</div>
+          <div key={i} style={{ ...card(t), padding: "16px" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: t.blueGradSoft, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+              <Icon name={tip.icon} size={17} color={t.blue} />
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 5, letterSpacing: -0.2 }}>{tip.title}</div>
+            <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.55 }}>{tip.text}</div>
           </div>
         ))}
       </div>
-      <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
-        <Icon name="external-link" size={18} color={t.blue} />
+      <div style={{ background: t.blueGradSoft, borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, border: `1px solid ${t.borderSoft}`, cursor: "pointer" }}>
+        <div style={{ width: 38, height: 38, borderRadius: 10, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 3px 10px rgba(37,99,235,0.35)" }}>
+          <Icon name="external-link" size={18} color="#fff" />
+        </div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 2 }}>Accéder à mon compte formation</div>
-          <div style={{ fontSize: 12, color: t.textSec }}>moncompteformation.gouv.fr — Connexion via FranceConnect</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: t.blue, marginBottom: 2 }}>Accéder à mon compte formation</div>
+          <div style={{ fontSize: 12, color: t.blue, opacity: 0.7 }}>moncompteformation.gouv.fr — Connexion via FranceConnect</div>
         </div>
       </div>
     </div>
@@ -2057,32 +2686,46 @@ function GuideCPF({ t, onBack }) {
 
 // ─── GUIDE D'UTILISATION PERKY ────────────────────────────────────────
 function GuidesHub({ t, onSelect }) {
+  const isMobile = useIsMobile();
   const guides = [
-    { id: "sante", icon: "heart", color: t.green, bg: t.greenLight, title: "Guide 100% Santé", sub: "Lunettes, dentaire et auditif à 0€ de reste à charge — comment ça marche" },
-    { id: "cpf", icon: "school", color: t.blue, bg: t.blueLighter, title: "Mon Compte Formation", sub: "Utilisez vos droits CPF pour vous former gratuitement" },
-    { id: "perky", icon: "help-circle", color: t.amber, bg: t.amberLight, title: "Guide d'utilisation Perky", sub: "Comment naviguer dans l'application et profiter de toutes les fonctionnalités" },
+    { id: "sante", icon: "heart", color: t.green, grad: t.greenGrad, title: "Guide 100% Santé", sub: "Lunettes, dentaire et auditif à 0€ de reste à charge — comment ça marche" },
+    { id: "cpf", icon: "school", color: t.blue, grad: t.blueGrad, title: "Mon Compte Formation", sub: "Utilisez vos droits CPF pour vous former gratuitement" },
+    { id: "perky", icon: "help-circle", color: t.amber, grad: t.amberGrad, title: "Guide d'utilisation Perky", sub: "Comment naviguer dans l'application et profiter de toutes les fonctionnalités" },
   ];
   return (
-    <div>
-      <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: "0 0 6px" }}>Aide & Guides</h1>
-      <p style={{ fontSize: 14, color: t.textSec, margin: "0 0 24px" }}>Tout ce dont vous avez besoin pour profiter de Perky</p>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+    <div style={{ maxWidth: 820, animation: "pkRise 0.4s ease" }}>
+      <div style={{ marginBottom: 28 }}>
+        <Badge text="Guides" variant="blue" t={t} />
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Aide & Guides</h1>
+        <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Tout ce dont vous avez besoin pour profiter de Perky</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 24 }}>
         {guides.map(g => (
           <div key={g.id} onClick={() => onSelect(g.id)}
-            style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: "20px", cursor: "pointer", transition: "border-color 0.15s, transform 0.15s" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = g.color; e.currentTarget.style.transform = "translateY(-2px)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.transform = "none"; }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: g.bg, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-              <Icon name={g.icon} size={22} color={g.color} />
+            style={{ ...card(t), padding: "24px", cursor: "pointer", border: `1.5px solid ${t.borderSoft}`, transition: "transform 0.18s, box-shadow 0.18s" }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = t.cardShadowHover; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = t.cardShadow; }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: g.grad, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, boxShadow: `0 4px 12px ${g.color}44` }}>
+              <Icon name={g.icon} size={24} color="#fff" />
             </div>
-            <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 6 }}>{g.title}</div>
-            <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.5 }}>{g.sub}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: t.text, marginBottom: 6, letterSpacing: -0.4 }}>{g.title}</div>
+            <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.55 }}>{g.sub}</div>
+            <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: g.color }}>
+              Lire le guide <Icon name="arrow-right" size={13} color={g.color} />
+            </div>
           </div>
         ))}
       </div>
-      <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "16px 18px" }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 6 }}>Besoin d'aide supplémentaire ?</div>
-        <div style={{ fontSize: 13, color: t.textSec }}>Contactez le support : <strong>support@perky.fr</strong></div>
+
+      <div style={{ background: t.bgTint, borderRadius: 16, padding: "18px 22px", border: `1.5px solid ${t.borderSoft}`, display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: t.blueGradSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon name="message-circle" size={20} color={t.blue} />
+        </div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 2 }}>Besoin d'aide supplémentaire ?</div>
+          <div style={{ fontSize: 13, color: t.textSec }}>Contactez le support : <strong style={{ color: t.blue }}>support@perky.fr</strong></div>
+        </div>
       </div>
     </div>
   );
@@ -2097,34 +2740,38 @@ function GuidePerky({ t, onBack }) {
     { icon: "gift", color: t.green, title: "Avantages employeur", text: "Les dispositifs activés par votre employeur (PPV, transport, chèques cadeaux...) apparaissent sur votre accueil. Ils contribuent à votre rémunération globale et sont mis à jour automatiquement." },
   ];
   return (
-    <div style={{ maxWidth: 680 }}>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", cursor: "pointer", fontSize: 13, color: t.blue, fontFamily: font, marginBottom: 16 }}>
-        <Icon name="arrow-left" size={16} color={t.blue} /> Retour
+    <div style={{ maxWidth: 700, animation: "pkRise 0.4s ease" }}>
+      <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "none", background: t.bgTint, borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, color: t.textSec, fontFamily: font, marginBottom: 24, boxShadow: t.cardShadowSoft }}
+        onMouseEnter={e => e.currentTarget.style.background = t.bgSecondary}
+        onMouseLeave={e => e.currentTarget.style.background = t.bgTint}>
+        <Icon name="arrow-left" size={16} color={t.textSec} /> Retour
       </button>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 14, background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={t.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 16, background: t.amberGrad, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(245,158,11,0.35)" }}>
+          <Icon name="help-circle" size={26} color="#fff" />
         </div>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 500, color: t.text, margin: 0 }}>Guide d'utilisation Perky</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: t.text, margin: 0, letterSpacing: -0.7 }}>Guide d'utilisation Perky</h1>
           <p style={{ fontSize: 14, color: t.textSec, margin: "4px 0 0" }}>Tout ce qu'il faut savoir pour bien utiliser votre espace</p>
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
         {sections.map((s, i) => (
-          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 14 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={s.icon} size={18} color={s.color} /></div>
+          <div key={i} style={{ ...card(t), padding: "18px 20px", display: "flex", gap: 14 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 12, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${s.color}33` }}>
+              <Icon name={s.icon} size={18} color={s.color} />
+            </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 4 }}>{s.title}</div>
-              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>{s.text}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 5, letterSpacing: -0.2 }}>{s.title}</div>
+              <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.65 }}>{s.text}</div>
             </div>
           </div>
         ))}
       </div>
-      <div style={{ background: t.bgSecondary, borderRadius: 12, padding: "16px 18px" }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: t.text, marginBottom: 8 }}>Une question ? Un problème ?</div>
-        <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>
-          Contactez le support Perky à <strong>support@perky.fr</strong> ou consultez la FAQ sur <strong>help.perky.fr</strong>.<br />
+      <div style={{ background: t.bgTint, borderRadius: 14, padding: "18px 20px", border: `1.5px solid ${t.borderSoft}` }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 8, letterSpacing: -0.3 }}>Une question ? Un problème ?</div>
+        <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.65 }}>
+          Contactez le support Perky à <strong style={{ color: t.blue }}>support@perky.fr</strong> ou consultez la FAQ sur <strong style={{ color: t.blue }}>help.perky.fr</strong>.<br />
           Pour les questions sur vos avantages employeur, adressez-vous directement à votre gestionnaire RH.
         </div>
       </div>
@@ -2220,6 +2867,9 @@ export default function App() {
   const activeEmployee = employees.find(e => e.id === 1) || INIT_EMPLOYEES[0];
   const currentEmpPage = showPaymentConfirm ? "confirmation" : empPage;
 
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   if (authState === "login") return <LoginPage onLogin={handleLogin} t={t} />;
   if (authState === "emp-activation") return <EmployeeActivation onComplete={() => setAuthState("app")} t={t} />;
   if (authState === "boss-onboarding") return <PatronOnboarding onComplete={(co) => { if (co) setCompany(co); setAuthState("app"); }} t={t} />;
@@ -2228,90 +2878,211 @@ export default function App() {
 
   const empViews = {
     home: <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />,
-    catalogue: <EmpCatalogue onOfferClick={o => { setSelectedOffer(o); setEmpPage("detail"); }} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
-    detail: selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => { setSelectedOffer(null); setEmpPage("catalogue"); }} onAddToCart={addToCart} t={t} /> : null,
+    catalogue: selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => setSelectedOffer(null)} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
     cart: <CartPage cart={cart} onRemove={id => setCart(p => p.filter(i => i.id !== id))} onPay={handlePayment} t={t} />,
-    confirmation: <PaymentConfirm orders={paidOrders} onGoToWallet={() => { setShowPaymentConfirm(false); setEmpPage("wallet"); }} onGoToCatalogue={() => { setShowPaymentConfirm(false); setEmpPage("catalogue"); }} t={t} />,
     wallet: <EmpWallet t={t} />,
     guide: guidePage === "sante" ? <Guide100Sante t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "cpf" ? <GuideCPF t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "perky" ? <GuidePerky t={t} onBack={() => setGuidePage("hub")} /> : <GuidesHub t={t} onSelect={setGuidePage} />,
     settings: <Settings dark={dark} setDark={setDark} t={t} />,
+    detail: selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => { setSelectedOffer(null); setEmpPage("catalogue"); }} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : null,
+    confirmation: <PaymentConfirm orders={paidOrders} onGoToWallet={() => { setShowPaymentConfirm(false); setEmpPage("wallet"); }} onGoToCatalogue={() => { setShowPaymentConfirm(false); setEmpPage("catalogue"); }} t={t} />,
   };
 
   const bossViews = {
-    home: <BossHome employees={employees} scannerState={scannerState} t={t} onNav={setBossPage} />,
+    home: <BossHome employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onNav={setBossPage} />,
     scanner: <BossScanner employees={employees} scannerState={scannerState} setScannerState={setScannerState} onUpdateEmployeePPV={updateEmployeePPV} t={t} company={company} />,
     team: <BossTeam employees={employees} setEmployees={setEmployees} t={t} />,
     factures: <BossFactures t={t} />,
-    offres: <EmpCatalogue onOfferClick={o => { setSelectedOffer(o); }} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
+    offres: <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
     settings: <Settings dark={dark} setDark={setDark} t={t} />,
   };
 
-  return (
-    <div style={{ fontFamily: font, background: t.bg, minHeight: "100vh", color: t.text }} onClick={() => showNotifs && setShowNotifs(false)}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 20px", borderBottom: `1px solid ${t.border}`, background: t.sidebar, position: "relative", zIndex: 200 }}>
-        <div style={{ display: "flex", gap: 6 }}>
-          {[{ id: "employee", icon: "user", label: "Espace salarié" }, { id: "employer", icon: "briefcase", label: "Espace patron" }].map(m => {
-            const active = isPatron ? m.id === "employer" : m.id === "employee";
-            return <button key={m.id} onClick={() => { if (m.id === "employee") setCurrentAccount({ ...currentAccount, role: "employee" }); else setCurrentAccount({ ...currentAccount, role: "patron" }); }}
-              style={{ padding: "7px 16px", borderRadius: 8, border: active ? "none" : `1px solid ${t.border}`, fontSize: 13, cursor: "pointer", fontFamily: font, fontWeight: 500, background: active ? t.blue : "transparent", color: active ? "#fff" : t.textSec, display: "flex", alignItems: "center", gap: 6 }}>
-              <Icon name={m.icon} size={14} color={active ? "#fff" : t.textSec} /> {m.label}
-            </button>;
-          })}
-        </div>
+  const navItems = isPatron ? bossNav : empNav;
+  const activePageId = isPatron ? bossPage : (currentEmpPage === "detail" ? "catalogue" : currentEmpPage === "confirmation" ? "cart" : currentEmpPage);
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Cloche notifs — espace salarié uniquement */}
-          {!isPatron && (
-            <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowNotifs(s => !s)} style={{ position: "relative", width: 36, height: 36, borderRadius: 10, border: `1px solid ${t.border}`, background: showNotifs ? t.blueLighter : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <BellIcon size={18} color={showNotifs ? t.blue : t.textSec} />
-                {unreadCount > 0 && <span style={{ position: "absolute", top: 7, right: 7, width: 8, height: 8, borderRadius: "50%", background: t.red, border: `2px solid ${t.sidebar}` }} />}
-              </button>
-              {showNotifs && (
-                <div style={{ position: "absolute", top: 44, right: 0, width: 360, background: t.card, border: `1px solid ${t.border}`, borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.14)", overflow: "hidden", zIndex: 300 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${t.border}` }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 15, fontWeight: 500, color: t.text }}>Notifications</span>
-                      {unreadCount > 0 && <span style={{ background: t.red, color: "#fff", fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 10 }}>{unreadCount}</span>}
-                    </div>
-                    {unreadCount > 0 && <button onClick={markAllRead} style={{ fontSize: 12, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Tout marquer lu</button>}
-                  </div>
-                  <div style={{ maxHeight: 360, overflowY: "auto" }}>
-                    {notifications.map((notif, i) => (
-                      <div key={notif.id}
-                        onClick={() => setNotifications(p => p.map(n => n.id === notif.id ? { ...n, read: true } : n))}
-                        style={{ display: "flex", gap: 12, padding: "14px 18px", borderBottom: i < notifications.length - 1 ? `1px solid ${t.border}` : "none", background: notif.read ? "transparent" : t.bgSecondary, cursor: "pointer" }}>
-                        <div style={{ width: 38, height: 38, borderRadius: 10, background: notif.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <Icon name={notif.icon} size={18} color={notif.color} />
+  const handleNavSelect = (id) => {
+    if (isPatron) setBossPage(id);
+    else { setEmpPage(id); setSelectedOffer(null); setShowPaymentConfirm(false); }
+    setSidebarOpen(false);
+  };
+
+  const userInfo = isPatron
+    ? { initials: "AO", name: "Alpha Optique", sub: "Dirigeant" }
+    : { initials: activeEmployee.initials, name: `${activeEmployee.firstName} ${activeEmployee.lastName}`, sub: "Alpha Optique" };
+
+  return (
+    <div style={{ fontFamily: font, background: t.appGrad, minHeight: "100vh", color: t.text }} onClick={() => { showNotifs && setShowNotifs(false); }}>
+      <style>{`
+        @keyframes pkFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pkPop { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes pkRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pkFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+        @keyframes pkDrift { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-20px) scale(1.12); } 100% { transform: translate(0,0) scale(1); } }
+        @keyframes pkSlideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { -webkit-text-size-adjust: 100%; }
+        body { margin: 0; overscroll-behavior: none; }
+        input, button, select, textarea { -webkit-appearance: none; appearance: none; font-family: inherit; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: ${t.borderStrong}; border-radius: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+      `}</style>
+
+      {/* ── TOPBAR ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "10px 14px" : "10px 22px", borderBottom: `1px solid ${t.border}`, background: t.glass, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", position: "sticky", top: 0, zIndex: 200 }}>
+        {isMobile ? (
+          /* Mobile topbar: hamburger + logo + notifs */
+          <>
+            <button onClick={e => { e.stopPropagation(); setSidebarOpen(s => !s); }}
+              style={{ width: 38, height: 38, borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: t.cardShadowSoft }}>
+              <Icon name="menu-2" size={18} color={t.text} />
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              </div>
+              <span style={{ fontSize: 17, fontWeight: 800, color: t.text, letterSpacing: -0.5 }}>Perky</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {!isPatron && (
+                <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+                  <button onClick={() => setShowNotifs(s => !s)} style={{ position: "relative", width: 38, height: 38, borderRadius: 10, border: `1px solid ${t.border}`, background: showNotifs ? t.blueLighter : t.card, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: t.cardShadowSoft }}>
+                    <BellIcon size={17} color={showNotifs ? t.blue : t.textSec} />
+                    {unreadCount > 0 && <span style={{ position: "absolute", top: 6, right: 6, minWidth: 14, height: 14, borderRadius: 7, background: t.red, border: `2px solid ${t.card}`, color: "#fff", fontSize: 8, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount}</span>}
+                  </button>
+                  {showNotifs && (
+                    <div style={{ position: "fixed", top: 60, right: 8, left: 8, background: t.card, border: `1px solid ${t.border}`, borderRadius: 18, boxShadow: t.popShadow, overflow: "hidden", zIndex: 300, animation: "pkPop 0.2s ease" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${t.borderSoft}` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: t.text }}>Notifications</span>
+                          {unreadCount > 0 && <span style={{ background: t.red, color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 20 }}>{unreadCount}</span>}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: notif.read ? 400 : 500, color: t.text, marginBottom: 2, lineHeight: 1.4 }}>{notif.title}</div>
-                          <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.4, marginBottom: 4 }}>{notif.sub}</div>
-                          <div style={{ fontSize: 11, color: t.textTert }}>{notif.time}</div>
-                        </div>
-                        {!notif.read && <div style={{ width: 8, height: 8, borderRadius: "50%", background: t.blue, flexShrink: 0, marginTop: 6 }} />}
+                        {unreadCount > 0 && <button onClick={markAllRead} style={{ fontSize: 12, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font, fontWeight: 700 }}>Tout lire</button>}
                       </div>
-                    ))}
-                  </div>
+                      <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                        {notifications.map((notif, i) => (
+                          <div key={notif.id} onClick={() => setNotifications(p => p.map(n => n.id === notif.id ? { ...n, read: true } : n))}
+                            style={{ display: "flex", gap: 10, padding: "12px 18px", borderBottom: i < notifications.length - 1 ? `1px solid ${t.borderSoft}` : "none", background: notif.read ? "transparent" : t.blueLighter + "55", cursor: "pointer" }}>
+                            <div style={{ width: 36, height: 36, borderRadius: 10, background: notif.color + "1F", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              <Icon name={notif.icon} size={16} color={notif.color} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: notif.read ? 500 : 700, color: t.text, marginBottom: 2, lineHeight: 1.4 }}>{notif.title}</div>
+                              <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.35, marginBottom: 3 }}>{notif.sub}</div>
+                              <div style={{ fontSize: 11, color: t.textTert }}>{notif.time}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+              <button onClick={handleLogout} style={{ width: 38, height: 38, borderRadius: 10, border: `1px solid ${t.border}`, background: t.card, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: t.cardShadowSoft }}>
+                <Icon name="logout" size={16} color={t.textSec} />
+              </button>
             </div>
-          )}
+          </>
+        ) : (
+          /* Desktop topbar */
+          <>
+            <div style={{ display: "flex", gap: 4, padding: 3, background: t.bgSecondary, borderRadius: 12, border: `1px solid ${t.borderSoft}` }}>
+              {[{ id: "employee", icon: "user", label: "Espace salarié" }, { id: "employer", icon: "briefcase", label: "Espace patron" }].map(m => {
+                const isActive = isPatron ? m.id === "employer" : m.id === "employee";
+                return <button key={m.id} onClick={() => { if (m.id === "employee") setCurrentAccount({ ...currentAccount, role: "employee" }); else setCurrentAccount({ ...currentAccount, role: "patron" }); }}
+                  style={{ padding: "7px 15px", borderRadius: 9, border: "none", fontSize: 13, cursor: "pointer", fontFamily: font, fontWeight: isActive ? 700 : 500, background: isActive ? t.card : "transparent", color: isActive ? t.blue : t.textSec, display: "flex", alignItems: "center", gap: 7, boxShadow: isActive ? t.cardShadowSoft : "none", transition: "all 0.15s" }}>
+                  <Icon name={m.icon} size={14} color={isActive ? t.blue : t.textSec} /> {m.label}
+                </button>;
+              })}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              {!isPatron && (
+                <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+                  <button onClick={() => setShowNotifs(s => !s)} style={{ position: "relative", width: 38, height: 38, borderRadius: 11, border: `1px solid ${t.border}`, background: showNotifs ? t.blueLighter : t.card, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", boxShadow: t.cardShadowSoft }}>
+                    <BellIcon size={17} color={showNotifs ? t.blue : t.textSec} />
+                    {unreadCount > 0 && <span style={{ position: "absolute", top: 6, right: 6, minWidth: 16, height: 16, padding: "0 4px", borderRadius: 8, background: t.red, border: `2px solid ${t.card}`, color: "#fff", fontSize: 9, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount}</span>}
+                  </button>
+                  {showNotifs && (
+                    <div style={{ position: "absolute", top: 46, right: 0, width: 384, background: t.card, border: `1px solid ${t.border}`, borderRadius: 18, boxShadow: t.popShadow, overflow: "hidden", zIndex: 300, animation: "pkPop 0.2s ease" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${t.borderSoft}` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 15, fontWeight: 700, color: t.text }}>Notifications</span>
+                          {unreadCount > 0 && <span style={{ background: t.red, color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 20 }}>{unreadCount}</span>}
+                        </div>
+                        {unreadCount > 0 && <button onClick={markAllRead} style={{ fontSize: 12, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font, fontWeight: 700 }}>Tout marquer lu</button>}
+                      </div>
+                      <div style={{ maxHeight: 360, overflowY: "auto" }}>
+                        {notifications.map((notif, i) => (
+                          <div key={notif.id} onClick={() => setNotifications(p => p.map(n => n.id === notif.id ? { ...n, read: true } : n))}
+                            style={{ display: "flex", gap: 12, padding: "14px 20px", borderBottom: i < notifications.length - 1 ? `1px solid ${t.borderSoft}` : "none", background: notif.read ? "transparent" : t.blueLighter + "66", cursor: "pointer", transition: "background 0.12s" }}>
+                            <div style={{ width: 40, height: 40, borderRadius: 12, background: notif.color + "1F", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              <Icon name={notif.icon} size={18} color={notif.color} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: notif.read ? 500 : 700, color: t.text, marginBottom: 2, lineHeight: 1.4 }}>{notif.title}</div>
+                              <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.4, marginBottom: 4 }}>{notif.sub}</div>
+                              <div style={{ fontSize: 11, color: t.textTert }}>{notif.time}</div>
+                            </div>
+                            {!notif.read && <div style={{ width: 8, height: 8, borderRadius: "50%", background: t.blue, flexShrink: 0, marginTop: 8 }} />}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <button onClick={handleLogout} style={{ fontSize: 12.5, color: t.textSec, border: `1px solid ${t.border}`, background: t.card, padding: "8px 14px", borderRadius: 11, cursor: "pointer", fontFamily: font, fontWeight: 600, display: "flex", alignItems: "center", gap: 7, boxShadow: t.cardShadowSoft, transition: "color 0.14s" }}
+                onMouseEnter={e => e.currentTarget.style.color = t.text}
+                onMouseLeave={e => e.currentTarget.style.color = t.textSec}>
+                <Icon name="logout" size={14} color={t.textSec} /> Déconnexion
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
-          <button onClick={handleLogout} style={{ fontSize: 12, color: t.textSec, border: `1px solid ${t.border}`, background: "none", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: 6 }}>
-            <Icon name="logout" size={14} color={t.textSec} /> Déconnexion
-          </button>
+      {/* ── MOBILE SIDEBAR DRAWER ── */}
+      {isMobile && sidebarOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 500 }} onClick={() => setSidebarOpen(false)}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", animation: "pkFade 0.2s ease" }} />
+          <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 280, background: t.sidebar, boxShadow: t.popShadow, animation: "pkSlideIn 0.25s cubic-bezier(0.4,0,0.2,1)", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            <Sidebar items={navItems} active={activePageId} onSelect={handleNavSelect} user={userInfo} role={isPatron ? "Espace dirigeant" : "Espace salarié"} t={t} cartCount={cart.length} />
+          </div>
+        </div>
+      )}
+
+      {/* ── MAIN CONTENT ── */}
+      <div style={{ display: "flex" }}>
+        {/* Desktop sidebar */}
+        {!isMobile && (
+          <Sidebar items={navItems} active={activePageId} onSelect={handleNavSelect} user={userInfo} role={isPatron ? "Espace dirigeant" : "Espace salarié"} t={t} cartCount={cart.length} />
+        )}
+
+        {/* Page content */}
+        <div style={{ flex: 1, padding: isMobile ? "20px 16px 90px" : "32px 40px", overflowY: "auto", minHeight: isMobile ? "calc(100vh - 59px)" : "calc(100vh - 59px)", overflowX: "hidden" }}>
+          {isPatron ? (bossViews[bossPage] || bossViews.home) : empViews[currentEmpPage]}
         </div>
       </div>
-      <div style={{ display: "flex" }}>
-        {!isPatron ? <>
-          <Sidebar items={empNav} active={currentEmpPage === "detail" ? "catalogue" : currentEmpPage === "confirmation" ? "cart" : currentEmpPage} onSelect={id => { setEmpPage(id); setSelectedOffer(null); setShowPaymentConfirm(false); }} user={{ initials: activeEmployee.initials, name: `${activeEmployee.firstName} ${activeEmployee.lastName}`, sub: "Alpha Optique" }} role="Espace salarié" t={t} cartCount={cart.length} />
-          <div style={{ flex: 1, padding: "24px 32px", background: t.bg, overflowY: "auto", minHeight: "calc(100vh - 45px)" }}>{empViews[currentEmpPage]}</div>
-        </> : <>
-          <Sidebar items={bossNav} active={bossPage} onSelect={setBossPage} user={{ initials: "AO", name: "Alpha Optique", sub: "Dirigeant" }} role="Espace dirigeant" t={t} cartCount={0} />
-          <div style={{ flex: 1, padding: "24px 32px", background: t.bg, overflowY: "auto", minHeight: "calc(100vh - 45px)" }}>{bossViews[bossPage] || bossViews.home}</div>
-        </>}
-      </div>
+
+      {/* ── MOBILE BOTTOM NAV ── */}
+      {isMobile && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200, background: t.sidebar, borderTop: `1px solid ${t.border}`, display: "flex", paddingBottom: "env(safe-area-inset-bottom)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}>
+          {navItems.slice(0, 5).map(it => {
+            const isActive = activePageId === it.id;
+            const count = it.id === "cart" ? cart.length : 0;
+            return (
+              <button key={it.id} onClick={() => handleNavSelect(it.id)}
+                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 10px", border: "none", background: "transparent", cursor: "pointer", fontFamily: font, color: isActive ? t.blue : t.textTert, fontSize: 10, fontWeight: isActive ? 700 : 500, position: "relative" }}>
+                <div style={{ position: "relative" }}>
+                  <Icon name={it.icon} size={22} color={isActive ? t.blue : t.textTert} />
+                  {count > 0 && <span style={{ position: "absolute", top: -4, right: -6, minWidth: 14, height: 14, borderRadius: 7, background: t.red, color: "#fff", fontSize: 8, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>}
+                </div>
+                <span style={{ maxWidth: 56, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.2 }}>{it.label}</span>
+                {isActive && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 28, height: 3, borderRadius: "0 0 4px 4px", background: t.blueGrad }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
