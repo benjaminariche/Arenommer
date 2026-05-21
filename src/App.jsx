@@ -971,7 +971,27 @@ function PatronOnboarding({ onComplete, t }) {
 }
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────
+const SCANNER_SUB = [
+  { id: "ppv",      label: "Kit PPV",            icon: "file-certificate", color: "#2563EB" },
+  { id: "scanner-resto",   label: "Titres-restaurant",  icon: "tools-kitchen-2",  color: "#0EA371" },
+  { id: "scanner-navigo",  label: "Transport Navigo",   icon: "bus",              color: "#F59E0B" },
+  { id: "scanner-vacances",label: "Chèques vacances",   icon: "beach",            color: "#7C3AED" },
+  { id: "scanner-cadeaux", label: "Chèques cadeaux",    icon: "gift",             color: "#DC2F36" },
+];
+
 function Sidebar({ items, active, onSelect, user, role, t, cartCount }) {
+  const [scannerOpen, setScannerOpen] = useState(
+    active === "scanner" || SCANNER_SUB.some(s => s.id === active)
+  );
+
+  useEffect(() => {
+    if (active === "scanner" || SCANNER_SUB.some(s => s.id === active)) {
+      setScannerOpen(true);
+    }
+  }, [active]);
+
+  const isScannerFamily = active === "scanner" || SCANNER_SUB.some(s => s.id === active);
+
   return (
     <div style={{ width: 248, background: t.sidebar, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", minHeight: "100vh", flexShrink: 0, position: "relative" }}>
       {/* Logo */}
@@ -990,12 +1010,61 @@ function Sidebar({ items, active, onSelect, user, role, t, cartCount }) {
       <div style={{ height: 1, background: t.borderSoft, margin: "0 16px 8px" }} />
 
       {/* Nav */}
-      <div style={{ flex: 1, padding: "6px 12px" }}>
+      <div style={{ flex: 1, padding: "6px 12px", overflowY: "auto" }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: t.textTert, letterSpacing: 0.9, textTransform: "uppercase", padding: "8px 12px 6px" }}>Menu</div>
         {items.map(it => {
           const isActive = active === it.id;
+          const isScanner = it.id === "scanner";
+
+          // Scanner → item avec accordéon
+          if (isScanner) {
+            const parentActive = isScannerFamily;
+            return (
+              <div key={it.id}>
+                {/* Parent Scanner */}
+                <div style={{ display: "flex", alignItems: "center", marginBottom: scannerOpen ? 2 : 3 }}>
+                  <button onClick={() => { onSelect(it.id); setScannerOpen(o => !o); }}
+                    style={{ display: "flex", alignItems: "center", gap: 11, flex: 1, padding: "10px 12px", borderRadius: 12, border: "none", background: parentActive ? t.blueGradSoft : "transparent", color: parentActive ? t.blue : t.textSec, cursor: "pointer", fontSize: 13.5, fontWeight: parentActive ? 700 : 500, fontFamily: font, textAlign: "left", transition: "background 0.14s, color 0.14s", position: "relative" }}
+                    onMouseEnter={e => { if (!parentActive) e.currentTarget.style.background = t.bgSecondary; }}
+                    onMouseLeave={e => { if (!parentActive) e.currentTarget.style.background = "transparent"; }}>
+                    {parentActive && <div style={{ position: "absolute", left: -12, top: "50%", transform: "translateY(-50%)", width: 4, height: 22, borderRadius: "0 4px 4px 0", background: t.blueGrad }} />}
+                    <div style={{ width: 30, height: 30, borderRadius: 9, background: parentActive ? t.blue + "1F" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Icon name={it.icon} size={17} color={parentActive ? t.blue : t.textTert} />
+                    </div>
+                    <span style={{ flex: 1 }}>{it.label}</span>
+                    <div style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: scannerOpen ? t.blue + "18" : "transparent", transition: "transform 0.2s, background 0.2s", transform: scannerOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                      <Icon name="chevron-down" size={13} color={parentActive ? t.blue : t.textTert} />
+                    </div>
+                  </button>
+                </div>
+
+                {/* Sous-catégories */}
+                {scannerOpen && (
+                  <div style={{ marginLeft: 20, marginBottom: 4, borderLeft: `2px solid ${t.borderSoft}`, paddingLeft: 8, animation: "pkFade 0.2s ease" }}>
+                    {SCANNER_SUB.map(sub => {
+                      const subActive = active === sub.id;
+                      return (
+                        <button key={sub.id} onClick={() => onSelect(sub.id)}
+                          style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 10px", borderRadius: 10, border: "none", background: subActive ? sub.color + "15" : "transparent", color: subActive ? sub.color : t.textSec, cursor: "pointer", fontSize: 12.5, fontWeight: subActive ? 700 : 500, fontFamily: font, marginBottom: 2, textAlign: "left", transition: "all 0.14s" }}
+                          onMouseEnter={e => { if (!subActive) e.currentTarget.style.background = t.bgSecondary; }}
+                          onMouseLeave={e => { if (!subActive) e.currentTarget.style.background = "transparent"; }}>
+                          <div style={{ width: 24, height: 24, borderRadius: 7, background: subActive ? sub.color + "22" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.14s" }}>
+                            <Icon name={sub.icon} size={13} color={subActive ? sub.color : t.textTert} />
+                          </div>
+                          <span>{sub.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Items normaux
           return (
-            <button key={it.id} onClick={() => onSelect(it.id)} style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", padding: "10px 12px", borderRadius: 12, border: "none", background: isActive ? t.blueGradSoft : "transparent", color: isActive ? t.blue : t.textSec, cursor: "pointer", fontSize: 13.5, fontWeight: isActive ? 700 : 500, fontFamily: font, marginBottom: 3, textAlign: "left", transition: "background 0.14s, color 0.14s", position: "relative" }}
+            <button key={it.id} onClick={() => onSelect(it.id)}
+              style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", padding: "10px 12px", borderRadius: 12, border: "none", background: isActive ? t.blueGradSoft : "transparent", color: isActive ? t.blue : t.textSec, cursor: "pointer", fontSize: 13.5, fontWeight: isActive ? 700 : 500, fontFamily: font, marginBottom: 3, textAlign: "left", transition: "background 0.14s, color 0.14s", position: "relative" }}
               onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = t.bgSecondary; }}
               onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
               {isActive && <div style={{ position: "absolute", left: -12, top: "50%", transform: "translateY(-50%)", width: 4, height: 22, borderRadius: "0 4px 4px 0", background: t.blueGrad }} />}
@@ -1038,290 +1107,98 @@ function Sidebar({ items, active, onSelect, user, role, t, cartCount }) {
 }
 
 // ─── BOSS SCANNER ─────────────────────────────────────────────────────
-function BossScanner({ employees, scannerState, setScannerState, onUpdateEmployeePPV, t, company }) {
-  const isMobile = useIsMobile();
-  const [openItem, setOpenItem] = useState(null);
+function BossScanner({ employees, scannerState, t, company }) {
   const s = scannerState;
   const activeEmp = employees.filter(e => e.active);
   const n = activeEmp.length;
+
   const isComplement = s.ppv_type?.value === "Versement complémentaire";
   const totalPPVNew = activeEmp.reduce((sum, e) => {
     const already = isComplement ? (s.ppv_already?.[e.id] || 0) : 0;
     return sum + Math.min(e.ppv || 0, Math.max(0, 3000 - already));
   }, 0);
-  const totalPPVAlready = isComplement ? activeEmp.reduce((sum, e) => sum + (s.ppv_already?.[e.id] || 0), 0) : 0;
-  const totalPPV = totalPPVNew;
   const totalNavigo = Math.round(((s.navigo.pct - 50) / 100) * 86.40 * 12 * n);
   const totalCadeaux = s.cadeaux.amount * n;
   const totalVacances = s.vacances.amount * n;
-  const grandTotal = totalPPV + totalNavigo + totalCadeaux + totalVacances;
-  const globalPct = Math.round([totalPPV > 0, totalNavigo > 0, totalCadeaux > 0, totalVacances > 0].filter(Boolean).length / 4 * 100);
-  const update = (key, field, val) => setScannerState(p => ({ ...p, [key]: { ...p[key], [field]: val } }));
-
   const restoTotal = Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n);
+  const grandTotal = totalPPVNew + totalNavigo + totalCadeaux + totalVacances + restoTotal;
+  const globalPct = Math.round([totalPPVNew > 0, totalNavigo > 0, totalCadeaux > 0, totalVacances > 0].filter(Boolean).length / 4 * 100);
+
   const items = [
-    { id: "ppv", title: "PPV 2026 — par salarié", icon: "coin", color: "blue", loi: "Art. 1 loi n°2022-1158 — max 3 000€/salarié", total: totalPPV, pct: Math.round((totalPPV / (3000 * n)) * 100), perEmployee: true, savingsLabel: `${fmt(Math.round(totalPPV * 0.45))}€ économisés vs primes classiques` },
-    { id: "navigo", title: "Navigo — taux uniforme", icon: "bus", color: "amber", loi: "Art. L3261-4 CT — exo jusqu'à 75%", total: totalNavigo, pct: Math.round(((s.navigo.pct - 50) / 25) * 100), perEmployee: false },
-    { id: "cadeaux", title: "Chèques cadeaux Noël", icon: "gift", color: "amber", loi: "Circ. URSSAF — plafond ~193€/événement", total: totalCadeaux, pct: Math.round((s.cadeaux.amount / 193) * 100), perEmployee: false },
-    { id: "vacances", title: "Chèques vacances", icon: "beach", color: "amber", loi: "Art. L411-9 Code tourisme — 30% SMIC", total: totalVacances, pct: Math.round((s.vacances.amount / 550) * 100), perEmployee: false },
-    { id: "resto", title: "Titres-restaurant", icon: "tools-kitchen-2", color: "green", loi: "Art. L3262-1 CT — exo part patronale 50-60%", total: restoTotal, pct: Math.round((s.resto.amount / s.resto.max) * 100), perEmployee: false, isResto: true },
+    { id: "ppv",      label: "PPV 2026",           icon: "coin",            color: t.blue,   total: totalPPVNew,  pct: Math.round((totalPPVNew / (3000 * Math.max(n,1))) * 100), desc: `${(activeEmp[0]?.ppv || 0)}€ / salarié configuré` },
+    { id: "navigo",   label: "Navigo",              icon: "bus",             color: t.amber,  total: totalNavigo,  pct: Math.round(((s.navigo.pct - 50) / 25) * 100), desc: `${s.navigo.pct}% pris en charge` },
+    { id: "cadeaux",  label: "Chèques cadeaux",     icon: "gift",            color: t.red,    total: totalCadeaux, pct: Math.round((s.cadeaux.amount / 193) * 100), desc: `${s.cadeaux.amount}€ / salarié / événement` },
+    { id: "vacances", label: "Chèques vacances",    icon: "beach",           color: t.purple, total: totalVacances,pct: Math.round((s.vacances.amount / 550) * 100), desc: `${s.vacances.amount}€ / salarié` },
+    { id: "resto",    label: "Titres-restaurant",   icon: "tools-kitchen-2", color: t.green,  total: restoTotal,   pct: Math.round((s.resto.amount / s.resto.max) * 100), desc: `${s.resto.amount}€/j — ${s.resto.pct}% patronal` },
   ];
 
-  return <div style={{ maxWidth: 880, animation: "pkRise 0.4s ease both" }}>
-    <div style={{ marginBottom: 18 }}>
-      <Badge text="Configuration" variant="blue" t={t} dot />
-      <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Scanner avantages</h1>
-      <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Configurez chaque dispositif — le calcul se met à jour en temps réel</p>
-    </div>
-    <div style={{ background: "linear-gradient(135deg, #1D4FCB 0%, #2563EB 50%, #1E3A8A 100%)", borderRadius: 20, padding: isMobile ? "20px" : "24px 28px", color: "#fff", marginBottom: 22, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, position: "relative", overflow: "hidden", boxShadow: `0 12px 32px -10px ${t.blue}77` }}>
-      <div style={{ ...glowDot("#60A5FA", 280, 0.45), top: "-50%", right: "16%" }} />
-      <div style={{ ...glowDot("#A78BFA", 200, 0.3), bottom: "-60%", left: "8%" }} />
-      <div style={{ position: "relative" }}>
-        <div style={{ fontSize: 12.5, opacity: 0.82, fontWeight: 600, marginBottom: 6 }}>Pouvoir d'achat total configuré</div>
-        <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.4, lineHeight: 1 }}>{fmt(grandTotal)} €</div>
-        <div style={{ fontSize: 12.5, opacity: 0.72, marginTop: 7 }}>pour {n} salarié{n > 1 ? "s" : ""} — ~{fmt(Math.round(grandTotal / Math.max(n, 1)))} €/pers.</div>
+  return (
+    <div style={{ maxWidth: 880, animation: "pkRise 0.4s ease both" }}>
+
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <Badge text="Tableau de bord" variant="blue" t={t} dot />
+        <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Scanner avantages</h1>
+        <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Vue d'ensemble de vos dispositifs — configurez les détails via les sous-catégories dans la sidebar</p>
       </div>
-      <div style={{ position: "relative", width: 120, height: 120 }}>
-        <svg width={120} height={120} style={{ transform: "rotate(-90deg)" }}>
-          <circle cx={60} cy={60} r={52} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={9} />
-          <circle cx={60} cy={60} r={52} fill="none" stroke="#fff" strokeWidth={9} strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 52} strokeDashoffset={2 * Math.PI * 52 * (1 - globalPct / 100)}
-            style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.34,1.2,0.64,1)" }} />
-        </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1 }}>{globalPct}%</div>
-          <div style={{ fontSize: 10.5, opacity: 0.75, marginTop: 3, fontWeight: 600 }}>optimisé</div>
+
+      {/* Hero */}
+      <div style={{ background: "linear-gradient(135deg, #1D4FCB 0%, #2563EB 50%, #1E3A8A 100%)", borderRadius: 20, padding: "24px 28px", color: "#fff", marginBottom: 22, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, position: "relative", overflow: "hidden", boxShadow: `0 12px 32px -10px ${t.blue}77` }}>
+        <div style={{ ...glowDot("#60A5FA", 280, 0.45), top: "-50%", right: "16%" }} />
+        <div style={{ ...glowDot("#A78BFA", 200, 0.3), bottom: "-60%", left: "8%" }} />
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 12.5, opacity: 0.82, fontWeight: 600, marginBottom: 6 }}>Pouvoir d'achat total configuré</div>
+          <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.4, lineHeight: 1 }}>{grandTotal.toLocaleString("fr-FR")} €</div>
+          <div style={{ fontSize: 12.5, opacity: 0.72, marginTop: 7 }}>pour {n} salarié{n > 1 ? "s" : ""} — ~{Math.round(grandTotal / Math.max(n, 1)).toLocaleString("fr-FR")} €/pers.</div>
         </div>
-      </div>
-    </div>
-
-    {items.map(item => {
-      const colorMap = { blue: t.blue, green: t.green, amber: t.amber };
-      const lightMap = { blue: t.blueLighter, green: t.greenLight, amber: t.amberLight };
-      const c = colorMap[item.color]; const cl = lightMap[item.color];
-      const isOpen = openItem === item.id;
-      const sv = s[item.id];
-
-      return <div key={item.id} {...lift(t)} style={{ background: t.card, borderRadius: 16, boxShadow: isOpen ? t.cardShadowHover : t.cardShadow, marginBottom: 12, overflow: "hidden", transition: "box-shadow 0.18s, transform 0.18s" }}>
-        <div onClick={() => setOpenItem(isOpen ? null : item.id)} style={{ padding: "16px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 13, borderLeft: `3px solid ${c}` }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${c}26, ${c}12)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${c}26` }}><Icon name={item.icon} size={18} color={c} /></div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 14.5, fontWeight: 700, color: t.text }}>{item.title}</span>
-                <Tooltip text={INFO_TEXTS[item.id]} t={t} />
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                {item.total > 0 && <span style={{ fontSize: 13, fontWeight: 800, color: c }}>{fmt(item.total)} € équipe</span>}
-                <Badge text={item.done ? "Activé" : item.total > 0 ? "Configuré" : "À activer"} variant={item.done ? "green" : item.total > 0 ? "blue" : "amber"} t={t} dot />
-                <div style={{ width: 26, height: 26, borderRadius: 8, background: t.bgSecondary, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}>
-                  <Icon name="chevron-down" size={15} color={t.textSec} />
-                </div>
-              </div>
-            </div>
-            <Bar pct={item.pct} color={c} h={5} />
+        <div style={{ position: "relative", width: 120, height: 120 }}>
+          <svg width={120} height={120} style={{ transform: "rotate(-90deg)" }}>
+            <circle cx={60} cy={60} r={52} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={9} />
+            <circle cx={60} cy={60} r={52} fill="none" stroke="#fff" strokeWidth={9} strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 52} strokeDashoffset={2 * Math.PI * 52 * (1 - globalPct / 100)}
+              style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.34,1.2,0.64,1)" }} />
+          </svg>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1 }}>{globalPct}%</div>
+            <div style={{ fontSize: 10.5, opacity: 0.75, marginTop: 3, fontWeight: 600 }}>optimisé</div>
           </div>
         </div>
-        {isOpen && <div style={{ borderTop: `1px solid ${t.borderSoft}`, padding: "18px 18px" }}>
-          <span style={{ fontSize: 11, color: t.textSec, fontFamily: "monospace", background: t.bgSecondary, padding: "4px 11px", borderRadius: 7, display: "inline-block", marginBottom: 14, border: `1px solid ${t.borderSoft}` }}>{item.loi}</span>
+      </div>
 
-          {item.perEmployee ? (
-            <div>
-              {/* PPV — type versement */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                {["Premier versement", "Versement complémentaire"].map(type => {
-                  const sel = (s.ppv_type?.value || "Premier versement") === type;
-                  return <button key={type} onClick={() => update("ppv_type", "value", type)}
-                    style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${sel ? c : t.border}`, background: sel ? cl : "transparent", color: sel ? c : t.textSec, fontSize: 12, fontWeight: sel ? 500 : 400, cursor: "pointer", fontFamily: font }}>
-                    {type}
-                  </button>;
-                })}
-              </div>
-
-              {(s.ppv_type?.value || "Premier versement") === "Versement complémentaire" && (
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ background: t.amberLight, borderRadius: 8, padding: "10px 14px", fontSize: 12, color: t.amber, marginBottom: 14, lineHeight: 1.5 }}>
-                    ⚠️ Un versement complémentaire nécessite une <strong>DUE modificative</strong> faisant référence à la DUE initiale. Renseignez les montants déjà versés pour calculer le reliquat disponible.
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 10 }}>Montants déjà versés cette année par salarié</div>
-                  {activeEmp.map(emp => {
-                    const already = s.ppv_already?.[emp.id] || 0;
-                    const reliquat = Math.max(0, 3000 - already);
-                    return (
-                      <div key={emp.id} style={{ display: "flex", alignItems: "center", gap: 12, background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", marginBottom: 6 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: t.amberLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, color: t.amber, flexShrink: 0 }}>{emp.initials}</div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{emp.firstName} {emp.lastName}</div>
-                          <div style={{ fontSize: 11, color: t.textSec }}>Reliquat : <strong style={{ color: reliquat > 0 ? t.green : t.red }}>{fmt(reliquat)}€</strong> disponibles</div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <input type="range" min={0} max={3000} step={100} value={already}
-                            onChange={e => setScannerState(p => ({ ...p, ppv_already: { ...p.ppv_already, [emp.id]: parseInt(e.target.value) } }))}
-                            style={{ width: 100, accentColor: t.amber }} />
-                          <span style={{ fontSize: 14, fontWeight: 600, color: t.amber, minWidth: 52, textAlign: "right" }}>{fmt(already)}€</span>
-                        </div>
-                      </div>
-                    );
-                  })}
+      {/* Grille dispositifs */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {items.map(item => {
+          const isActive = item.total > 0;
+          return (
+            <div key={item.id} style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, padding: "18px 20px", border: `1px solid ${t.borderSoft}`, opacity: isActive ? 1 : 0.55, transition: "opacity 0.2s" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: `${item.color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${item.color}28` }}>
+                  <Icon name={item.icon} size={20} color={item.color} />
                 </div>
-              )}
-
-              <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 10 }}>
-                {(s.ppv_type?.value || "Premier versement") === "Versement complémentaire" ? "Nouveau versement à configurer" : "Montant par salarié"}
-                <span style={{ fontSize: 12, color: t.textSec, fontWeight: 400, marginLeft: 6 }}>(modulable par ancienneté ou classification)</span>
-              </div>
-
-              {activeEmp.map(emp => {
-                const already = (s.ppv_type?.value === "Versement complémentaire") ? (s.ppv_already?.[emp.id] || 0) : 0;
-                const maxAllowed = Math.max(0, 3000 - already);
-                const currentPPV = Math.min(emp.ppv || 0, maxAllowed);
-                const totalAnnual = already + currentPPV;
-                return (
-                  <div key={emp.id} style={{ background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, color: t.blue, flexShrink: 0 }}>{emp.initials}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{emp.firstName} {emp.lastName}</div>
-                        <div style={{ fontSize: 11, color: t.textSec }}>{emp.seniority} mois d'ancienneté</div>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <input type="range" min={0} max={maxAllowed} step={100} value={currentPPV}
-                          onChange={e => onUpdateEmployeePPV(emp.id, parseInt(e.target.value))}
-                          style={{ width: 110, accentColor: c }} />
-                        <span style={{ fontSize: 15, fontWeight: 600, color: c, minWidth: 56, textAlign: "right" }}>{fmt(currentPPV)}€</span>
-                      </div>
-                    </div>
-                    {already > 0 && (
-                      <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
-                        <div style={{ flex: 1, background: t.amberLight, borderRadius: 6, padding: "5px 8px", fontSize: 11, color: t.amber, textAlign: "center" }}>Déjà versé : {fmt(already)}€</div>
-                        <div style={{ flex: 1, background: cl, borderRadius: 6, padding: "5px 8px", fontSize: 11, color: c, textAlign: "center" }}>Ce versement : {fmt(currentPPV)}€</div>
-                        <div style={{ flex: 1, background: t.card, borderRadius: 6, padding: "5px 8px", fontSize: 11, color: t.text, textAlign: "center", fontWeight: 600, border: `1px solid ${t.border}` }}>Total annuel : {fmt(totalAnnual)}€</div>
-                      </div>
-                    )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: t.text }}>{item.label}</span>
+                    <Badge text={isActive ? "Actif" : "Non configuré"} variant={isActive ? "green" : "amber"} t={t} dot />
                   </div>
-                );
-              })}
-
-              {/* Récap global */}
-              {(() => {
-                const isComplement = s.ppv_type?.value === "Versement complémentaire";
-                const totalAlready = activeEmp.reduce((sum, e) => sum + (s.ppv_already?.[e.id] || 0), 0);
-                const totalNew = activeEmp.reduce((sum, e) => {
-                  const already = isComplement ? (s.ppv_already?.[e.id] || 0) : 0;
-                  return sum + Math.min(e.ppv || 0, Math.max(0, 3000 - already));
-                }, 0);
-                const totalAnnual = totalAlready + totalNew;
-                return (
-                  <div style={{ background: cl, borderRadius: 10, padding: "12px 16px", marginTop: 10 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : (isComplement ? "1fr 1fr 1fr" : "1fr 1fr"), gap: 12 }}>
-                      {isComplement && (
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: 11, color: c, marginBottom: 2 }}>Déjà versé (année)</div>
-                          <div style={{ fontSize: 18, fontWeight: 600, color: t.amber }}>{fmt(totalAlready)} €</div>
-                        </div>
-                      )}
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 11, color: c, marginBottom: 2 }}>{isComplement ? "Ce versement" : "Total équipe"}</div>
-                        <div style={{ fontSize: 18, fontWeight: 600, color: c }}>{fmt(totalNew)} €</div>
-                      </div>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 11, color: c, marginBottom: 2 }}>{isComplement ? "Total annuel équipe" : "Plafond restant"}</div>
-                        <div style={{ fontSize: 18, fontWeight: 600, color: c }}>{isComplement ? fmt(totalAnnual) : fmt(3000 * n - totalNew)} €</div>
-                      </div>
-                    </div>
-                    {isComplement && totalAnnual > 0 && (
-                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c}22`, fontSize: 12, color: c, textAlign: "center" }}>
-                        Économie totale vs primes classiques : <strong>~{fmt(Math.round(totalAnnual * 0.45))} €</strong> de charges
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              <div style={{ marginTop: 12, background: t.bgSecondary, borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontSize: 12, color: t.textSec }}>📄 {(s.ppv_type?.value || "Premier versement") === "Versement complémentaire" ? "DUE modificative" : "DUE initiale"} pré-remplie + mémo comptable</div>
-                <button onClick={() => downloadKit("ppv", { company, employees, scannerState, ppvType: s.ppv_type?.value || "Premier versement" })}
-                  style={{ padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.blue}`, background: t.blueLighter, color: t.blue, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Icon name="download" size={14} color={t.blue} /> Télécharger le kit Perky
-                </button>
+                  <div style={{ fontSize: 12.5, color: t.textSec, marginBottom: 8 }}>{item.desc}</div>
+                  <Bar pct={item.pct} color={item.color} h={6} />
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: item.color, letterSpacing: -0.5 }}>{item.total.toLocaleString("fr-FR")} €</div>
+                  <div style={{ fontSize: 11, color: t.textTert, marginTop: 2 }}>/an équipe</div>
+                </div>
               </div>
             </div>
+          );
+        })}
+      </div>
 
-          ) : item.isResto ? (
-            <div>
-              {/* RESTO — double slider */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Montant facial du billet</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: c }}>{sv.amount}€</span>
-                </div>
-                <input type="range" min={8} max={15} step={0.5} value={sv.amount}
-                  onChange={e => update("resto", "amount", parseFloat(e.target.value))}
-                  style={{ width: "100%", accentColor: c, cursor: "pointer", marginBottom: 4 }} />
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: t.textTert }}>
-                  <span>8€ (min recommandé)</span><span>15€</span>
-                </div>
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Part prise en charge par l'entreprise</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: c }}>{sv.pct}%</span>
-                    <span style={{ fontSize: 12, color: t.textSec }}>({(sv.amount * sv.pct / 100).toFixed(2)}€/billet)</span>
-                    {(sv.pct < 50 || sv.pct > 60) && <span style={{ fontSize: 11, color: t.red, background: t.redLight, padding: "2px 8px", borderRadius: 6 }}>⚠️ Hors zone exo</span>}
-                    {sv.pct >= 50 && sv.pct <= 60 && <span style={{ fontSize: 11, color: t.green, background: t.greenLight, padding: "2px 8px", borderRadius: 6 }}>✓ Exonéré</span>}
-                  </div>
-                </div>
-                <input type="range" min={40} max={70} step={1} value={sv.pct}
-                  onChange={e => update("resto", "pct", parseInt(e.target.value))}
-                  style={{ width: "100%", accentColor: sv.pct >= 50 && sv.pct <= 60 ? c : t.red, cursor: "pointer", marginBottom: 4 }} />
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: t.textTert }}>
-                  <span>40%</span>
-                  <span style={{ color: t.green, fontWeight: 500 }}>Zone exonérée : 50% → 60%</span>
-                  <span>70%</span>
-                </div>
-              </div>
-              {sv.amount > 0 && (
-                <div style={{ background: cl, borderRadius: 10, padding: "12px 16px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>
-                    <div><div style={{ fontSize: 11, color: c }}>Part patronale/billet</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{(sv.amount * sv.pct / 100).toFixed(2)}€</div></div>
-                    <div><div style={{ fontSize: 11, color: c }}>Part salarié/billet</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{(sv.amount * (1 - sv.pct / 100)).toFixed(2)}€</div></div>
-                    <div><div style={{ fontSize: 11, color: c }}>Pouvoir d'achat équipe/an</div><div style={{ fontSize: 16, fontWeight: 600, color: c }}>{fmt(restoTotal)}€</div></div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-          ) : (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{item.id === "navigo" ? `${sv.pct}% remboursés` : `${fmt(sv.amount || 0)}€/salarié`}</span>
-                <span style={{ fontSize: 12, color: t.textSec }}>Plafond : {item.id === "navigo" ? "75%" : `${fmt(s[item.id]?.max || 0)}€`}</span>
-              </div>
-              <input type="range" min={item.id === "navigo" ? 50 : 0} max={item.id === "navigo" ? 75 : (s[item.id]?.max || 500)} step={item.id === "navigo" ? 5 : item.id === "vacances" ? 50 : 10}
-                value={item.id === "navigo" ? sv.pct : (sv.amount || 0)}
-                onChange={e => update(item.id, item.id === "navigo" ? "pct" : "amount", parseInt(e.target.value))}
-                style={{ width: "100%", accentColor: c, cursor: "pointer", marginBottom: 8 }} />
-              {item.total > 0 && <div style={{ background: cl, borderRadius: 10, padding: "12px 16px", display: "flex", justifyContent: "space-between" }}>
-                <div style={{ fontSize: 11, color: c, flex: 1 }}>{item.savingsLabel || `Total équipe`}</div>
-                <div style={{ textAlign: "right" }}><div style={{ fontSize: 11, color: c }}>Total</div><div style={{ fontSize: 20, fontWeight: 600, color: c }}>{fmt(item.total)}€</div></div>
-              </div>}
-              {!item.done && item.total > 0 && (
-                <button onClick={() => downloadKit(item.id, { company, employees, scannerState })}
-                  style={{ marginTop: 10, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.blue}`, background: t.blueLighter, color: t.blue, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Icon name="download" size={14} color={t.blue} /> Télécharger le kit Perky
-                </button>
-              )}
-            </div>
-          )}
-        </div>}
-      </div>;
-    })}
-    <div style={{ background: t.amberLight, borderRadius: 14, padding: "14px 16px", fontSize: 12.5, color: t.amberDeep, lineHeight: 1.6, display: "flex", gap: 9, alignItems: "flex-start", border: `1px solid ${t.amber}26`, marginTop: 4 }}>
-      <Icon name="alert-triangle" size={16} color={t.amber} />
-      <span>Estimations indicatives basées sur les plafonds légaux 2026. À valider avec votre expert-comptable.</span>
+      <div style={{ background: t.amberLight, borderRadius: 14, padding: "14px 16px", fontSize: 12.5, color: t.amberDeep, lineHeight: 1.6, display: "flex", gap: 9, alignItems: "flex-start", border: `1px solid ${t.amber}26`, marginTop: 16 }}>
+        <Icon name="alert-triangle" size={16} color={t.amber} />
+        <span>Estimations indicatives basées sur les plafonds légaux 2026. Configurez chaque dispositif via les sous-catégories, puis validez avec votre expert-comptable.</span>
+      </div>
     </div>
-  </div>;
+  );
 }
 
 // ─── BOSS HOME ────────────────────────────────────────────────────────
@@ -2787,17 +2664,1772 @@ const empNav = [
   { id: "guide", label: "Aide & Guides", icon: "help-circle" },
   { id: "settings", label: "Paramètres", icon: "settings" },
 ];
+// ─── BOSS SUB KIT (Sous-catégories Scanner) ──────────────────────────
+function BossSubKit({ kitId, employees, scannerState, setScannerState, company, t }) {
+  const isMobile = useIsMobile();
+  const activeEmp = employees.filter(e => e.active);
+  const n = activeEmp.length;
+  const s = scannerState;
+  const companyName = company?.name || "Votre entreprise";
+  const siret = company?.siret || "[SIRET à compléter]";
+  const today = new Date().toLocaleDateString("fr-FR");
+  const update = (key, field, val) => setScannerState(p => ({ ...p, [key]: { ...p[key], [field]: val } }));
+
+  // ── CONSTANTES LÉGALES 2026 ────────────────────────────────────────
+  const PMSS_2026 = 3924;          // Plafond Mensuel Sécurité Sociale 2026
+  const SMIC_MENSUEL_2026 = 1801.80; // SMIC brut mensuel 2026
+  const RESTO_PLAFOND_PATRON = 7.63; // Part patronale max exonérée 2026
+  const CADEAUX_PLAFOND = 193;     // 5% PMSS 2026
+  const NAVIGO_MENSUEL = 86.40;    // Pass Navigo mensuel 2026
+  const VACANCES_PLAFOND_MAX = 1800; // Max contribution patronale annuelle/salarié
+
+  // ── STATE SPÉCIFIQUES PAR MODULE ──────────────────────────────────
+  // Navigo
+  const [navigoCertif, setNavigoCertif] = useState(false);
+  // Resto
+  const [restoCertif, setRestoCertif] = useState(false);
+  // Cadeaux
+  const [cadeauxEvent, setCadeauxEvent] = useState(s.cadeaux?.event || "");
+  const [cadeauxCertif, setCadeauxCertif] = useState(false);
+  // Vacances — profil par salarié {tranche: "A"|"B", enfants: number}
+  const [vacancesProfiles, setVacancesProfiles] = useState(
+    Object.fromEntries(activeEmp.map(e => [e.id, { tranche: "A", enfants: 0, abondement: s.vacances?.amount || 0 }]))
+  );
+
+  const currentVal = s[kitId] || {};
+
+  // ── MOTEUR DE WARNINGS ─────────────────────────────────────────────
+  const warnings = [];
+  const blockingWarnings = [];
+
+  // ── RESTO ──────────────────────────────────────────────────────────
+  if (kitId === "resto") {
+    const pct = currentVal.pct || 55;
+    const amount = currentVal.amount || 0;
+    const partPatronale = amount * (pct / 100);
+
+    if (pct < 50 || pct > 60) {
+      blockingWarnings.push({ text: `🚨 BLOQUANT — La prise en charge patronale doit être comprise entre 50% et 60% pour bénéficier de l'exonération (Art. L3262-1 CT). Valeur actuelle : ${pct}%. Ajustez le curseur.`, blocking: true });
+    }
+    if (amount > 0 && partPatronale > RESTO_PLAFOND_PATRON) {
+      warnings.push({ text: `⚠️ Votre part patronale (${partPatronale.toFixed(2)}€/ticket) dépasse le plafond d'exonération 2026 de ${RESTO_PLAFOND_PATRON}€. Le surplus de ${(partPatronale - RESTO_PLAFOND_PATRON).toFixed(2)}€ par ticket sera soumis à cotisations sociales. Pensez à ajuster la valeur faciale ou le taux.`, blocking: false });
+    }
+  }
+
+  // ── NAVIGO ─────────────────────────────────────────────────────────
+  if (kitId === "navigo") {
+    const pct = currentVal.pct || 50;
+    if (pct > 50) {
+      warnings.push({ text: `⚠️ Règle d'égalité de traitement (Art. L3261-4 CT) : Ce taux de ${pct}% doit être appliqué uniformément à tous les salariés qui présentent un justificatif de transport en commun. Aucune distinction individuelle n'est autorisée.`, blocking: false });
+    }
+    if (pct === 100) {
+      warnings.push({ text: `ℹ️ Prise en charge à 100% : L'exonération totale est possible sous conditions spécifiques (accord de branche ou d'entreprise). Vérifiez la conformité avec votre expert-comptable avant application.`, blocking: false });
+    }
+  }
+
+  // ── CHÈQUES CADEAUX ────────────────────────────────────────────────
+  if (kitId === "cadeaux") {
+    const amount = currentVal.amount || 0;
+    if (amount > CADEAUX_PLAFOND) {
+      blockingWarnings.push({ text: `🚨 RISQUE MAJEUR — Le montant de ${amount}€ dépasse le plafond d'exonération de ${CADEAUX_PLAFOND}€ par événement (5% du PMSS 2026). Attention : en cas de dépassement, l'URSSAF redresse la TOTALITÉ de la somme dès le premier euro — pas seulement le surplus. Réduisez le montant ou justifiez un second événement URSSAF distinct.`, blocking: true });
+    }
+    if (amount > 0 && !cadeauxEvent) {
+      blockingWarnings.push({ text: `🚨 BLOQUANT — Vous devez sélectionner un événement URSSAF officiel pour justifier l'attribution des bons d'achat. Sans événement, la totalité est soumise à charges.`, blocking: true });
+    }
+  }
+
+  // ── CHÈQUES VACANCES ───────────────────────────────────────────────
+  if (kitId === "vacances") {
+    const plafondGlobal = (n * VACANCES_PLAFOND_MAX) / 2;
+    const totalAbondement = Object.values(vacancesProfiles).reduce((sum, p) => sum + (p.abondement || 0), 0);
+
+    if (totalAbondement > plafondGlobal) {
+      blockingWarnings.push({ text: `🚨 PLAFOND ENTREPRISE DÉPASSÉ — La somme totale des contributions ANCV (${totalAbondement.toLocaleString("fr-FR")}€) dépasse le plafond légal annuel de l'entreprise : ${plafondGlobal.toLocaleString("fr-FR")}€ (n×1800€ / 2). Réduisez les abondements.`, blocking: true });
+    }
+
+    Object.entries(vacancesProfiles).forEach(([empId, profile]) => {
+      const emp = activeEmp.find(e => e.id === parseInt(empId));
+      if (!emp) return;
+      const plafondSmic30 = SMIC_MENSUEL_2026 * 0.30;
+      const abondementMax = Math.min(profile.abondement || 0, VACANCES_PLAFOND_MAX);
+      const abondementMensuelImplicite = abondementMax / 12;
+
+      if ((profile.abondement || 0) > 0 && abondementMensuelImplicite > plafondSmic30) {
+        warnings.push({ text: `⚠️ ${emp.firstName} ${emp.lastName} : L'abondement mensuel implicite (${abondementMensuelImplicite.toFixed(0)}€/mois) dépasse 30% du SMIC mensuel (${plafondSmic30.toFixed(0)}€). Le surplus sera soumis à cotisations (Art. L411-9 Code tourisme).`, blocking: false });
+      }
+    });
+  }
+
+  const hasBlocking = blockingWarnings.length > 0;
+  const canPrint = !hasBlocking && (
+    (kitId === "navigo" && navigoCertif) ||
+    (kitId === "resto" && restoCertif) ||
+    (kitId === "cadeaux" && cadeauxCertif && !!cadeauxEvent) ||
+    (kitId === "vacances")
+  );
+
+  // ── CALCUL TOTAL ───────────────────────────────────────────────────
+  const getTotal = () => {
+    if (kitId === "navigo") {
+      const extra = Math.round(((currentVal.pct || 50) - 50) / 100 * NAVIGO_MENSUEL * 12);
+      return extra * n;
+    }
+    if (kitId === "resto") {
+      return Math.round((currentVal.amount || 0) * ((currentVal.pct || 55) / 100) * 220 * n);
+    }
+    if (kitId === "vacances") {
+      return Object.values(vacancesProfiles).reduce((sum, p) => sum + (p.abondement || 0), 0);
+    }
+    return (currentVal.amount || 0) * n;
+  };
+  const total = getTotal();
+
+  // ── MÉTA ───────────────────────────────────────────────────────────
+  const KIT_META = {
+    resto: {
+      label: "Titres-restaurant",
+      icon: "tools-kitchen-2",
+      color: t.green,
+      badge: "green",
+      loi: "Art. L3262-1 CT — exonération de la part patronale entre 50% et 60% de la valeur faciale, dans la limite de 7,63€/ticket (2026)",
+      ctp: "Pas de CTP spécifique — rubrique d'abondement standard sur bulletin de paie",
+    },
+    navigo: {
+      label: "Transport Navigo",
+      icon: "bus",
+      color: t.amber,
+      badge: "amber",
+      loi: "Art. L3261-2 CT (obligation 50%) & Art. L3261-4 CT (exonération jusqu'à 75%). Prise en charge à 100% possible sous accord collectif.",
+      ctp: "Pas de CTP DSN spécifique — indiquer sur bulletin la ligne 'Remboursement frais transport'",
+    },
+    vacances: {
+      label: "Chèques vacances ANCV",
+      icon: "beach",
+      color: t.purple,
+      badge: "purple",
+      loi: "Art. L411-1 à L411-17 Code du tourisme — contribution patronale exonérée dans la limite de 30% du SMIC mensuel brut et 1 800€/an/salarié",
+      ctp: "CTP 226 — Chèques-vacances (contribution patronale exonérée)",
+    },
+    cadeaux: {
+      label: "Bons d'achat / Chèques cadeaux",
+      icon: "gift",
+      color: t.red,
+      badge: "red",
+      loi: "Circulaire URSSAF du 7 juillet 2004 — plafond 5% du PMSS 2026 = 193€ par événement et par salarié. Règle du premier euro en cas de dépassement.",
+      ctp: "Pas de CTP DSN — les bons d'achat exonérés ne figurent pas en DSN si dans les plafonds",
+    },
+  };
+
+  const meta = KIT_META[kitId];
+  if (!meta) return null;
+
+  // ── IMPRESSION ─────────────────────────────────────────────────────
+  const handlePrint = () => {
+    const pct = currentVal.pct || 55;
+    const amount = currentVal.amount || 0;
+    const partPatronale = kitId === "resto" ? (amount * pct / 100) : 0;
+    const navExtra = kitId === "navigo" ? Math.round(((pct - 50) / 100) * NAVIGO_MENSUEL * 12) : 0;
+    const plafondGlobal = kitId === "vacances" ? ((n * VACANCES_PLAFOND_MAX) / 2) : 0;
+
+    const vacancesRows = kitId === "vacances" ? activeEmp.map(e => {
+      const p = vacancesProfiles[e.id] || { tranche: "A", enfants: 0, abondement: 0 };
+      const tauxBase = p.tranche === "A" ? 80 : 50;
+      const bonusEnfants = Math.min((p.enfants || 0) * 5, 10);
+      const tauxMax = tauxBase + bonusEnfants;
+      return `<tr><td>${e.firstName} ${e.lastName}</td><td>${p.tranche === "A" ? "≤ 3 924€/mois" : "> 3 924€/mois"}</td><td>${p.enfants || 0}</td><td>${tauxMax}%</td><td style="font-weight:700;color:#185FA5">${(p.abondement || 0).toLocaleString("fr-FR")}€/an</td></tr>`;
+    }).join("") : "";
+
+    const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8">
+<title>Kit ${meta.label} — ${companyName}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; max-width: 730px; margin: 30px auto; color: #1a1a1a; font-size: 13.5px; line-height: 1.65; }
+  .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #185FA5; padding-bottom: 12px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 700; color: #185FA5; }
+  .kit-tag { font-size: 11px; color: #888; background: #f0f4ff; padding: 3px 10px; border-radius: 12px; }
+  h1 { font-size: 20px; font-weight: 700; color: #185FA5; margin: 0 0 4px; }
+  h2 { font-size: 13px; font-weight: 700; color: #185FA5; border-bottom: 2px solid #e8eef8; padding-bottom: 5px; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .info-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  .info-table td { padding: 7px 12px; border: 1px solid #ddd; font-size: 13px; }
+  .info-table td:first-child { background: #EAF1FB; font-weight: 600; width: 40%; }
+  .data-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px; }
+  .data-table th { padding: 8px 10px; background: #185FA5; color: #fff; font-weight: 600; text-align: left; font-size: 11.5px; }
+  .data-table td { padding: 8px 10px; border: 1px solid #e0e0e0; }
+  .data-table tr:nth-child(even) td { background: #f7f9fc; }
+  .highlight { background: #EAF5F1; border-left: 4px solid #0EA371; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 13px; }
+  .loi-box { background: #EAF1FB; border-left: 4px solid #185FA5; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 12.5px; }
+  .warn-box { background: #FFF8ED; border-left: 4px solid #F59E0B; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 12.5px; color: #92400E; }
+  .ctp-box { background: #F0F4FF; border: 2px solid #185FA5; border-radius: 8px; padding: 14px 18px; margin: 14px 0; }
+  .disclaimer { margin-top: 24px; padding: 12px 16px; background: #f8f8f8; border-left: 3px solid #aaa; font-size: 11.5px; color: #666; font-style: italic; line-height: 1.6; }
+  .sig { margin-top: 28px; display: flex; gap: 40px; }
+  .sig-line { flex: 1; }
+  .sig-line .line { border-bottom: 1.5px solid #ccc; height: 36px; margin-bottom: 4px; }
+  .checkbox-line { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0; font-size: 13px; }
+  .checkbox-box { width: 14px; height: 14px; border: 1.5px solid #333; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  @media print { body { margin: 15px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="logo">PERKY</span>
+  <span class="kit-tag">Kit ${meta.label} — 2026</span>
+</div>
+<h1>${meta.label} — Décision & Mémo Comptable 2026</h1>
+<p style="color:#888;font-size:12px">Société : <strong>${companyName}</strong> · SIRET : ${siret} · ${n} salarié${n > 1 ? "s" : ""} · Généré le ${today}</p>
+
+<div class="loi-box"><strong>📚 Base légale :</strong> ${meta.loi}</div>
+
+<h2>Configuration validée par l'employeur</h2>
+<table class="info-table">
+  <tr><td>Société</td><td>${companyName}</td></tr>
+  <tr><td>SIRET</td><td>${siret}</td></tr>
+  <tr><td>Effectif concerné</td><td>${n} salarié${n > 1 ? "s" : ""}</td></tr>
+  ${kitId === "resto" ? `
+  <tr><td>Valeur faciale du ticket</td><td><strong>${amount}€ / repas / jour</strong></td></tr>
+  <tr><td>Part patronale</td><td><strong>${pct}%</strong> soit <strong>${partPatronale.toFixed(2)}€ / ticket</strong></td></tr>
+  <tr><td>Part salariale</td><td><strong>${(100 - pct)}%</strong> soit <strong>${(amount - partPatronale).toFixed(2)}€ / ticket</strong></td></tr>
+  <tr><td>Plafond exo. 2026</td><td>7,63€ / ticket — ${partPatronale <= 7.63 ? "✅ Conforme" : "⚠️ Dépassé"}</td></tr>
+  <tr><td>Jours de travail estimés/an</td><td>220 jours</td></tr>
+  <tr><td>Coût patronal annuel total</td><td><strong style="color:#185FA5">${total.toLocaleString("fr-FR")}€</strong> (${n} salariés)</td></tr>
+  ` : ""}
+  ${kitId === "navigo" ? `
+  <tr><td>Taux de remboursement</td><td><strong>${currentVal.pct || 50}%</strong> du Pass Navigo</td></tr>
+  <tr><td>Gain net annuel / salarié</td><td><strong>+${navExtra.toLocaleString("fr-FR")}€/an</strong> vs remboursement légal 50%</td></tr>
+  <tr><td>Gain total équipe</td><td><strong style="color:#185FA5">+${(navExtra * n).toLocaleString("fr-FR")}€/an</strong></td></tr>
+  <tr><td>Condition</td><td>Justificatif nominatif obligatoire (mensuel ou annuel)</td></tr>
+  ` : ""}
+  ${kitId === "cadeaux" ? `
+  <tr><td>Événement URSSAF</td><td><strong>${cadeauxEvent || "—"}</strong></td></tr>
+  <tr><td>Montant par salarié</td><td><strong>${amount}€</strong></td></tr>
+  <tr><td>Plafond 2026</td><td>193€ par événement — ${amount <= 193 ? "✅ Conforme" : "🚨 DÉPASSÉ"}</td></tr>
+  <tr><td>Budget total</td><td><strong style="color:#185FA5">${(amount * n).toLocaleString("fr-FR")}€</strong></td></tr>
+  ` : ""}
+  ${kitId === "vacances" ? `
+  <tr><td>PMSS 2026</td><td>${PMSS_2026.toLocaleString("fr-FR")}€/mois</td></tr>
+  <tr><td>Plafond global entreprise</td><td>${plafondGlobal.toLocaleString("fr-FR")}€ (${n} sal. × 1 800€ / 2)</td></tr>
+  <tr><td>Total abondements</td><td><strong style="color:#185FA5">${total.toLocaleString("fr-FR")}€</strong></td></tr>
+  ` : ""}
+</table>
+
+${kitId === "vacances" ? `
+<h2>Détail par salarié</h2>
+<table class="data-table">
+  <thead><tr><th>Salarié</th><th>Tranche salaire</th><th>Enfants à charge</th><th>Taux max</th><th>Abondement / an</th></tr></thead>
+  <tbody>${vacancesRows}</tbody>
+</table>
+` : ""}
+
+<div class="ctp-box">
+  <div style="font-size:13px;font-weight:700;color:#185FA5;margin-bottom:6px">📋 Code Type de Personnel (CTP) & Instructions DSN</div>
+  <div style="font-size:13px;color:#333">${meta.ctp}</div>
+</div>
+
+<h2>Instructions pour votre gestionnaire de paie</h2>
+<ul style="font-size:13px;line-height:2.2">
+  ${kitId === "resto" ? `
+  <li>Intégrer les titres-restaurant via les <strong>rubriques d'abondement standard</strong> sur les bulletins de paie</li>
+  <li>Part patronale : <strong>${partPatronale.toFixed(2)}€ / ticket</strong> — exonérée dans la limite de <strong>7,63€</strong> (plafond 2026)</li>
+  <li>${partPatronale > 7.63 ? `<strong style="color:#DC2F36">⚠️ Surplus soumis à charges : ${(partPatronale - 7.63).toFixed(2)}€/ticket</strong>` : "Part patronale conforme — exonération totale applicable"}</li>
+  <li>Ne distribuer les titres qu'aux <strong>jours effectivement travaillés</strong> (hors congés, RTT, maladie, remboursement note de frais repas)</li>
+  <li>Conservation des justificatifs de remise pendant 5 ans</li>
+  ` : ""}
+  ${kitId === "navigo" ? `
+  <li>Modifier le taux de prise en charge transport de <strong>50% → ${currentVal.pct || 50}%</strong> sur les bulletins de paie</li>
+  <li>Exiger un <strong>justificatif nominatif</strong> du salarié (mensuel ou annuel) avant tout remboursement</li>
+  <li>Appliquer ce taux de manière <strong>uniforme</strong> à tous les salariés présentant un justificatif (principe d'égalité de traitement)</li>
+  <li>Pour les salariés à temps partiel < 17,5h/semaine : proratiser le remboursement</li>
+  <li>Ce remboursement est <strong>exonéré de cotisations et non imposable</strong> pour les salariés</li>
+  ` : ""}
+  ${kitId === "cadeaux" ? `
+  <li>Attribuer les bons d'achat <strong>uniquement à l'occasion de l'événement</strong> : <strong>${cadeauxEvent}</strong></li>
+  <li>Montant : <strong>${amount}€ / salarié</strong> — ${amount <= 193 ? "✅ Dans le plafond de 193€ : aucune cotisation sociale" : "🚨 Dépassement — cotisations dues sur la totalité"}</li>
+  <li>Les bons doivent être utilisables pour des <strong>biens en rapport avec l'événement</strong> (ex: jouets, culture, alimentaire pour Noël)</li>
+  <li>Conserver les <strong>preuves d'attribution</strong> (listes nominatives, factures fournisseur) pendant 5 ans</li>
+  <li>${amount <= 193 ? "Pas de mention en DSN si dans les plafonds" : "À déclarer en DSN comme avantage en nature"}</li>
+  ` : ""}
+  ${kitId === "vacances" ? `
+  <li>Enregistrer les contributions ANCV en paie avec le <strong>CTP 226</strong></li>
+  <li>Vérifier pour chaque salarié que l'abondement mensuel implicite ne dépasse pas <strong>30% du SMIC brut mensuel (${(SMIC_MENSUEL_2026 * 0.30).toFixed(0)}€)</strong></li>
+  <li>Plafond annuel par salarié : <strong>1 800€ maximum</strong></li>
+  <li>La contribution du salarié doit représenter <strong>au minimum 20%</strong> du montant total du chèque vacances</li>
+  <li>Les chèques vacances sont <strong>exonérés d'impôt sur le revenu</strong> pour le salarié</li>
+  ` : ""}
+</ul>
+
+${kitId === "navigo" || kitId === "resto" ? `
+<h2>Engagement de l'employeur</h2>
+<div class="checkbox-line">
+  <div class="checkbox-box">✓</div>
+  <span>${kitId === "navigo"
+    ? "Je certifie que le remboursement est conditionné à la fourniture mensuelle ou annuelle d'un justificatif de transport nominatif par le salarié."
+    : "Je m'engage à ne distribuer les titres-restaurant qu'aux salariés présents (hors jours de congé, RTT, maladie ou notes de frais de repas)."
+  }</span>
+</div>
+` : ""}
+
+<div class="disclaimer">
+  <strong>Mention de responsabilité Perky :</strong> Ce document a été prémâché sur la base des paramètres déclarés par l'employeur. L'expert-comptable et le gestionnaire de paie demeurent seuls responsables de la vérification de la conformité des bulletins de paie, du respect des plafonds légaux individuels et de la transmission DSN. Perky ne saurait être tenu responsable d'inexactitudes dans les déclarations de l'employeur.
+</div>
+
+<div class="sig">
+  <div class="sig-line">
+    <div class="line"></div>
+    <div style="font-size:11px;color:#888">Fait à ________________, le ${today}</div>
+  </div>
+  <div class="sig-line">
+    <div class="line"></div>
+    <div style="font-size:11px;color:#888">Signature du dirigeant</div>
+  </div>
+</div>
+
+<div style="margin-top:20px;font-size:11px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:12px">
+  Document généré par Perky · ${today} · perky.fr · Confidentiel
+</div>
+</body></html>`;
+
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 600); }
+  };
+
+  // ── RENDU ──────────────────────────────────────────────────────────
+  const inputStyle = (focusColor) => ({
+    width: "100%", padding: "11px 14px", border: `1.5px solid ${t.border}`, borderRadius: 12,
+    fontSize: 15, fontFamily: font, outline: "none", background: t.bgTint, color: t.text, boxSizing: "border-box",
+  });
+
+  const WarnBox = ({ text, blocking }) => (
+    <div style={{
+      padding: "13px 16px", borderRadius: 12, marginBottom: 10,
+      background: blocking ? "#FFF0F0" : t.amberLight,
+      border: `1.5px solid ${blocking ? t.red : t.amber + "66"}`,
+      backgroundImage: blocking ? "repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(220,47,54,0.04) 8px,rgba(220,47,54,0.04) 16px)" : "none",
+      fontSize: 13, color: blocking ? t.red : t.amberDeep, lineHeight: 1.65, fontWeight: blocking ? 600 : 400,
+    }}>{text}</div>
+  );
+
+  const CheckboxLine = ({ checked, onToggle, label, required }) => (
+    <div onClick={onToggle} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 16px", borderRadius: 14, border: `2px solid ${checked ? t.green : required ? t.red + "66" : t.borderStrong}`, background: checked ? t.greenLight : t.bgTint, cursor: "pointer", transition: "all 0.18s", marginTop: 12 }}>
+      <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${checked ? t.green : t.borderStrong}`, background: checked ? t.green : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.18s" }}>
+        {checked && <Icon name="check" size={13} color="#fff" />}
+      </div>
+      <div style={{ fontSize: 13, color: t.text, lineHeight: 1.6 }}>{label}</div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 800, animation: "pkRise 0.4s ease" }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 22 }}>
+        <div>
+          <Badge text={meta.label} variant={meta.badge} t={t} dot />
+          <h1 style={{ fontSize: 25, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.7 }}>{meta.label}</h1>
+          <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Configuration · Alertes URSSAF · Kit expert-comptable</p>
+        </div>
+      </div>
+
+      {/* ── LOI ── */}
+      <div style={{ background: t.blueGradSoft, borderRadius: 14, padding: "14px 18px", marginBottom: 16, display: "flex", gap: 11, alignItems: "flex-start", border: `1px solid ${t.blue}22` }}>
+        <Icon name="scale" size={17} color={t.blue} />
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: t.blue, marginBottom: 3 }}>Base légale & CTP</div>
+          <div style={{ fontSize: 13, color: t.blue, opacity: 0.85, lineHeight: 1.6 }}>{meta.loi}</div>
+          <div style={{ fontSize: 12, color: t.blue, opacity: 0.7, marginTop: 4, fontStyle: "italic" }}>{meta.ctp}</div>
+        </div>
+      </div>
+
+      {/* ── WARNINGS BLOQUANTS ── */}
+      {blockingWarnings.map((w, i) => <WarnBox key={i} text={w.text} blocking />)}
+      {warnings.map((w, i) => <WarnBox key={i} text={w.text} blocking={false} />)}
+
+      {/* ── CONFIG ── */}
+      <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px", marginBottom: 16, border: `1px solid ${t.borderSoft}` }}>
+        <SectionTitle icon={meta.icon} iconColor={meta.color} title="Paramètres" sub="Configurez les valeurs — les alertes se mettent à jour en temps réel" t={t} />
+
+        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 18 }}>
+
+          {/* ── RESTO ── */}
+          {kitId === "resto" && (() => {
+            const pct = currentVal.pct || 55;
+            const amount = currentVal.amount || 0;
+            const partP = amount * (pct / 100);
+            const partS = amount - partP;
+            return (
+              <>
+                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: t.textSec, display: "block", marginBottom: 7 }}>Valeur faciale (€ / repas)</label>
+                    <div style={{ position: "relative" }}>
+                      <input type="number" min={0} max={20} step={0.5} value={amount || ""}
+                        onChange={e => update("resto", "amount", parseFloat(e.target.value) || 0)}
+                        placeholder="ex: 10"
+                        style={{ ...inputStyle(meta.color), paddingRight: 36 }}
+                        onFocus={e => { e.target.style.borderColor = meta.color; e.target.style.boxShadow = `0 0 0 4px ${meta.color}22`; }}
+                        onBlur={e => { e.target.style.borderColor = t.border; e.target.style.boxShadow = "none"; }} />
+                      <span style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: t.textSec, fontWeight: 700 }}>€</span>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: t.textSec, display: "block", marginBottom: 8 }}>Part patronale : <strong style={{ color: (pct < 50 || pct > 60) ? t.red : meta.color }}>{pct}%</strong></label>
+                    <input type="range" min={45} max={65} step={1} value={pct}
+                      onChange={e => update("resto", "pct", parseInt(e.target.value))}
+                      style={{ width: "100%", accentColor: (pct < 50 || pct > 60) ? t.red : meta.color, marginTop: 6 }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: t.textTert, marginTop: 4 }}>
+                      <span style={{ color: pct < 50 ? t.red : t.textTert }}>45%</span>
+                      <span style={{ color: t.green, fontWeight: 700 }}>50–60% ✓</span>
+                      <span style={{ color: pct > 60 ? t.red : t.textTert }}>65%</span>
+                    </div>
+                  </div>
+                </div>
+                {amount > 0 && (
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 10 }}>
+                    {[
+                      { label: "Part patronale", value: `${partP.toFixed(2)}€`, sub: `/ticket`, ok: partP <= RESTO_PLAFOND_PATRON, warn: partP > RESTO_PLAFOND_PATRON },
+                      { label: "Plafond exo. 2026", value: `${RESTO_PLAFOND_PATRON}€`, sub: `max exonéré`, ok: true },
+                      { label: "Part salariale", value: `${partS.toFixed(2)}€`, sub: `/ticket`, ok: true },
+                      { label: "Coût patronal/an", value: `${Math.round(partP * 220 * n).toLocaleString("fr-FR")}€`, sub: `équipe (220j)`, ok: true },
+                    ].map((s2, i) => (
+                      <div key={i} style={{ padding: "12px 14px", background: s2.warn ? "#FFF0F0" : s2.ok ? meta.color + "0F" : t.bgTint, borderRadius: 12, border: `1px solid ${s2.warn ? t.red + "44" : meta.color + "22"}` }}>
+                        <div style={{ fontSize: 11, color: t.textSec, marginBottom: 4 }}>{s2.label}</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: s2.warn ? t.red : meta.color, letterSpacing: -0.4 }}>{s2.value}</div>
+                        <div style={{ fontSize: 11, color: t.textTert }}>{s2.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            );
+          })()}
+
+          {/* ── NAVIGO ── */}
+          {kitId === "navigo" && (() => {
+            const pct = currentVal.pct || 50;
+            const extraMensuel = Math.round(((pct - 50) / 100) * NAVIGO_MENSUEL);
+            const extraAnnuel = extraMensuel * 12;
+            return (
+              <>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: t.textSec, display: "block", marginBottom: 8 }}>
+                    Taux de prise en charge : <strong style={{ color: meta.color, fontSize: 15 }}>{pct}%</strong>
+                    {pct === 50 && <span style={{ fontSize: 11, color: t.textTert, fontWeight: 400, marginLeft: 8 }}>(minimum légal)</span>}
+                    {pct === 75 && <span style={{ fontSize: 11, color: t.green, fontWeight: 600, marginLeft: 8 }}>✓ Plafond exo.</span>}
+                    {pct === 100 && <span style={{ fontSize: 11, color: t.blue, fontWeight: 600, marginLeft: 8 }}>ℹ️ Vérifier avec EC</span>}
+                  </label>
+                  <input type="range" min={50} max={100} step={5} value={pct}
+                    onChange={e => update("navigo", "pct", parseInt(e.target.value))}
+                    style={{ width: "100%", accentColor: meta.color }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginTop: 4 }}>
+                    <span style={{ color: t.textTert }}>50% (légal)</span>
+                    <span style={{ color: t.green, fontWeight: 700 }}>75% (max. exo.) ✓</span>
+                    <span style={{ color: t.blue }}>100%</span>
+                  </div>
+                </div>
+                {pct > 50 && (
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 10 }}>
+                    {[
+                      { label: "Gain / salarié / mois", value: `+${extraMensuel}€`, color: meta.color },
+                      { label: "Gain / salarié / an", value: `+${extraAnnuel.toLocaleString("fr-FR")}€`, color: meta.color },
+                      { label: "Gain total équipe / an", value: `+${(extraAnnuel * n).toLocaleString("fr-FR")}€`, color: t.green },
+                    ].map((s2, i) => (
+                      <div key={i} style={{ padding: "12px 14px", background: meta.color + "0F", borderRadius: 12, border: `1px solid ${meta.color}22` }}>
+                        <div style={{ fontSize: 11, color: t.textSec, marginBottom: 4 }}>{s2.label}</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: s2.color, letterSpacing: -0.4 }}>{s2.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ padding: "12px 14px", background: t.bgTint, borderRadius: 12, border: `1px solid ${t.borderSoft}`, fontSize: 12.5, color: t.textSec, lineHeight: 1.65 }}>
+                  <strong style={{ color: t.text }}>Note temps partiel :</strong> Les salariés travaillant moins de 17,5h/semaine (mi-temps) ont leur remboursement proratisé. Au-delà, ils bénéficient du taux complet choisi.
+                </div>
+              </>
+            );
+          })()}
+
+          {/* ── CHÈQUES CADEAUX ── */}
+          {kitId === "cadeaux" && (() => {
+            const amount = currentVal.amount || 0;
+            const EVENTS = ["Noël des salariés", "Noël des enfants (< 16 ans)", "Rentrée scolaire", "Naissance / Adoption", "Mariage / PACS", "Départ à la retraite", "Fête des mères / des pères"];
+            return (
+              <>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: t.textSec, display: "block", marginBottom: 7 }}>Événement URSSAF <span style={{ color: t.red }}>*</span></label>
+                  <select value={cadeauxEvent} onChange={e => { setCadeauxEvent(e.target.value); update("cadeaux", "event", e.target.value); }}
+                    style={{ width: "100%", padding: "12px 14px", border: `2px solid ${!cadeauxEvent ? t.red + "66" : t.green}`, borderRadius: 12, fontSize: 14, fontFamily: font, outline: "none", background: t.bgTint, color: cadeauxEvent ? t.text : t.textTert, cursor: "pointer" }}
+                    onFocus={e => e.target.style.borderColor = meta.color}
+                    onBlur={e => e.target.style.borderColor = cadeauxEvent ? t.green : t.red + "66"}>
+                    <option value="">— Sélectionner un événement obligatoire —</option>
+                    {EVENTS.map(ev => <option key={ev} value={ev}>{ev}</option>)}
+                  </select>
+                  {!cadeauxEvent && <div style={{ fontSize: 12, color: t.red, marginTop: 5, display: "flex", alignItems: "center", gap: 4 }}><Icon name="alert-circle" size={13} color={t.red} /> Sélection obligatoire pour l'exonération</div>}
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: t.textSec, display: "block", marginBottom: 7 }}>Montant par salarié (€)</label>
+                  <div style={{ position: "relative", maxWidth: 200 }}>
+                    <input type="number" min={0} max={400} value={amount || ""}
+                      onChange={e => update("cadeaux", "amount", parseInt(e.target.value) || 0)}
+                      placeholder="ex: 150"
+                      style={{ ...inputStyle(meta.color), paddingRight: 36 }}
+                      onFocus={e => { e.target.style.borderColor = amount > CADEAUX_PLAFOND ? t.red : meta.color; e.target.style.boxShadow = `0 0 0 4px ${meta.color}22`; }}
+                      onBlur={e => { e.target.style.borderColor = t.border; e.target.style.boxShadow = "none"; }} />
+                    <span style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: t.textSec, fontWeight: 700 }}>€</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                    <div style={{ flex: 1, height: 8, background: t.borderSoft, borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.min(amount / CADEAUX_PLAFOND * 100, 100)}%`, height: "100%", background: amount > CADEAUX_PLAFOND ? t.red : amount > CADEAUX_PLAFOND * 0.8 ? t.amber : t.green, borderRadius: 4, transition: "width 0.3s, background 0.3s" }} />
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: amount > CADEAUX_PLAFOND ? t.red : t.textSec, flexShrink: 0 }}>
+                      {amount}€ / {CADEAUX_PLAFOND}€ {amount > CADEAUX_PLAFOND ? "🚨 DÉPASSÉ" : "✓"}
+                    </span>
+                  </div>
+                </div>
+                {amount > 0 && cadeauxEvent && amount <= CADEAUX_PLAFOND && (
+                  <div style={{ padding: "12px 16px", background: t.greenLight, borderRadius: 12, border: `1px solid ${t.green}33`, fontSize: 13, color: t.green }}>
+                    ✅ Configuration conforme — {amount}€ × {n} salarié{n > 1 ? "s" : ""} = <strong>{(amount * n).toLocaleString("fr-FR")}€</strong> · Aucune cotisation sociale due
+                  </div>
+                )}
+              </>
+            );
+          })()}
+
+          {/* ── CHÈQUES VACANCES ── */}
+          {kitId === "vacances" && (() => {
+            const plafondGlobal = (n * VACANCES_PLAFOND_MAX) / 2;
+            const totalAbo = Object.values(vacancesProfiles).reduce((sum, p) => sum + (p.abondement || 0), 0);
+            return (
+              <>
+                <div style={{ padding: "12px 16px", background: t.bgTint, borderRadius: 12, border: `1px solid ${t.borderSoft}`, fontSize: 13, color: t.textSec, lineHeight: 1.65, marginBottom: 4 }}>
+                  <strong style={{ color: t.text }}>Comment ça fonctionne :</strong> Sélectionnez la tranche de salaire et le nombre d'enfants à charge de chaque salarié. Perky calcule automatiquement le taux d'abondement maximal autorisé (Tranche A ≤ 3 924€/mois = 80%, Tranche B > 3 924€/mois = 50%, +5% par enfant, max +10%).
+                </div>
+                <div style={{ background: t.bgSecondary, borderRadius: 14, overflow: "hidden" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1.5fr 0.8fr 1fr 1fr", gap: 0, padding: "10px 16px", background: t.bgTint, borderBottom: `1px solid ${t.borderSoft}` }}>
+                    {["Salarié", "Tranche salaire", "Enfants", "Taux max", "Abondement/an"].map(h => (
+                      <div key={h} style={{ fontSize: 11, fontWeight: 700, color: t.textTert, textTransform: "uppercase", letterSpacing: 0.4 }}>{h}</div>
+                    ))}
+                  </div>
+                  {activeEmp.map((e, i) => {
+                    const p = vacancesProfiles[e.id] || { tranche: "A", enfants: 0, abondement: 0 };
+                    const tauxBase = p.tranche === "A" ? 80 : 50;
+                    const bonusEnfants = Math.min((p.enfants || 0) * 5, 10);
+                    const tauxMax = tauxBase + bonusEnfants;
+                    const abo = p.abondement || 0;
+                    const isOverMax = abo > VACANCES_PLAFOND_MAX;
+                    const setProfile = (field, val) => setVacancesProfiles(prev => ({ ...prev, [e.id]: { ...prev[e.id], [field]: val } }));
+                    return (
+                      <div key={e.id} style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1.5fr 0.8fr 1fr 1fr", gap: 0, padding: "12px 16px", borderBottom: i < activeEmp.length - 1 ? `1px solid ${t.borderSoft}` : "none", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: t.purple + "33", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: t.purple, flexShrink: 0 }}>{e.initials}</div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: t.text }}>{e.firstName} {e.lastName}</div>
+                            <div style={{ fontSize: 11, color: t.textSec }}>{e.seniority} mois</div>
+                          </div>
+                        </div>
+                        <select value={p.tranche} onChange={ev => setProfile("tranche", ev.target.value)}
+                          style={{ padding: "6px 10px", border: `1.5px solid ${t.border}`, borderRadius: 8, fontSize: 12, fontFamily: font, outline: "none", background: t.card, color: t.text, cursor: "pointer" }}
+                          onFocus={ev => ev.target.style.borderColor = t.purple}
+                          onBlur={ev => ev.target.style.borderColor = t.border}>
+                          <option value="A">≤ 3 924€/mois</option>
+                          <option value="B">&gt; 3 924€/mois</option>
+                        </select>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <button onClick={() => setProfile("enfants", Math.max(0, (p.enfants || 0) - 1))}
+                            style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${t.border}`, background: t.card, cursor: "pointer", fontSize: 16, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: t.text, minWidth: 16, textAlign: "center" }}>{p.enfants || 0}</span>
+                          <button onClick={() => setProfile("enfants", Math.min(4, (p.enfants || 0) + 1))}
+                            style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${t.border}`, background: t.card, cursor: "pointer", fontSize: 16, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: t.purple }}>{tauxMax}%<span style={{ fontSize: 11, color: t.textTert, fontWeight: 400, display: "block" }}>base {tauxBase}% +{bonusEnfants}%</span></div>
+                        <div style={{ position: "relative" }}>
+                          <input type="number" min={0} max={VACANCES_PLAFOND_MAX} value={abo || ""}
+                            onChange={ev => setProfile("abondement", parseInt(ev.target.value) || 0)}
+                            placeholder="0"
+                            style={{ width: "100%", padding: "7px 32px 7px 10px", border: `1.5px solid ${isOverMax ? t.red : t.border}`, borderRadius: 8, fontSize: 13, fontFamily: font, outline: "none", background: isOverMax ? "#FFF0F0" : t.card, color: t.text, boxSizing: "border-box" }}
+                            onFocus={ev => ev.target.style.borderColor = t.purple}
+                            onBlur={ev => ev.target.style.borderColor = isOverMax ? t.red : t.border} />
+                          <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: t.textSec }}>€</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Total vs plafond */}
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, padding: "14px 18px", background: totalAbo > plafondGlobal ? "#FFF0F0" : t.purple + "0F", borderRadius: 12, border: `1px solid ${totalAbo > plafondGlobal ? t.red : t.purple + "22"}` }}>
+                    <div style={{ fontSize: 12, color: t.textSec, marginBottom: 4 }}>Total abondements</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: totalAbo > plafondGlobal ? t.red : t.purple }}>{totalAbo.toLocaleString("fr-FR")} €</div>
+                  </div>
+                  <div style={{ flex: 1, padding: "14px 18px", background: t.bgTint, borderRadius: 12, border: `1px solid ${t.borderSoft}` }}>
+                    <div style={{ fontSize: 12, color: t.textSec, marginBottom: 4 }}>Plafond légal entreprise</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: t.textSec }}>{plafondGlobal.toLocaleString("fr-FR")} €</div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+
+        </div>
+      </div>
+
+      {/* ── CERTIFICATIONS ── */}
+      {kitId === "resto" && (
+        <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "20px 24px", marginBottom: 16, border: `1px solid ${t.borderSoft}` }}>
+          <SectionTitle icon="shield-check" iconColor={t.green} title="Engagement obligatoire" sub="À cocher avant téléchargement du kit" t={t} />
+          <CheckboxLine
+            checked={restoCertif}
+            onToggle={() => setRestoCertif(c => !c)}
+            label="Je m'engage à ne distribuer les titres-restaurant qu'aux salariés présents lors de journées de travail effectives (hors jours de congés payés, RTT, arrêts maladie, ou jours avec remboursement de notes de frais de repas)."
+            required={!restoCertif}
+          />
+        </div>
+      )}
+
+      {kitId === "navigo" && (
+        <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "20px 24px", marginBottom: 16, border: `1px solid ${t.borderSoft}` }}>
+          <SectionTitle icon="shield-check" iconColor={t.amber} title="Engagement obligatoire" sub="À cocher avant téléchargement du kit" t={t} />
+          <CheckboxLine
+            checked={navigoCertif}
+            onToggle={() => setNavigoCertif(c => !c)}
+            label="Je certifie que le remboursement des frais de transport est conditionné à la fourniture mensuelle ou annuelle d'un justificatif nominatif (abonnement de transport en commun) par chaque salarié bénéficiaire."
+            required={!navigoCertif}
+          />
+        </div>
+      )}
+
+      {kitId === "cadeaux" && (
+        <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "20px 24px", marginBottom: 16, border: `1px solid ${t.borderSoft}` }}>
+          <SectionTitle icon="shield-check" iconColor={t.red} title="Engagement obligatoire" sub="À cocher avant téléchargement du kit" t={t} />
+          <CheckboxLine
+            checked={cadeauxCertif}
+            onToggle={() => setCadeauxCertif(c => !c)}
+            label={`Je certifie que les bons d'achat sont attribués exclusivement à l'occasion de l'événement "${cadeauxEvent || "sélectionné ci-dessus"}" et que les biens acquis sont en lien avec cet événement. Je conserverai les justificatifs d'attribution pendant 5 ans.`}
+            required={!cadeauxCertif}
+          />
+        </div>
+      )}
+
+      {/* ── KIT TÉLÉCHARGEABLE ── */}
+      <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px", border: `1px solid ${t.borderSoft}` }}>
+        <SectionTitle icon="file-certificate" iconColor={t.green} title="Kit expert-comptable" sub="Mémo + CTP + instructions DSN prêts à envoyer" t={t} />
+
+        {hasBlocking && (
+          <div style={{ marginTop: 14, padding: "12px 16px", background: "#FFF0F0", borderRadius: 12, border: `1.5px solid ${t.red}`, fontSize: 13, color: t.red, fontWeight: 600 }}>
+            🚨 Corrigez les alertes bloquantes ci-dessus avant de pouvoir télécharger le kit.
+          </div>
+        )}
+
+        {!canPrint && !hasBlocking && (
+          <div style={{ marginTop: 14, padding: "12px 16px", background: t.amberLight, borderRadius: 12, border: `1px solid ${t.amber}44`, fontSize: 13, color: t.amberDeep }}>
+            ⚠️ {kitId === "cadeaux" && !cadeauxEvent ? "Sélectionnez un événement URSSAF" : "Cochez l'engagement ci-dessus"} pour débloquer le téléchargement.
+          </div>
+        )}
+
+        <button onClick={() => canPrint && handlePrint()} disabled={!canPrint}
+          style={{ width: "100%", padding: "14px", borderRadius: 13, border: "none", background: canPrint ? t.blueGrad : t.bgSecondary, color: canPrint ? "#fff" : t.textTert, fontSize: 14, fontWeight: 700, cursor: canPrint ? "pointer" : "not-allowed", fontFamily: font, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16, boxShadow: canPrint ? "0 4px 14px rgba(37,99,235,0.35)" : "none", transition: "transform 0.15s" }}
+          onMouseEnter={e => { if (canPrint) e.currentTarget.style.transform = "translateY(-2px)"; }}
+          onMouseLeave={e => e.currentTarget.style.transform = "none"}>
+          <Icon name="printer" size={16} color={canPrint ? "#fff" : t.textTert} />
+          Imprimer le Kit {meta.label}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── KIT PPV ──────────────────────────────────────────────────────────
+function BossPPVKit({ employees, company, t }) {
+  const isMobile = useIsMobile();
+  const activeEmp = employees.filter(e => e.active);
+  const today = new Date().toLocaleDateString("fr-FR");
+  const companyName = company?.name || "Votre entreprise";
+  const siret = company?.siret || "[SIRET à compléter]";
+
+  // ── STATE ─────────────────────────────────────────────────────────
+  const [mode, setMode] = useState(null); // "uniforme"|"anciennete"|"salaire"|"libre"
+  const [step, setStep] = useState("define"); // "define"|"preview"
+
+  // Uniforme
+  const [uniformAmount, setUniformAmount] = useState("");
+
+  // Ancienneté: paliers [{max, amount}] (max=null = dernier palier "et plus")
+  const [seniPaliers, setSeniPaliers] = useState([
+    { label: "Moins de 12 mois", maxMonths: 12, amount: "" },
+    { label: "12 à 36 mois",     maxMonths: 36, amount: "" },
+    { label: "Plus de 36 mois",  maxMonths: null, amount: "" },
+  ]);
+
+  // Salaire: paliers fixes de 500€ à partir de 1000
+  const SALARY_BRACKETS = [
+    { label: "Moins de 1 000€",            key: "lt1000" },
+    { label: "De 1 000€ à 1 500€",         key: "1000_1500" },
+    { label: "De 1 500€ à 2 000€",         key: "1500_2000" },
+    { label: "De 2 000€ à 2 500€",         key: "2000_2500" },
+    { label: "De 2 500€ à 3 000€",         key: "2500_3000" },
+    { label: "Plus de 3 000€",             key: "gt3000" },
+  ];
+  const [salaryAmounts, setSalaryAmounts] = useState(
+    Object.fromEntries(SALARY_BRACKETS.map(b => [b.key, ""]))
+  );
+  // Assignation manuelle salarié → bracket
+  const [salaryAssign, setSalaryAssign] = useState(
+    Object.fromEntries(activeEmp.map(e => [e.id, ""]))
+  );
+
+  // Libre
+  const [libreAmounts, setLibreAmounts] = useState(
+    Object.fromEntries(activeEmp.map(e => [e.id, ""]))
+  );
+
+  // Checkboxes
+  const [certifSmic, setCertifSmic] = useState(false);
+  const [certifPpvType, setCertifPpvType] = useState("premier"); // "premier"|"complement"
+  const [payMonth, setPayMonth] = useState("");
+
+  // ── CALCUL DES MONTANTS FINAUX ───────────────────────────────────
+  const getFinalAmounts = () => {
+    if (mode === "uniforme") {
+      const v = parseFloat(uniformAmount) || 0;
+      return Object.fromEntries(activeEmp.map(e => [e.id, v]));
+    }
+    if (mode === "anciennete") {
+      return Object.fromEntries(activeEmp.map(e => {
+        const palier = seniPaliers.find(p => p.maxMonths === null || e.seniority < p.maxMonths);
+        return [e.id, parseFloat(palier?.amount) || 0];
+      }));
+    }
+    if (mode === "salaire") {
+      return Object.fromEntries(activeEmp.map(e => {
+        const bk = salaryAssign[e.id];
+        return [e.id, bk ? (parseFloat(salaryAmounts[bk]) || 0) : 0];
+      }));
+    }
+    if (mode === "libre") {
+      return Object.fromEntries(activeEmp.map(e => [e.id, parseFloat(libreAmounts[e.id]) || 0]));
+    }
+    return {};
+  };
+
+  const finalAmounts = getFinalAmounts();
+  const totalPPV = Object.values(finalAmounts).reduce((s, v) => s + v, 0);
+  const savings = Math.round(totalPPV * 0.45);
+
+  // ── WARNINGS ─────────────────────────────────────────────────────
+  const warnings = [];
+  const amounts = Object.values(finalAmounts).filter(v => v > 0);
+
+  // A. Montant dérisoire
+  activeEmp.forEach(e => {
+    const a = finalAmounts[e.id];
+    if (a > 0 && a < 50) {
+      warnings.push({
+        type: "orange",
+        text: `⚠️ ${e.firstName} ${e.lastName} : prime de ${a}€ — L'URSSAF peut requalifier une prime inférieure à 50€ comme dérisoire et annuler les exonérations.`,
+      });
+    }
+  });
+
+  // B. Écart disproportionné (mode libre)
+  if (mode === "libre" && amounts.length >= 2) {
+    const max = Math.max(...amounts);
+    const min = Math.min(...amounts);
+    if (min > 0 && max / min > 5) {
+      warnings.push({
+        type: "orange",
+        text: `⚠️ Risque de redressement : L'écart entre votre plus grosse prime (${max}€) et votre plus petite (${min}€) dépasse un ratio de 1 à 5. L'URSSAF exige une modulation proportionnée.`,
+      });
+    }
+  }
+
+  // B2. Salarié à 0€ — Warning bloquant
+  if (mode === "libre") {
+    activeEmp.forEach(e => {
+      const a = finalAmounts[e.id];
+      if (a === 0 || a === undefined) {
+        warnings.push({
+          type: "red",
+          blocking: true,
+          text: `🚨 ALERTE REDRESSEMENT — ${e.firstName} ${e.lastName} : prime à 0€. Exclure un salarié présent de la PPV est le motif n°1 de redressement URSSAF (Art. L3314-5 CT). Si ce salarié a rejoint l'entreprise après la date fixée par la DUE, précisez-le explicitement dans l'article 1 de la DUE. Sinon, saisissez un montant, même symbolique (min. 50€ recommandé).`,
+        });
+      }
+    });
+  }
+
+  // C. Reverse-engineering ancienneté (mode libre)
+  let libreIsAnciennete = false;
+  if (mode === "libre" && activeEmp.length >= 2) {
+    const sorted = [...activeEmp].sort((a, b) => a.seniority - b.seniority);
+    const allNonZero = sorted.every(e => finalAmounts[e.id] > 0);
+    const allStrictlyEqual = allNonZero && sorted.every(e => finalAmounts[e.id] === finalAmounts[sorted[0].id]);
+    const isMonotone = sorted.every((e, i) =>
+      i === 0 || (finalAmounts[e.id] >= finalAmounts[sorted[i - 1].id])
+    );
+    // Ancienneté détectée seulement si : tous non-zéro, croissant, ET pas tous égaux
+    libreIsAnciennete = isMonotone && allNonZero && !allStrictlyEqual;
+
+    if (allStrictlyEqual) {
+      // Tous égaux → uniforme déguisé, pas d'ancienneté
+      // Pas de warning, on laisse passer (montant uniforme en mode libre = valide)
+    } else if (!libreIsAnciennete && allNonZero) {
+      warnings.push({
+        type: "info",
+        text: `ℹ️ Vos montants ne suivent pas une logique d'ancienneté détectable. Assurez-vous que la différence repose sur un critère légal explicite (classification, niveau de responsabilité…). Votre expert-comptable devra valider le critère de modulation manuellement avant application.`,
+      });
+    }
+  }
+
+  // ── VALIDITÉ ──────────────────────────────────────────────────────
+  const hasAmounts = amounts.length > 0 && totalPPV > 0;
+  const hasBlockingWarning = warnings.some(w => w.blocking);
+  const allAssigned = mode === "salaire"
+    ? activeEmp.every(e => salaryAssign[e.id] !== "")
+    : true;
+  const canGenerate = mode && hasAmounts && certifSmic && allAssigned && payMonth && !hasBlockingWarning;
+
+  // ── TEXTE ARTICLE 2 DUE ──────────────────────────────────────────
+  const getArticle2 = () => {
+    if (mode === "uniforme") {
+      return `La prime est d'un montant uniforme de ${parseFloat(uniformAmount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })}€ pour l'ensemble des salariés bénéficiaires.`;
+    }
+    if (mode === "anciennete" || (mode === "libre" && libreIsAnciennete)) {
+      return seniPaliers
+        .filter(p => parseFloat(p.amount) > 0)
+        .map((p, i) => {
+          const montant = parseFloat(p.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 });
+          if (p.maxMonths === null) return `Elle sera de ${montant}€ pour les salariés ayant plus de ${seniPaliers[seniPaliers.length - 2]?.maxMonths || "36"} mois d'ancienneté à la date de signature de la présente.`;
+          if (i === 0) return `La prime sera de ${montant}€ pour les salariés ayant moins de ${p.maxMonths} mois d'ancienneté à la date de signature de la présente.`;
+          const prev = seniPaliers[i - 1];
+          return `Elle sera de ${montant}€ pour les salariés ayant entre ${prev.maxMonths} et ${p.maxMonths} mois d'ancienneté à la date de signature de la présente.`;
+        }).join("\n\n");
+    }
+    if (mode === "salaire") {
+      const activeBrackets = SALARY_BRACKETS.filter(b => parseFloat(salaryAmounts[b.key]) > 0);
+      return activeBrackets.map((b, i) => {
+        const montant = parseFloat(salaryAmounts[b.key]).toLocaleString("fr-FR", { minimumFractionDigits: 2 });
+        if (i === 0 && activeBrackets.length === 1) return `La prime sera de ${montant}€ pour les salariés percevant une rémunération ${b.label.toLowerCase()} à la date de signature de la présente.`;
+        if (i === 0) return `La prime sera de ${montant}€ pour les salariés percevant une rémunération ${b.label.toLowerCase()} à la date de signature de la présente.`;
+        return `Elle sera de ${montant}€ pour les salariés percevant une rémunération ${b.label.toLowerCase()} à la date de signature de la présente.`;
+      }).join("\n\n");
+    }
+    return `La prime est modulée selon les critères légaux de classification et de rémunération validés par l'entreprise, conformément à l'article L3314-5 du Code du travail.`;
+  };
+
+  // ── IMPRESSION ────────────────────────────────────────────────────
+  const handlePrint = () => {
+    const article2 = getArticle2();
+    const empRows = activeEmp.map(e => {
+      const amt = finalAmounts[e.id];
+      const bk = mode === "salaire" ? SALARY_BRACKETS.find(b => b.key === salaryAssign[e.id])?.label || "—" : "—";
+      return `<tr>
+        <td>${e.firstName} ${e.lastName}</td>
+        <td>${e.role || "—"}</td>
+        <td>${e.seniority} mois</td>
+        ${mode === "salaire" ? `<td>${bk}</td>` : ""}
+        <td style="font-weight:700;color:#185FA5">${amt > 0 ? amt.toLocaleString("fr-FR", { minimumFractionDigits: 2 }) + " €" : "—"}</td>
+        <td style="text-align:center">☐</td>
+      </tr>`;
+    }).join("");
+
+    const article2Html = article2.split("\n\n").map(p => `<p>${p}</p>`).join("");
+    const allLibreEqual = mode === "libre" && activeEmp.length > 0 && activeEmp.every(e => (finalAmounts[e.id] || 0) === (finalAmounts[activeEmp[0].id] || 0)) && (finalAmounts[activeEmp[0].id] || 0) > 0;
+    const modeLabel = {
+      uniforme: "Montant uniforme",
+      anciennete: "Modulation par ancienneté",
+      salaire: "Modulation par tranche de rémunération",
+      libre: allLibreEqual ? "Montant uniforme (saisie libre)" : libreIsAnciennete ? "Modulation par ancienneté (détectée automatiquement)" : "Modulation libre — critère à valider par l'expert-comptable",
+    }[mode];
+
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Kit PPV — ${companyName}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; max-width: 740px; margin: 30px auto; color: #1a1a1a; font-size: 13.5px; line-height: 1.65; }
+  .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #185FA5; padding-bottom: 12px; margin-bottom: 28px; }
+  .logo { font-size: 22px; font-weight: 700; color: #185FA5; letter-spacing: -0.5px; }
+  .kit-tag { font-size: 11px; color: #888; background: #f0f4ff; padding: 3px 10px; border-radius: 12px; }
+  h1 { font-size: 20px; font-weight: 700; color: #185FA5; margin: 0 0 4px; }
+  h2 { font-size: 14px; font-weight: 700; color: #185FA5; margin: 28px 0 10px; border-bottom: 2px solid #e8eef8; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  h3 { font-size: 13px; font-weight: 700; color: #333; margin: 16px 0 8px; }
+  .info-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  .info-table td { padding: 7px 12px; border: 1px solid #ddd; font-size: 13px; }
+  .info-table td:first-child { background: #EAF1FB; font-weight: 600; width: 38%; }
+  .data-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px; }
+  .data-table th { padding: 8px 10px; background: #185FA5; color: #fff; font-weight: 600; text-align: left; font-size: 11.5px; }
+  .data-table td { padding: 8px 10px; border: 1px solid #e0e0e0; }
+  .data-table tr:nth-child(even) td { background: #f7f9fc; }
+  .highlight { background: #EAF5F1; border-left: 4px solid #0EA371; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 14px 0; font-size: 13px; }
+  .warn-orange { background: #FFF8ED; border-left: 4px solid #F59E0B; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 10px 0; font-size: 12.5px; color: #92400E; }
+  .disclaimer { margin-top: 24px; padding: 12px 16px; background: #f8f8f8; border-left: 3px solid #aaa; font-size: 11.5px; color: #777; font-style: italic; line-height: 1.6; }
+  .signature-block { margin-top: 32px; display: flex; gap: 40px; }
+  .sig-line { flex: 1; }
+  .sig-line .label { font-size: 11.5px; color: #888; margin-bottom: 36px; }
+  .sig-line .line { border-bottom: 1.5px solid #ccc; }
+  .page-break { page-break-before: always; }
+  .receipt-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px; }
+  .receipt-table th { padding: 8px 10px; background: #1D4FCB; color: #fff; font-size: 11.5px; text-align: left; }
+  .receipt-table td { padding: 8px 10px; border: 1px solid #e0e0e0; }
+  .receipt-table tr:nth-child(even) td { background: #f7f9fc; }
+  .checkbox-line { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0; font-size: 13px; }
+  .checkbox-box { width: 14px; height: 14px; border: 1.5px solid #333; flex-shrink: 0; margin-top: 2px; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  .total-bar { background: linear-gradient(135deg, #185FA5, #2563EB); color: #fff; border-radius: 8px; padding: 14px 18px; margin: 16px 0; display: flex; justify-content: space-between; align-items: center; }
+  .engagement-box { border: 2px dashed #185FA5; border-radius: 8px; padding: 16px 20px; margin: 20px 0; background: #f0f6ff; }
+  @media print { body { margin: 15px; } .page-break { page-break-before: always; } }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ PAGE 1 : DUE ════════════════════ -->
+<div class="header">
+  <span class="logo">PERKY</span>
+  <span class="kit-tag">Kit PPV — Décision Unilatérale de l'Employeur</span>
+</div>
+
+<h1>Prime de Partage de la Valeur (PPV) — 2026</h1>
+<p style="color:#888;font-size:12px;margin-top:2px">Document généré le ${today} · Confidentiel</p>
+
+<div class="highlight">
+  <strong>Rappel légal :</strong> La PPV permet de verser jusqu'à <strong>3 000€/salarié/an</strong>, totalement exonérés de cotisations sociales, CSG/CRDS et impôt sur le revenu pour les entreprises &lt; 50 salariés. <strong>Régime applicable jusqu'au 31/12/2026</strong> (Loi n°2022-1158 du 16 août 2022, modifiée par loi n°2023-1107 du 29 novembre 2023).
+</div>
+
+<h2>Décision Unilatérale de l'Employeur</h2>
+<p style="font-style:italic;font-size:12px;color:#666">Relative au versement d'une Prime de Partage de la Valeur — Exercice 2026</p>
+
+<table class="info-table">
+  <tr><td>Société</td><td>${companyName}</td></tr>
+  <tr><td>SIRET</td><td>${siret}</td></tr>
+  <tr><td>Effectif concerné</td><td>${activeEmp.length} salarié${activeEmp.length > 1 ? "s" : ""}</td></tr>
+  <tr><td>Modalité de versement</td><td>${certifPpvType === "premier" ? "Premier versement — exercice 2026" : "Versement complémentaire — exercice 2026"}</td></tr>
+  <tr><td>Base légale</td><td>Art. 1er loi n°2022-1158 du 16 août 2022</td></tr>
+  <tr><td>Mode de modulation</td><td>${modeLabel}</td></tr>
+</table>
+
+<h3>Article 1 — Bénéficiaires</h3>
+<p>L'ensemble des salariés liés par un contrat de travail à l'entreprise à la date de versement bénéficient de la présente prime, y compris les salariés en alternance et les apprentis, sous réserve d'avoir été présents dans l'entreprise au cours des douze mois précédant le versement.</p>
+
+<h3>Article 2 — Montant de la prime de partage de la valeur</h3>
+<p>Le montant de la prime sera déterminé pour chaque salarié, selon les modalités suivantes :</p>
+${article2Html}
+
+<h3>Article 3 — Date de versement</h3>
+<p>La prime sera versée avec la paie du mois de <strong>${payMonth || "[mois à compléter]"} 2026</strong>.</p>
+
+<h3>Article 4 — Régime fiscal et social</h3>
+<p>Conformément aux dispositions de l'article 1er de la loi n°2022-1158, la prime est <strong>exonérée de toutes les cotisations et contributions sociales d'origine légale ou conventionnelle</strong> (y compris CSG et CRDS), ainsi que de <strong>l'impôt sur le revenu</strong>, pour les salariés dont la rémunération n'excède pas 3 SMIC annuels (soit environ 64 500€ brut pour 2026), dans une entreprise de moins de 50 salariés.</p>
+
+<h3>Article 5 — Communication</h3>
+<p>La présente décision sera portée à la connaissance de chaque salarié bénéficiaire par remise en main propre contre signature.</p>
+
+<div class="signature-block">
+  <div class="sig-line">
+    <div class="label">Fait à _________________________, le ${today}</div>
+    <div class="line"></div>
+    <div style="font-size:11.5px;color:#888;margin-top:4px">Lieu et date</div>
+  </div>
+  <div class="sig-line">
+    <div class="label" style="margin-bottom:36px">&nbsp;</div>
+    <div class="line"></div>
+    <div style="font-size:11.5px;color:#888;margin-top:4px">Signature du dirigeant</div>
+  </div>
+</div>
+
+<!-- ════════════════════ PAGE 2 : REMISE EN MAIN PROPRE ════════════════════ -->
+<div class="page-break"></div>
+
+<div class="header">
+  <span class="logo">PERKY</span>
+  <span class="kit-tag">Accusés de réception — Remise en main propre</span>
+</div>
+
+<h1>Remise en main propre — PPV 2026</h1>
+<p style="color:#666;font-size:12.5px">Société : <strong>${companyName}</strong> · ${activeEmp.length} salarié${activeEmp.length > 1 ? "s" : ""} · Généré le ${today}</p>
+
+<div class="total-bar">
+  <div>
+    <div style="font-size:11px;opacity:0.8">TOTAL PPV ÉQUIPE</div>
+    <div style="font-size:22px;font-weight:700">${totalPPV.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:11px;opacity:0.8">ÉCONOMIE CHARGES ESTIMÉE</div>
+    <div style="font-size:18px;font-weight:700">~${savings.toLocaleString("fr-FR")} €</div>
+  </div>
+</div>
+
+<p style="font-size:12.5px;color:#555">Le tableau ci-dessous doit être complété et signé par chaque salarié lors de la remise de la présente décision. <strong>Conservez ce document signé pour vos archives.</strong></p>
+
+<table class="receipt-table">
+  <thead>
+    <tr>
+      <th>Salarié</th>
+      <th>Poste</th>
+      <th>Ancienneté</th>
+      ${mode === "salaire" ? "<th>Tranche rémunération</th>" : ""}
+      <th>Montant PPV</th>
+      <th style="text-align:center;width:90px">Signature reçue</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${empRows}
+    <tr style="background:#EAF1FB">
+      <td colspan="${mode === "salaire" ? 4 : 3}" style="font-weight:700">TOTAL</td>
+      <td style="font-weight:700;color:#185FA5">${totalPPV.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="engagement-box">
+  <p style="font-weight:700;font-size:13px;margin:0 0 10px;color:#185FA5">⚠️ Engagement de l'employeur — À lire attentivement avant signature</p>
+  <div class="checkbox-line">
+    <div class="checkbox-box">${certifSmic ? "✓" : ""}</div>
+    <span>Je certifie sur l'honneur que les salariés bénéficiant de l'exonération totale d'impôt sur le revenu au titre de la PPV gagnent moins de 3 SMIC annuels (environ 64 500€ brut/an pour 2026), conformément à l'article 1er de la loi n°2022-1158.</span>
+  </div>
+  <div class="checkbox-line">
+    <div class="checkbox-box">☐</div>
+    <span>Je m'engage à remettre le présent document en main propre à chaque salarié bénéficiaire et à recueillir leur signature avant le versement.</span>
+  </div>
+  <p style="font-size:11.5px;color:#888;margin:12px 0 0;font-style:italic">⚠️ Cet engagement est établi sous réserve de validation par votre expert-comptable, qui demeure responsable de la conformité des bulletins de paie et de la déclaration DSN.</p>
+  <div style="margin-top:20px;display:flex;gap:40px">
+    <div style="flex:1">
+      <div style="border-bottom:1.5px solid #ccc;margin-bottom:4px;height:32px"></div>
+      <div style="font-size:11px;color:#888">Nom et qualité du signataire</div>
+    </div>
+    <div style="flex:1">
+      <div style="border-bottom:1.5px solid #ccc;margin-bottom:4px;height:32px"></div>
+      <div style="font-size:11px;color:#888">Date et signature</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ PAGE 3 : MÉMO COMPTABLE ════════════════════ -->
+<div class="page-break"></div>
+
+<div class="header">
+  <span class="logo">PERKY</span>
+  <span class="kit-tag">Mémo Expert-Comptable — Confidentiel</span>
+</div>
+
+<h1>Mémo Comptable — PPV 2026</h1>
+<p style="color:#666;font-size:12.5px">À transmettre à votre gestionnaire de paie / expert-comptable</p>
+
+<table class="info-table">
+  <tr><td>Client</td><td>${companyName} (SIRET : ${siret})</td></tr>
+  <tr><td>Objet</td><td>Versement PPV — exercice 2026</td></tr>
+  <tr><td>Montant total</td><td><strong>${totalPPV.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</strong> pour ${activeEmp.length} salarié${activeEmp.length > 1 ? "s" : ""}</td></tr>
+  <tr><td>Code type de personnel (CTP)</td><td><strong style="color:#185FA5">CTP 510</strong> — Prime de partage de la valeur exonérée</td></tr>
+  <tr><td>Mois de versement</td><td>Paie de <strong>${payMonth || "[à compléter]"} 2026</strong></td></tr>
+  <tr><td>Type de versement</td><td>${certifPpvType === "premier" ? "Premier versement (plafond annuel intact)" : "Versement complémentaire (vérifier le plafond restant)"}</td></tr>
+  <tr><td>Pièces jointes</td><td>DUE signée · Accusés de réception salariés</td></tr>
+</table>
+
+<h2>Actions requises de votre part</h2>
+<ul style="font-size:13px;line-height:2">
+  <li>Intégrer les montants PPV sur les bulletins de paie du mois de <strong>${payMonth || "[mois]"} 2026</strong></li>
+  <li>Déclarer en DSN avec le <strong>CTP 510</strong> (Prime de partage de la valeur — exonérée)</li>
+  <li><strong>Vérifier individuellement</strong> que chaque bénéficiaire est bien sous le seuil de 3 SMIC annuels (~64 500€ brut 2026) sur vos fiches de paie</li>
+  <li>Pour les salariés dépassant ce seuil : appliquer le régime de droit commun (cotisations + CSG/CRDS + IR)</li>
+  ${certifPpvType === "complement" ? "<li><strong>Versement complémentaire :</strong> vérifier le plafond de 3 000€ restant pour chaque salarié (déduire les PPV déjà versées en 2026)</li>" : ""}
+</ul>
+
+<div class="highlight">
+  <strong>Récapitulatif par salarié :</strong><br><br>
+  <table class="data-table" style="margin:0">
+    <thead>
+      <tr>
+        <th>Salarié</th>
+        <th>Poste</th>
+        <th>Ancienneté</th>
+        <th>Montant PPV</th>
+        <th>CTP</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${activeEmp.map(e => {
+        const amt = finalAmounts[e.id];
+        return `<tr>
+          <td>${e.firstName} ${e.lastName}</td>
+          <td>${e.role || "—"}</td>
+          <td>${e.seniority} mois</td>
+          <td style="font-weight:700">${amt > 0 ? amt.toLocaleString("fr-FR", { minimumFractionDigits: 2 }) + " €" : "—"}</td>
+          <td style="color:#185FA5;font-weight:700">CTP 510</td>
+        </tr>`;
+      }).join("")}
+      <tr style="background:#EAF1FB">
+        <td colspan="3"><strong>TOTAL</strong></td>
+        <td><strong style="color:#185FA5">${totalPPV.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</strong></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="disclaimer">
+  <strong>Mention de responsabilité :</strong> Ce document a été prémâché par Perky sur la base de la déclaration de l'employeur concernant les plafonds de rémunération et la situation contractuelle des salariés. <strong>L'expert-comptable demeure seul responsable de la vérification de la conformité des plafonds de rémunération (seuil 3 SMIC) sur les fiches de paie avant transmission DSN.</strong> Perky ne saurait être tenu responsable de toute inexactitude dans les déclarations de l'employeur.
+</div>
+
+<div style="margin-top:20px;font-size:11px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:12px">
+  Document généré par Perky · ${today} · perky.fr · Confidentiel — Usage interne uniquement
+</div>
+
+</body>
+</html>`;
+
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 600);
+    }
+  };
+
+  // ── RENDU ─────────────────────────────────────────────────────────
+  const MODES = [
+    { id: "uniforme",   icon: "equal",       label: "Uniforme",     desc: "Même montant pour tous" },
+    { id: "anciennete", icon: "clock",        label: "Ancienneté",   desc: "Paliers selon la durée" },
+    { id: "salaire",    icon: "currency-euro",label: "Par salaire",  desc: "Tranches de rémunération" },
+    { id: "libre",      icon: "pencil",       label: "Libre",        desc: "Montant salarié par salarié" },
+  ];
+
+  const modeColors = { uniforme: t.blue, anciennete: t.green, salaire: t.amber, libre: t.purple };
+
+  return (
+    <div style={{ maxWidth: 860, animation: "pkRise 0.4s ease" }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ marginBottom: 24 }}>
+        <Badge text="Nouveau" variant="purple" t={t} dot />
+        <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Générateur Kit PPV</h1>
+        <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Définissez votre prime, validez, et téléchargez votre DUE + Mémo comptable prêts à signer.</p>
+      </div>
+
+      {/* ── STEPPER ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 28 }}>
+        {[{ id: "define", label: "1. Définir" }, { id: "preview", label: "2. Générer & Imprimer" }].map((s, i) => (
+          <div key={s.id} style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 20, background: step === s.id ? t.blueGrad : "transparent", cursor: step === "preview" && s.id === "define" ? "pointer" : "default" }}
+              onClick={() => { if (s.id === "define" && step === "preview") setStep("define"); }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: step === s.id ? "rgba(255,255,255,0.25)" : (step === "preview" && s.id === "define" ? t.green + "33" : t.bgSecondary), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: step === s.id ? "#fff" : (step === "preview" && s.id === "define" ? t.green : t.textTert) }}>
+                {step === "preview" && s.id === "define" ? "✓" : i + 1}
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: step === s.id ? "#fff" : t.textSec }}>{s.label}</span>
+            </div>
+            {i === 0 && <div style={{ width: 32, height: 2, background: step === "preview" ? t.green : t.borderSoft, borderRadius: 2 }} />}
+          </div>
+        ))}
+      </div>
+
+      {step === "define" && (<>
+
+        {/* ── CHOIX DU MODE ── */}
+        <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px", marginBottom: 16, border: `1px solid ${t.borderSoft}` }}>
+          <SectionTitle icon="layout-grid" iconColor={t.blue} title="Stratégie de modulation" sub="Comment souhaitez-vous répartir la prime ?" t={t} />
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 10, marginTop: 16 }}>
+            {MODES.map(m => {
+              const isActive = mode === m.id;
+              const c = modeColors[m.id];
+              return (
+                <div key={m.id} onClick={() => { setMode(m.id); setStep("define"); }}
+                  style={{ padding: "16px 14px", borderRadius: 14, cursor: "pointer", border: `2px solid ${isActive ? c : t.borderSoft}`, background: isActive ? c + "0F" : t.bgTint, transition: "all 0.18s", textAlign: "center" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: isActive ? c + "22" : t.bgSecondary, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
+                    <Icon name={m.icon} size={20} color={isActive ? c : t.textTert} />
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: isActive ? c : t.text, marginBottom: 3 }}>{m.label}</div>
+                  <div style={{ fontSize: 11.5, color: t.textTert, lineHeight: 1.4 }}>{m.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── CONFIGURATION DU MODE ── */}
+        {mode && (
+          <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px", marginBottom: 16, border: `1px solid ${t.borderSoft}`, animation: "pkRise 0.3s ease" }}>
+
+            {/* UNIFORME */}
+            {mode === "uniforme" && (
+              <div>
+                <SectionTitle icon="equal" iconColor={t.blue} title="Montant uniforme" sub="Identique pour tous les salariés" t={t} />
+                <div style={{ maxWidth: 280, marginTop: 16 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: t.textSec, display: "block", marginBottom: 7 }}>Montant par salarié (€)</label>
+                  <div style={{ position: "relative" }}>
+                    <input type="number" min="0" max="3000" value={uniformAmount} onChange={e => setUniformAmount(e.target.value)}
+                      placeholder="ex: 1000"
+                      style={{ width: "100%", padding: "12px 44px 12px 14px", border: `1.5px solid ${t.border}`, borderRadius: 12, fontSize: 16, fontFamily: font, outline: "none", background: t.bgTint, color: t.text, boxSizing: "border-box" }}
+                      onFocus={e => { e.target.style.borderColor = t.blue; e.target.style.boxShadow = `0 0 0 4px ${t.ring}`; }}
+                      onBlur={e => { e.target.style.borderColor = t.border; e.target.style.boxShadow = "none"; }} />
+                    <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, fontWeight: 700, color: t.textSec }}>€</span>
+                  </div>
+                  {parseFloat(uniformAmount) > 0 && (
+                    <div style={{ marginTop: 12, padding: "10px 14px", background: t.blueGradSoft, borderRadius: 10, fontSize: 13, color: t.blue, fontWeight: 600 }}>
+                      Total équipe : {(parseFloat(uniformAmount) * activeEmp.length).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ANCIENNETÉ */}
+            {mode === "anciennete" && (
+              <div>
+                <SectionTitle icon="clock" iconColor={t.green} title="Paliers d'ancienneté" sub="Définissez un montant par tranche" t={t} />
+                <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                  {seniPaliers.map((p, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: t.bgTint, borderRadius: 12, border: `1px solid ${t.borderSoft}` }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 10, background: t.greenLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon name="clock" size={15} color={t.green} />
+                      </div>
+                      <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: t.text }}>{p.label}</div>
+                      <div style={{ position: "relative", width: 140 }}>
+                        <input type="number" min="0" max="3000" value={p.amount}
+                          onChange={e => setSeniPaliers(prev => prev.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))}
+                          placeholder="0"
+                          style={{ width: "100%", padding: "9px 36px 9px 12px", border: `1.5px solid ${t.border}`, borderRadius: 10, fontSize: 14, fontFamily: font, outline: "none", background: t.card, color: t.text, boxSizing: "border-box" }}
+                          onFocus={e => { e.target.style.borderColor = t.green; e.target.style.boxShadow = `0 0 0 3px ${t.green}22`; }}
+                          onBlur={e => { e.target.style.borderColor = t.border; e.target.style.boxShadow = "none"; }} />
+                        <span style={{ position: "absolute", right: 11, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: t.textSec, fontWeight: 600 }}>€</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Aperçu salariés */}
+                <div style={{ marginTop: 14, padding: "14px 16px", background: t.bgSecondary, borderRadius: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: t.textSec, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.4 }}>Aperçu par salarié</div>
+                  {activeEmp.map(e => {
+                    const palier = seniPaliers.find(p => p.maxMonths === null || e.seniority < p.maxMonths);
+                    const amt = parseFloat(palier?.amount) || 0;
+                    return (
+                      <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${t.borderSoft}`, fontSize: 13 }}>
+                        <span style={{ color: t.text, fontWeight: 600 }}>{e.firstName} {e.lastName}</span>
+                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                          <span style={{ fontSize: 11, color: t.textTert }}>{palier?.label}</span>
+                          <span style={{ fontWeight: 800, color: amt > 0 ? t.green : t.textTert }}>{amt > 0 ? amt.toLocaleString("fr-FR", { minimumFractionDigits: 2 }) + " €" : "—"}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* SALAIRE */}
+            {mode === "salaire" && (
+              <div>
+                <SectionTitle icon="currency-euro" iconColor={t.amber} title="Tranches de rémunération" sub="Définissez un montant par tranche, puis assignez chaque salarié" t={t} />
+                {/* Montants par tranche */}
+                <div style={{ marginTop: 16, marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 10 }}>Étape 1 — Montant par tranche</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {SALARY_BRACKETS.map(b => (
+                      <div key={b.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: t.bgTint, borderRadius: 12, border: `1px solid ${t.borderSoft}` }}>
+                        <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: t.text }}>{b.label}</div>
+                        <div style={{ position: "relative", width: 130 }}>
+                          <input type="number" min="0" max="3000" value={salaryAmounts[b.key]}
+                            onChange={e => setSalaryAmounts(p => ({ ...p, [b.key]: e.target.value }))}
+                            placeholder="0"
+                            style={{ width: "100%", padding: "9px 36px 9px 12px", border: `1.5px solid ${t.border}`, borderRadius: 10, fontSize: 14, fontFamily: font, outline: "none", background: t.card, color: t.text, boxSizing: "border-box" }}
+                            onFocus={e => { e.target.style.borderColor = t.amber; e.target.style.boxShadow = `0 0 0 3px ${t.amber}22`; }}
+                            onBlur={e => { e.target.style.borderColor = t.border; e.target.style.boxShadow = "none"; }} />
+                          <span style={{ position: "absolute", right: 11, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: t.textSec, fontWeight: 600 }}>€</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Assignation salariés */}
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 10 }}>Étape 2 — Assigner chaque salarié à sa tranche</div>
+                  <div style={{ background: t.bgSecondary, borderRadius: 12, overflow: "hidden" }}>
+                    {activeEmp.map((e, i) => (
+                      <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: i < activeEmp.length - 1 ? `1px solid ${t.borderSoft}` : "none" }}>
+                        <div style={{ width: 34, height: 34, borderRadius: "50%", background: t.amberGrad, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 800, color: "#fff", flexShrink: 0 }}>{e.initials}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: t.text }}>{e.firstName} {e.lastName}</div>
+                          <div style={{ fontSize: 11.5, color: t.textSec }}>{e.role || "—"}</div>
+                        </div>
+                        <select value={salaryAssign[e.id]} onChange={ev => setSalaryAssign(p => ({ ...p, [e.id]: ev.target.value }))}
+                          style={{ padding: "8px 12px", border: `1.5px solid ${salaryAssign[e.id] ? t.amber : t.border}`, borderRadius: 10, fontSize: 12.5, fontFamily: font, outline: "none", background: t.card, color: t.text, cursor: "pointer", maxWidth: isMobile ? 140 : 200 }}
+                          onFocus={e2 => { e2.target.style.borderColor = t.amber; }}
+                          onBlur={e2 => { e2.target.style.borderColor = salaryAssign[e.id] ? t.amber : t.border; }}>
+                          <option value="">Sélectionner…</option>
+                          {SALARY_BRACKETS.map(b => (
+                            <option key={b.key} value={b.key}>{b.label}{parseFloat(salaryAmounts[b.key]) > 0 ? ` → ${parseFloat(salaryAmounts[b.key]).toLocaleString("fr-FR")}€` : ""}</option>
+                          ))}
+                        </select>
+                        {salaryAssign[e.id] && parseFloat(salaryAmounts[salaryAssign[e.id]]) > 0 && (
+                          <span style={{ fontWeight: 800, color: t.amber, fontSize: 14, minWidth: 60, textAlign: "right" }}>
+                            {parseFloat(salaryAmounts[salaryAssign[e.id]]).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* LIBRE */}
+            {mode === "libre" && (
+              <div>
+                <SectionTitle icon="pencil" iconColor={t.purple} title="Assistant saisie guidée" sub="Entrez vos montants — Perky analyse et suggère le critère légal" t={t} />
+
+                <div style={{ marginTop: 16, background: t.bgSecondary, borderRadius: 12, overflow: "hidden" }}>
+                  {activeEmp.map((e, i) => (
+                    <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: i < activeEmp.length - 1 ? `1px solid ${t.borderSoft}` : "none" }}>
+                      <div style={{ width: 34, height: 34, borderRadius: "50%", background: `linear-gradient(135deg, ${t.purple}, #9F67FA)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 800, color: "#fff", flexShrink: 0 }}>{e.initials}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: t.text }}>{e.firstName} {e.lastName}</div>
+                        <div style={{ fontSize: 11.5, color: t.textSec }}>{e.seniority} mois · {e.role || "—"}</div>
+                      </div>
+                      <div style={{ position: "relative", width: 130 }}>
+                        <input type="number" min="0" max="3000" value={libreAmounts[e.id]}
+                          onChange={ev => setLibreAmounts(p => ({ ...p, [e.id]: ev.target.value }))}
+                          placeholder="0"
+                          style={{ width: "100%", padding: "9px 36px 9px 12px", border: `1.5px solid ${libreAmounts[e.id] ? t.purple : t.border}`, borderRadius: 10, fontSize: 14, fontFamily: font, outline: "none", background: t.card, color: t.text, boxSizing: "border-box" }}
+                          onFocus={e2 => { e2.target.style.borderColor = t.purple; e2.target.style.boxShadow = `0 0 0 3px ${t.purple}22`; }}
+                          onBlur={e2 => { e2.target.style.borderColor = libreAmounts[e.id] ? t.purple : t.border; e2.target.style.boxShadow = "none"; }} />
+                        <span style={{ position: "absolute", right: 11, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: t.textSec, fontWeight: 600 }}>€</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Analyse de conformité en temps réel */}
+                {amounts.length >= 2 && (() => {
+                  const sorted = [...activeEmp].sort((a, b) => a.seniority - b.seniority);
+                  const allFilled = activeEmp.every(e => parseFloat(libreAmounts[e.id]) > 0);
+                  const hasZero = activeEmp.some(e => parseFloat(libreAmounts[e.id]) === 0 && libreAmounts[e.id] !== "");
+
+                  // Vérification uniforme
+                  const allStrictlyEqual = allFilled && activeEmp.every(e => parseFloat(libreAmounts[e.id]) === parseFloat(libreAmounts[activeEmp[0].id]));
+
+                  const isMonotoneSeni = !allStrictlyEqual && sorted.every((e, i) => i === 0 || (finalAmounts[e.id] >= finalAmounts[sorted[i - 1].id]));
+
+                  // Analyse rôle
+                  const roleGroups = {};
+                  activeEmp.forEach(e => { const r = e.role || "—"; if (!roleGroups[r]) roleGroups[r] = []; roleGroups[r].push(finalAmounts[e.id]); });
+                  const roleConsistent = Object.values(roleGroups).every(g => g.every(v => v === g[0]));
+
+                  // Ratio
+                  const maxAmt = Math.max(...amounts);
+                  const minAmt = Math.min(...amounts.filter(v => v > 0));
+                  const ratio = minAmt > 0 ? (maxAmt / minAmt) : null;
+
+                  // Alerte 0€ bloquante
+                  if (hasZero) return (
+                    <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 14, background: "#FFF0F0", border: `2px solid ${t.red}`, backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(220,47,54,0.04) 8px, rgba(220,47,54,0.04) 16px)", fontSize: 13, color: t.red, lineHeight: 1.65, fontWeight: 600 }}>
+                      🚨 <strong>ALERTE BLOQUANTE — Salarié à 0€ :</strong> Exclure un salarié présent de la PPV est le motif n°1 de redressement URSSAF (Art. L3314-5 CT). Si ce salarié a rejoint l'entreprise après la date de la DUE, précisez-le dans l'Article 1. Sinon, saisissez un montant — même symbolique (min. 50€ recommandé). La génération du kit est bloquée.
+                    </div>
+                  );
+
+                  // Cas uniforme déguisé
+                  if (allStrictlyEqual) return (
+                    <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 14, background: t.blueGradSoft, border: `1.5px solid ${t.blue}33`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: t.blue + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon name="equal" size={18} color={t.blue} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: t.blue, marginBottom: 4 }}>Montant uniforme détecté <span style={{ fontSize: 11, fontWeight: 600, color: t.textTert, background: t.bgSecondary, padding: "2px 8px", borderRadius: 20, marginLeft: 4 }}>Art. L3314-5 CT</span></div>
+                        <div style={{ fontSize: 12.5, color: t.textSec, lineHeight: 1.6 }}>Tous vos salariés ont le même montant. La DUE mentionnera un montant uniforme. Si c'est votre intention, vous pouvez utiliser directement le <strong>mode Uniforme</strong> pour plus de clarté.</div>
+                        <button onClick={() => setMode("uniforme")} style={{ marginTop: 10, padding: "7px 14px", borderRadius: 20, border: "none", background: t.blue, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: font }}>
+                          Basculer en mode Uniforme (recommandé) →
+                        </button>
+                      </div>
+                    </div>
+                  );
+
+                  if (!allFilled) return null;
+
+                  const suggestions = [];
+                  if (isMonotoneSeni) suggestions.push({ icon: "clock", color: t.green, critere: "Ancienneté", article: "Art. L3314-5 CT", desc: "Vos montants croissent avec l'ancienneté — critère légal validable automatiquement.", action: "anciennete" });
+                  if (roleConsistent && Object.keys(roleGroups).length > 1) suggestions.push({ icon: "briefcase", color: t.blue, critere: "Classification / Poste", article: "Art. L3314-5 CT", desc: "Même montant par poste — critère de classification professionnelle valide.", action: null });
+                  if (suggestions.length === 0) suggestions.push({ icon: "alert-circle", color: t.amber, critere: "Critère à préciser", article: "Art. L3314-5 CT", desc: "Vos montants ne suivent pas une logique identifiable automatiquement. Votre expert-comptable devra valider le critère de modulation avant mise en application.", action: null });
+
+                  return (
+                    <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.5 }}>🔍 Analyse Perky — Critère légal détecté</div>
+                      {suggestions.map((s, i) => (
+                        <div key={i} style={{ padding: "14px 16px", borderRadius: 14, background: s.color + "0F", border: `1.5px solid ${s.color}33`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <Icon name={s.icon} size={18} color={s.color} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                              <span style={{ fontSize: 13, fontWeight: 800, color: s.color }}>{s.critere}</span>
+                              <span style={{ fontSize: 11, fontWeight: 600, color: t.textTert, background: t.bgSecondary, padding: "2px 8px", borderRadius: 20 }}>{s.article}</span>
+                            </div>
+                            <div style={{ fontSize: 12.5, color: t.textSec, lineHeight: 1.6 }}>{s.desc}</div>
+                            {s.action === "anciennete" && (
+                              <button onClick={() => setMode("anciennete")} style={{ marginTop: 10, padding: "7px 14px", borderRadius: 20, border: "none", background: s.color, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: font }}>
+                                Basculer en mode Ancienneté (recommandé) →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {ratio !== null && ratio > 5 && (
+                        <div style={{ padding: "12px 14px", borderRadius: 12, background: t.amberLight, border: `1px solid ${t.amber}44`, fontSize: 12.5, color: t.amberDeep, lineHeight: 1.6 }}>
+                          ⚠️ Ratio max/min : <strong>{ratio.toFixed(1)}x</strong> — Au-delà de 5x, l'URSSAF peut contester la modulation. Envisagez de resserrer les écarts.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* ── PARAMÈTRES DE VERSEMENT ── */}
+        {mode && (
+          <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px", marginBottom: 16, border: `1px solid ${t.borderSoft}`, animation: "pkRise 0.35s ease" }}>
+            <SectionTitle icon="calendar" iconColor={t.blue} title="Paramètres du versement" t={t} />
+            <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16, marginTop: 16 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: t.textSec, display: "block", marginBottom: 7 }}>Mois de versement</label>
+                <select value={payMonth} onChange={e => setPayMonth(e.target.value)}
+                  style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${t.border}`, borderRadius: 12, fontSize: 14, fontFamily: font, outline: "none", background: t.bgTint, color: payMonth ? t.text : t.textTert, cursor: "pointer" }}
+                  onFocus={e => { e.target.style.borderColor = t.blue; }}
+                  onBlur={e => { e.target.style.borderColor = t.border; }}>
+                  <option value="">Choisir le mois…</option>
+                  {["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"].map(m => (
+                    <option key={m} value={m}>{m} 2026</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: t.textSec, display: "block", marginBottom: 7 }}>Type de versement</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[{ id: "premier", label: "Premier versement" }, { id: "complement", label: "Versement complémentaire" }].map(opt => (
+                    <button key={opt.id} onClick={() => setCertifPpvType(opt.id)}
+                      style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: `2px solid ${certifPpvType === opt.id ? t.blue : t.borderSoft}`, background: certifPpvType === opt.id ? t.blueGradSoft : t.bgTint, color: certifPpvType === opt.id ? t.blue : t.textSec, fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: font, transition: "all 0.15s" }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── WARNINGS ── */}
+        {warnings.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16, animation: "pkRise 0.3s ease" }}>
+            {warnings.map((w, i) => (
+              <div key={i} style={{
+                padding: "13px 16px",
+                borderRadius: 12,
+                background: w.blocking ? "#FFF0F0" : w.type === "orange" ? t.amberLight : t.blueGradSoft,
+                border: w.blocking
+                  ? `1.5px solid ${t.red}`
+                  : `1px solid ${w.type === "orange" ? t.amber + "44" : t.blue + "33"}`,
+                backgroundImage: w.blocking
+                  ? "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(220,47,54,0.04) 8px, rgba(220,47,54,0.04) 16px)"
+                  : "none",
+                fontSize: 13,
+                color: w.blocking ? t.red : w.type === "orange" ? t.amberDeep : t.blue,
+                lineHeight: 1.65,
+                fontWeight: w.blocking ? 600 : 400,
+              }}>
+                {w.text}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── TOTAL & CERTIFICATION ── */}
+        {mode && hasAmounts && (
+          <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px", border: `1px solid ${t.borderSoft}`, animation: "pkRise 0.4s ease" }}>
+
+            {/* Total */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: t.blueGrad, borderRadius: 14, marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", fontWeight: 600, marginBottom: 3 }}>TOTAL PPV ÉQUIPE</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: "#fff", letterSpacing: -0.8 }}>{totalPPV.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>{activeEmp.length} salarié{activeEmp.length > 1 ? "s" : ""} · économie charges ~{savings.toLocaleString("fr-FR")} €</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", fontWeight: 600, marginBottom: 4 }}>PLAFOND LÉGAL</div>
+                <div style={{ fontSize: 14, color: "#fff", fontWeight: 700 }}>3 000€ / salarié / an</div>
+                {activeEmp.some(e => (finalAmounts[e.id] || 0) > 3000) && (
+                  <div style={{ marginTop: 6, fontSize: 12, color: "#FCA5A5", fontWeight: 700 }}>⚠️ Plafond dépassé pour certains salariés</div>
+                )}
+              </div>
+            </div>
+
+            {/* Certification SMIC */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: t.textSec, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 10 }}>Certification obligatoire</div>
+              <div onClick={() => setCertifSmic(s => !s)}
+                style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "16px 18px", borderRadius: 14, border: `2px solid ${certifSmic ? t.green : t.borderStrong}`, background: certifSmic ? t.greenLight : t.bgTint, cursor: "pointer", transition: "all 0.2s" }}>
+                <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${certifSmic ? t.green : t.borderStrong}`, background: certifSmic ? t.green : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.2s" }}>
+                  {certifSmic && <Icon name="check" size={13} color="#fff" />}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: certifSmic ? t.green : t.text, marginBottom: 3 }}>
+                    Certification exonération SMIC — Obligatoire
+                  </div>
+                  <div style={{ fontSize: 12.5, color: t.textSec, lineHeight: 1.6 }}>
+                    Je certifie sur l'honneur que les salariés bénéficiant de l'exonération totale d'impôt sur le revenu au titre de la PPV gagnent <strong>moins de 3 SMIC annuels</strong> (environ 64 500€ brut/an pour 2026), conformément à l'article 1er de la loi n°2022-1158.
+                  </div>
+                </div>
+              </div>
+              {!certifSmic && (
+                <div style={{ marginTop: 8, fontSize: 12, color: t.red, display: "flex", alignItems: "center", gap: 5 }}>
+                  <Icon name="alert-circle" size={13} color={t.red} />
+                  Cette certification est obligatoire pour débloquer la génération du kit.
+                </div>
+              )}
+            </div>
+
+            {/* Bouton Générer */}
+            <button onClick={() => canGenerate && setStep("preview")} disabled={!canGenerate}
+              style={{ width: "100%", padding: "15px", borderRadius: 13, border: "none", background: canGenerate ? t.blueGrad : t.bgSecondary, color: canGenerate ? "#fff" : t.textTert, fontSize: 15, fontWeight: 700, cursor: canGenerate ? "pointer" : "not-allowed", fontFamily: font, boxShadow: canGenerate ? "0 4px 14px rgba(37,99,235,0.4)" : "none", transition: "transform 0.15s, box-shadow 0.15s" }}
+              onMouseEnter={e => { if (canGenerate) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 20px rgba(37,99,235,0.45)"; } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = canGenerate ? "0 4px 14px rgba(37,99,235,0.4)" : "none"; }}>
+              {!canGenerate
+                ? (hasBlockingWarning ? "🚨 Corrigez les alertes bloquantes pour continuer" : !payMonth ? "Choisissez un mois de versement" : !certifSmic ? "Cochez la certification SMIC pour continuer" : "Saisissez les montants pour continuer")
+                : "Générer le Kit PPV →"}
+            </button>
+
+          </div>
+        )}
+
+      </>)}
+
+      {/* ── ÉTAPE 2 : APERÇU & IMPRESSION ── */}
+      {step === "preview" && (
+        <div style={{ animation: "pkRise 0.4s ease" }}>
+          {/* Récap */}
+          <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px", marginBottom: 16, border: `1px solid ${t.borderSoft}` }}>
+            <SectionTitle icon="file-text" iconColor={t.green} title="Kit prêt à imprimer" sub="3 documents générés : DUE · Remise en main propre · Mémo comptable" t={t} />
+
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 12, margin: "18px 0" }}>
+              {[
+                { icon: "file-certificate", label: "DUE", desc: "Décision Unilatérale de l'Employeur", color: t.blue },
+                { icon: "writing", label: "Remise en main propre", desc: "Liste salariés + signatures", color: t.green },
+                { icon: "calculator", label: "Mémo Comptable", desc: "CTP 510 · Instructions DSN", color: t.amber },
+              ].map((d, i) => (
+                <div key={i} style={{ padding: "16px", background: t.bgTint, borderRadius: 14, border: `1px solid ${t.borderSoft}`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: d.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icon name={d.icon} size={18} color={d.color} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: t.text, marginBottom: 2 }}>{d.label}</div>
+                    <div style={{ fontSize: 12, color: t.textSec }}>{d.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Récap chiffres */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, padding: "14px 18px", background: t.blueGradSoft, borderRadius: 12, marginBottom: 16 }}>
+              {[
+                { label: "Total PPV", value: totalPPV.toLocaleString("fr-FR", { minimumFractionDigits: 2 }) + " €", icon: "coin" },
+                { label: "Salariés", value: activeEmp.length, icon: "users" },
+                { label: "Économie charges", value: "~" + savings.toLocaleString("fr-FR") + " €", icon: "trending-down" },
+                { label: "Versement", value: payMonth + " 2026", icon: "calendar" },
+              ].map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", background: t.card, borderRadius: 20, boxShadow: t.cardShadowSoft }}>
+                  <Icon name={s.icon} size={14} color={t.blue} />
+                  <span style={{ fontSize: 12, color: t.textSec }}>{s.label} :</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: t.text }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Warnings recap */}
+            {warnings.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                {warnings.map((w, i) => (
+                  <div key={i} style={{
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    background: w.blocking ? "#FFF0F0" : w.type === "orange" ? t.amberLight : t.blueGradSoft,
+                    border: w.blocking ? `1.5px solid ${t.red}` : `1px solid ${w.type === "orange" ? t.amber + "44" : t.blue + "33"}`,
+                    backgroundImage: w.blocking ? "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(220,47,54,0.04) 8px, rgba(220,47,54,0.04) 16px)" : "none",
+                    marginBottom: 6,
+                    fontSize: 12.5,
+                    color: w.blocking ? t.red : w.type === "orange" ? t.amberDeep : t.blue,
+                    lineHeight: 1.55,
+                    fontWeight: w.blocking ? 600 : 400,
+                  }}>
+                    {w.text}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button onClick={handlePrint}
+              style={{ width: "100%", padding: "15px", borderRadius: 13, border: "none", background: t.greenGrad, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", justifyContent: "center", gap: 9, boxShadow: "0 4px 14px rgba(14,163,113,0.4)", transition: "transform 0.15s, box-shadow 0.15s" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 20px rgba(14,163,113,0.45)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(14,163,113,0.4)"; }}>
+              <Icon name="printer" size={18} color="#fff" /> Imprimer / Télécharger le Kit PPV (3 pages)
+            </button>
+          </div>
+
+          {/* Retour */}
+          <button onClick={() => setStep("define")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", border: "none", background: t.bgTint, borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, color: t.textSec, fontFamily: font, boxShadow: t.cardShadowSoft }}>
+            <Icon name="arrow-left" size={15} color={t.textSec} /> Modifier la configuration
+          </button>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
 const bossNav = [
   { id: "home", label: "Tableau de bord", icon: "home" },
   { id: "scanner", label: "Scanner", icon: "chart-bar" },
+  { id: "ppv", label: "Kit PPV", icon: "file-certificate" },
   { id: "team", label: "Équipe", icon: "users" },
   { id: "factures", label: "Factures", icon: "file-invoice" },
   { id: "offres", label: "Catalogue", icon: "tag" },
   { id: "settings", label: "Paramètres", icon: "settings" },
 ];
 
+// ─── PAGE DE PROTECTION MDP ───────────────────────────────────────────
+const GATE_PASSWORD = "Perky2026";
+
+function PasswordGate({ children }) {
+  const [unlocked, setUnlocked] = useState(false);
+  const [input, setInput] = useState("");
+  const [error, setError] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const handleSubmit = () => {
+    if (input === GATE_PASSWORD) {
+      setUnlocked(true);
+      setError(false);
+    } else {
+      setError(true);
+      setInput("");
+      setShake(true);
+      setTimeout(() => setShake(false), 600);
+    }
+  };
+
+  if (unlocked) return children;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "radial-gradient(1200px 700px at 20% -10%, #EAF1FB 0%, transparent 60%), radial-gradient(900px 600px at 95% 5%, #EDEBFA 0%, transparent 55%), #F4F5F7", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif", padding: 24 }}>
+      <style>{`
+        @keyframes pkShake {
+          0%, 100% { transform: translateX(0); }
+          15% { transform: translateX(-8px); }
+          30% { transform: translateX(8px); }
+          45% { transform: translateX(-6px); }
+          60% { transform: translateX(6px); }
+          75% { transform: translateX(-3px); }
+          90% { transform: translateX(3px); }
+        }
+        @keyframes pkFadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        * { box-sizing: border-box; }
+        input, button { -webkit-appearance: none; appearance: none; font-family: inherit; }
+      `}</style>
+
+      <div style={{ width: "100%", maxWidth: 420, animation: "pkFadeIn 0.5s ease" }}>
+
+        {/* Logo */}
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 18, background: "linear-gradient(135deg, #3B82F6 0%, #2563EB 55%, #1E40AF 100%)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", boxShadow: "0 8px 24px rgba(37,99,235,0.35)" }}>
+            <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#10131A", letterSpacing: -0.7, marginBottom: 6 }}>Perky</div>
+          <div style={{ fontSize: 14, color: "#5C6270", lineHeight: 1.5 }}>Accès réservé — saisissez votre mot de passe</div>
+        </div>
+
+        {/* Card */}
+        <div style={{ background: "#fff", borderRadius: 24, boxShadow: "0 0 0 1px rgba(16,19,26,0.05), 0 20px 48px -12px rgba(16,19,26,0.18)", padding: "36px 32px", animation: shake ? "pkShake 0.6s ease" : "none" }}>
+
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#5C6270", marginBottom: 8, letterSpacing: 0.2 }}>
+            Mot de passe
+          </label>
+
+          <div style={{ position: "relative", marginBottom: 16 }}>
+            <input
+              type={showPass ? "text" : "password"}
+              value={input}
+              onChange={e => { setInput(e.target.value); setError(false); }}
+              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              placeholder="••••••••••"
+              autoFocus
+              style={{
+                width: "100%",
+                padding: "14px 46px 14px 16px",
+                border: `2px solid ${error ? "#DC2F36" : "#E5E7EB"}`,
+                borderRadius: 14,
+                fontSize: 16,
+                outline: "none",
+                background: error ? "#FDEBEC" : "#FBFBFC",
+                color: "#10131A",
+                boxSizing: "border-box",
+                transition: "border-color 0.15s, background 0.15s",
+                letterSpacing: showPass ? 0 : 2,
+              }}
+              onFocus={e => { if (!error) { e.target.style.borderColor = "#2563EB"; e.target.style.boxShadow = "0 0 0 4px rgba(37,99,235,0.16)"; } }}
+              onBlur={e => { e.target.style.borderColor = error ? "#DC2F36" : "#E5E7EB"; e.target.style.boxShadow = "none"; }}
+            />
+            <button
+              onClick={() => setShowPass(s => !s)}
+              style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", border: "none", background: "none", cursor: "pointer", padding: 4, color: "#9AA0AC", fontSize: 18 }}>
+              {showPass ? "🙈" : "👁️"}
+            </button>
+          </div>
+
+          {error && (
+            <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 14px", background: "#FDEBEC", borderRadius: 10, marginBottom: 16, fontSize: 13, color: "#DC2F36", fontWeight: 600, border: "1px solid rgba(220,47,54,0.2)" }}>
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#DC2F36" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              Mot de passe incorrect. Veuillez réessayer.
+            </div>
+          )}
+
+          <button
+            onClick={handleSubmit}
+            disabled={!input}
+            style={{
+              width: "100%",
+              padding: "15px",
+              borderRadius: 13,
+              border: "none",
+              background: input ? "linear-gradient(135deg, #3B82F6 0%, #2563EB 55%, #1E40AF 100%)" : "#EDEEF1",
+              color: input ? "#fff" : "#9AA0AC",
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: input ? "pointer" : "default",
+              fontFamily: "inherit",
+              boxShadow: input ? "0 4px 14px rgba(37,99,235,0.4)" : "none",
+              transition: "transform 0.15s, box-shadow 0.15s",
+            }}
+            onMouseEnter={e => { if (input) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 20px rgba(37,99,235,0.45)"; } }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = input ? "0 4px 14px rgba(37,99,235,0.4)" : "none"; }}>
+            Accéder →
+          </button>
+        </div>
+
+        <div style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#9AA0AC" }}>
+          © 2026 Perky · Accès restreint
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────
 export default function App() {
+  return (
+    <PasswordGate>
+      <PerkyApp />
+    </PasswordGate>
+  );
+}
+
+function PerkyApp() {
   const [dark, setDark] = useState(false);
   const [authState, setAuthState] = useState("login");
   const [currentAccount, setCurrentAccount] = useState(null);
@@ -2817,7 +4449,6 @@ export default function App() {
     { id: 3, icon: "flame", color: "#BA7517", title: "Nouvelle offre : Disneyland Paris", sub: "-30€ sur le billet 1 jour, disponible dès maintenant", time: "Il y a 1sem", read: true },
     { id: 4, icon: "bus", color: "#378ADD", title: "Transport remboursé à 75%", sub: "Votre employeur prend désormais en charge 75% de votre Navigo", time: "Il y a 2sem", read: true },
   ]);
-  const [showNotifs, setShowNotifs] = useState(false);
   const [guidePage, setGuidePage] = useState("hub");
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -2889,7 +4520,13 @@ export default function App() {
 
   const bossViews = {
     home: <BossHome employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onNav={setBossPage} />,
-    scanner: <BossScanner employees={employees} scannerState={scannerState} setScannerState={setScannerState} onUpdateEmployeePPV={updateEmployeePPV} t={t} company={company} />,
+    scanner: <BossScanner employees={employees} scannerState={scannerState} t={t} company={company} />,
+    ppv: <BossPPVKit employees={employees} company={company} t={t} />,
+    "scanner-ppv": <BossPPVKit employees={employees} company={company} t={t} />,
+    "scanner-resto": <BossSubKit kitId="resto" employees={employees} scannerState={scannerState} setScannerState={setScannerState} company={company} t={t} />,
+    "scanner-navigo": <BossSubKit kitId="navigo" employees={employees} scannerState={scannerState} setScannerState={setScannerState} company={company} t={t} />,
+    "scanner-vacances": <BossSubKit kitId="vacances" employees={employees} scannerState={scannerState} setScannerState={setScannerState} company={company} t={t} />,
+    "scanner-cadeaux": <BossSubKit kitId="cadeaux" employees={employees} scannerState={scannerState} setScannerState={setScannerState} company={company} t={t} />,
     team: <BossTeam employees={employees} setEmployees={setEmployees} t={t} />,
     factures: <BossFactures t={t} />,
     offres: <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
