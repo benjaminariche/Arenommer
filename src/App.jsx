@@ -3199,7 +3199,7 @@ ${kitId === "navigo" || kitId === "resto" ? `
             return (
               <>
                 <div style={{ padding: "12px 16px", background: t.bgTint, borderRadius: 12, border: `1px solid ${t.borderSoft}`, fontSize: 13, color: t.textSec, lineHeight: 1.65, marginBottom: 4 }}>
-                  <strong style={{ color: t.text }}>Comment ça fonctionne :</strong> Sélectionnez la tranche de salaire et le nombre d'enfants à charge de chaque salarié. Perky calcule automatiquement le taux d'abondement maximal autorisé (Tranche A ≤ 3 924€/mois = 80%, Tranche B > 3 924€/mois = 50%, +5% par enfant, max +10%).
+                  <strong style={{ color: t.text }}>Comment ça fonctionne :</strong> Sélectionnez la tranche de salaire et le nombre d'enfants à charge de chaque salarié. Perky calcule automatiquement le taux d'abondement maximal autorisé (Tranche A &le; 3 924€/mois = 80%, Tranche B &gt; 3 924€/mois = 50%, +5% par enfant, max +10%).
                 </div>
                 <div style={{ background: t.bgSecondary, borderRadius: 14, overflow: "hidden" }}>
                   <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1.5fr 0.8fr 1fr 1fr", gap: 0, padding: "10px 16px", background: t.bgTint, borderBottom: `1px solid ${t.borderSoft}` }}>
@@ -3228,7 +3228,7 @@ ${kitId === "navigo" || kitId === "resto" ? `
                           style={{ padding: "6px 10px", border: `1.5px solid ${t.border}`, borderRadius: 8, fontSize: 12, fontFamily: font, outline: "none", background: t.card, color: t.text, cursor: "pointer" }}
                           onFocus={ev => ev.target.style.borderColor = t.purple}
                           onBlur={ev => ev.target.style.borderColor = t.border}>
-                          <option value="A">≤ 3 924€/mois</option>
+                          <option value="A">&le; 3 924€/mois</option>
                           <option value="B">&gt; 3 924€/mois</option>
                         </select>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
