@@ -375,6 +375,9 @@ function downloadKit(kitId, { company, employees, scannerState }) {
 
 const SECTORS = ["Commerce / Retail", "Optique / Santé", "Hôtellerie-Restauration", "BTP / Artisanat", "Services aux entreprises", "Beauté / Bien-être", "Transport / Logistique", "Autre"];
 
+// Secteurs pour lesquels le module Titres-Restaurant est non pertinent
+const RESTO_EXCLUDED_SECTORS = ["Hôtellerie-Restauration", "BTP / Artisanat"];
+
 const IMG = {
   ugc: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=250&fit=crop",
   disney: "https://images.unsplash.com/photo-1597466599360-3b9775841aec?w=400&h=250&fit=crop",
@@ -979,10 +982,12 @@ const SCANNER_SUB = [
   { id: "scanner-cadeaux", label: "Chèques cadeaux",    icon: "gift",             color: "#DC2F36" },
 ];
 
-function Sidebar({ items, active, onSelect, user, role, t, cartCount }) {
+function Sidebar({ items, active, onSelect, user, role, t, cartCount, company }) {
   const [scannerOpen, setScannerOpen] = useState(
     active === "scanner" || SCANNER_SUB.some(s => s.id === active)
   );
+  const isRestoExcluded = RESTO_EXCLUDED_SECTORS.includes(company?.sector);
+  const visibleScannerSub = SCANNER_SUB.filter(s => !(s.id === "scanner-resto" && isRestoExcluded));
 
   useEffect(() => {
     if (active === "scanner" || SCANNER_SUB.some(s => s.id === active)) {
@@ -1041,7 +1046,7 @@ function Sidebar({ items, active, onSelect, user, role, t, cartCount }) {
                 {/* Sous-catégories */}
                 {scannerOpen && (
                   <div style={{ marginLeft: 20, marginBottom: 4, borderLeft: `2px solid ${t.borderSoft}`, paddingLeft: 8, animation: "pkFade 0.2s ease" }}>
-                    {SCANNER_SUB.map(sub => {
+                    {visibleScannerSub.map(sub => {
                       const subActive = active === sub.id;
                       return (
                         <button key={sub.id} onClick={() => onSelect(sub.id)}
@@ -1111,6 +1116,7 @@ function BossScanner({ employees, scannerState, t, company }) {
   const s = scannerState;
   const activeEmp = employees.filter(e => e.active);
   const n = activeEmp.length;
+  const isRestoExcluded = RESTO_EXCLUDED_SECTORS.includes(company?.sector);
 
   const isComplement = s.ppv_type?.value === "Versement complémentaire";
   const totalPPVNew = activeEmp.reduce((sum, e) => {
@@ -1120,17 +1126,20 @@ function BossScanner({ employees, scannerState, t, company }) {
   const totalNavigo = Math.round(((s.navigo.pct - 50) / 100) * 86.40 * 12 * n);
   const totalCadeaux = s.cadeaux.amount * n;
   const totalVacances = s.vacances.amount * n;
-  const restoTotal = Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n);
+  const restoTotal = isRestoExcluded ? 0 : Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n);
   const grandTotal = totalPPVNew + totalNavigo + totalCadeaux + totalVacances + restoTotal;
   const globalPct = Math.round([totalPPVNew > 0, totalNavigo > 0, totalCadeaux > 0, totalVacances > 0].filter(Boolean).length / 4 * 100);
 
-  const items = [
+  const allItems = [
     { id: "ppv",      label: "PPV 2026",           icon: "coin",            color: t.blue,   total: totalPPVNew,  pct: Math.round((totalPPVNew / (3000 * Math.max(n,1))) * 100), desc: `${(activeEmp[0]?.ppv || 0)}€ / salarié configuré` },
     { id: "navigo",   label: "Navigo",              icon: "bus",             color: t.amber,  total: totalNavigo,  pct: Math.round(((s.navigo.pct - 50) / 25) * 100), desc: `${s.navigo.pct}% pris en charge` },
     { id: "cadeaux",  label: "Chèques cadeaux",     icon: "gift",            color: t.red,    total: totalCadeaux, pct: Math.round((s.cadeaux.amount / 193) * 100), desc: `${s.cadeaux.amount}€ / salarié / événement` },
     { id: "vacances", label: "Chèques vacances",    icon: "beach",           color: t.purple, total: totalVacances,pct: Math.round((s.vacances.amount / 550) * 100), desc: `${s.vacances.amount}€ / salarié` },
     { id: "resto",    label: "Titres-restaurant",   icon: "tools-kitchen-2", color: t.green,  total: restoTotal,   pct: Math.round((s.resto.amount / s.resto.max) * 100), desc: `${s.resto.amount}€/j — ${s.resto.pct}% patronal` },
   ];
+
+  // Masquer Titres-Restaurant pour HCR et BTP
+  const items = allItems.filter(item => !(item.id === "resto" && isRestoExcluded));
 
   return (
     <div style={{ maxWidth: 880, animation: "pkRise 0.4s ease both" }}>
@@ -1197,6 +1206,14 @@ function BossScanner({ employees, scannerState, t, company }) {
         <Icon name="alert-triangle" size={16} color={t.amber} />
         <span>Estimations indicatives basées sur les plafonds légaux 2026. Configurez chaque dispositif via les sous-catégories, puis validez avec votre expert-comptable.</span>
       </div>
+
+      {/* Note sectorielle HCR / BTP */}
+      {isRestoExcluded && (
+        <div style={{ background: t.blueGradSoft, borderRadius: 14, padding: "13px 16px", fontSize: 12.5, color: t.blue, lineHeight: 1.65, display: "flex", gap: 9, alignItems: "flex-start", border: `1px solid ${t.blue}22`, marginTop: 10 }}>
+          <Icon name="info-circle" size={15} color={t.blue} />
+          <span>💡 <strong>Note sectorielle :</strong> Le module Titres-Restaurant est masqué pour votre secteur ({company?.sector}). Vos conventions collectives privilégient d'autres dispositifs (Panier BTP / Avantage en Nature Repas HCR) gérés directement sur votre outil de paie.</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -2675,6 +2692,14 @@ function BossSubKit({ kitId, employees, scannerState, setScannerState, company, 
   const today = new Date().toLocaleDateString("fr-FR");
   const update = (key, field, val) => setScannerState(p => ({ ...p, [key]: { ...p[key], [field]: val } }));
 
+  // Checklist post-validation (module Resto uniquement)
+  const [restoValidated, setRestoValidated] = useState(false);
+  const [checklistItems, setChecklistItems] = useState([false, false]);
+  const toggleChecklist = (i) => setChecklistItems(prev => prev.map((v, idx) => idx === i ? !v : v));
+
+  // Secteur exclu pour Resto
+  const isRestoExcluded = kitId === "resto" && RESTO_EXCLUDED_SECTORS.includes(company?.sector);
+
   // ── CONSTANTES LÉGALES 2026 ────────────────────────────────────────
   const PMSS_2026 = 3924;          // Plafond Mensuel Sécurité Sociale 2026
   const SMIC_MENSUEL_2026 = 1801.80; // SMIC brut mensuel 2026
@@ -2993,6 +3018,41 @@ ${kitId === "navigo" || kitId === "resto" ? `
   };
 
   // ── RENDU ──────────────────────────────────────────────────────────
+
+  // Affichage secteur exclu (avant tout le reste)
+  if (isRestoExcluded) return (
+    <div style={{ maxWidth: 620, animation: "pkRise 0.4s ease" }}>
+      <Badge text="Titres-restaurant" variant="green" t={t} dot />
+      <h1 style={{ fontSize: 25, fontWeight: 800, color: t.text, margin: "8px 0 20px", letterSpacing: -0.7 }}>Titres-restaurant</h1>
+      <div style={{ background: t.blueGradSoft, borderRadius: 16, padding: "22px 24px", border: `1px solid ${t.blue}22`, display: "flex", gap: 16, alignItems: "flex-start" }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
+          <Icon name="info-circle" size={22} color="#fff" />
+        </div>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: t.blue, marginBottom: 8, letterSpacing: -0.3 }}>Module non applicable à votre secteur</div>
+          <div style={{ fontSize: 13.5, color: t.blue, opacity: 0.85, lineHeight: 1.7 }}>
+            Le module Titres-Restaurant est masqué pour le secteur <strong>{company?.sector}</strong>.<br />
+            Vos conventions collectives privilégient d'autres dispositifs :
+          </div>
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+            {(company?.sector === "Hôtellerie-Restauration"
+              ? [{ icon: "tools-kitchen-2", label: "Avantage en Nature Repas (AN Repas HCR)", desc: "Évalué forfaitairement — géré directement sur votre outil de paie" }]
+              : [{ icon: "briefcase", label: "Panier de chantier BTP", desc: "Indemnité conventionnelle de repas sur chantier — exonérée de charges sous conditions" }]
+            ).map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", background: "rgba(37,99,235,0.08)", borderRadius: 12 }}>
+                <Icon name={item.icon} size={16} color={t.blue} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: t.blue }}>{item.label}</div>
+                  <div style={{ fontSize: 12, color: t.blue, opacity: 0.7, marginTop: 2 }}>{item.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const inputStyle = (focusColor) => ({
     width: "100%", padding: "11px 14px", border: `1.5px solid ${t.border}`, borderRadius: 12,
     fontSize: 15, fontFamily: font, outline: "none", background: t.bgTint, color: t.text, boxSizing: "border-box",
@@ -3310,6 +3370,48 @@ ${kitId === "navigo" || kitId === "resto" ? `
       {/* ── KIT TÉLÉCHARGEABLE ── */}
       <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px", border: `1px solid ${t.borderSoft}` }}>
         <SectionTitle icon="file-certificate" iconColor={t.green} title="Kit expert-comptable" sub="Mémo + CTP + instructions DSN prêts à envoyer" t={t} />
+
+        {/* Checklist post-validation (Resto uniquement) */}
+        {kitId === "resto" && !restoValidated && canPrint && (
+          <div style={{ marginTop: 16, padding: "18px 20px", background: t.greenLight, borderRadius: 14, border: `1.5px solid ${t.green}33` }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: t.green, marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}>
+              <Icon name="circle-check" size={16} color={t.green} /> Prochaines étapes pour activer le dispositif
+            </div>
+            {[
+              { label: "Appliquez cette modification sur votre espace émetteur de titres (Swile, Edenred, Bimpli, Sodexo…)" },
+              { label: "Transmettez la DUE et la fiche de paramétrage générées par Perky à votre expert-comptable pour la mise à jour des bulletins de paie." },
+            ].map((item, i) => (
+              <div key={i} onClick={() => toggleChecklist(i)}
+                style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: i === 0 ? `1px solid ${t.green}22` : "none", cursor: "pointer" }}>
+                <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${checklistItems[i] ? t.green : t.green + "55"}`, background: checklistItems[i] ? t.green : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.18s" }}>
+                  {checklistItems[i] && <Icon name="check" size={12} color="#fff" />}
+                </div>
+                <div style={{ fontSize: 13, color: checklistItems[i] ? t.green : t.text, fontWeight: checklistItems[i] ? 600 : 400, lineHeight: 1.6, textDecoration: checklistItems[i] ? "line-through" : "none", opacity: checklistItems[i] ? 0.7 : 1, transition: "all 0.2s" }}>
+                  <strong style={{ color: t.green }}>Étape {i + 1} :</strong> {item.label}
+                </div>
+              </div>
+            ))}
+            {checklistItems.every(Boolean) && (
+              <div onClick={() => setRestoValidated(true)}
+                style={{ marginTop: 14, padding: "11px 16px", background: t.green, borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 12px rgba(14,163,113,0.35)", transition: "transform 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+                onMouseLeave={e => e.currentTarget.style.transform = "none"}>
+                ✅ Marquer le dispositif comme activé
+              </div>
+            )}
+          </div>
+        )}
+
+        {kitId === "resto" && restoValidated && (
+          <div style={{ marginTop: 16, padding: "14px 18px", background: t.greenLight, borderRadius: 12, border: `1px solid ${t.green}33`, display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: t.green, fontWeight: 600 }}>
+            <Icon name="circle-check" size={18} color={t.green} />
+            Dispositif activé — en attente de confirmation de votre expert-comptable.
+            <button onClick={() => { setRestoValidated(false); setChecklistItems([false, false]); }}
+              style={{ marginLeft: "auto", fontSize: 11, color: t.textTert, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>
+              Réinitialiser
+            </button>
+          </div>
+        )}
 
         {hasBlocking && (
           <div style={{ marginTop: 14, padding: "12px 16px", background: "#FFF0F0", borderRadius: 12, border: `1.5px solid ${t.red}`, fontSize: 13, color: t.red, fontWeight: 600 }}>
@@ -4495,7 +4597,7 @@ function PerkyApp() {
 
   const markAllRead = () => setNotifications(p => p.map(n => ({ ...n, read: true })));
 
-  const activeEmployee = employees.find(e => e.id === 1) || INIT_EMPLOYEES[0];
+  const activeEmployee = employees.find(e => e.id === 1) || employees.find(e => e.active) || INIT_EMPLOYEES[0];
   const currentEmpPage = showPaymentConfirm ? "confirmation" : empPage;
 
   const isMobile = useIsMobile();
@@ -4507,15 +4609,21 @@ function PerkyApp() {
 
   const isPatron = currentAccount?.role === "patron";
 
-  const empViews = {
-    home: <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />,
-    catalogue: selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => setSelectedOffer(null)} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
-    cart: <CartPage cart={cart} onRemove={id => setCart(p => p.filter(i => i.id !== id))} onPay={handlePayment} t={t} />,
-    wallet: <EmpWallet t={t} />,
-    guide: guidePage === "sante" ? <Guide100Sante t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "cpf" ? <GuideCPF t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "perky" ? <GuidePerky t={t} onBack={() => setGuidePage("hub")} /> : <GuidesHub t={t} onSelect={setGuidePage} />,
-    settings: <Settings dark={dark} setDark={setDark} t={t} />,
-    detail: selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => { setSelectedOffer(null); setEmpPage("catalogue"); }} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : null,
-    confirmation: <PaymentConfirm orders={paidOrders} onGoToWallet={() => { setShowPaymentConfirm(false); setEmpPage("wallet"); }} onGoToCatalogue={() => { setShowPaymentConfirm(false); setEmpPage("catalogue"); }} t={t} />,
+  // Fonction lazy — évite d'instancier tous les composants salarié en même temps
+  // ce qui causait un crash silencieux (page blanche) lors du toggle de rôle
+  const getEmpView = (page) => {
+    if (!activeEmployee) return <div style={{ padding: 40, color: t.textSec, fontSize: 14 }}>Chargement…</div>;
+    switch (page) {
+      case "home":        return <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />;
+      case "catalogue":   return selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => setSelectedOffer(null)} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />;
+      case "cart":        return <CartPage cart={cart} onRemove={id => setCart(p => p.filter(i => i.id !== id))} onPay={handlePayment} t={t} />;
+      case "wallet":      return <EmpWallet t={t} />;
+      case "guide":       return guidePage === "sante" ? <Guide100Sante t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "cpf" ? <GuideCPF t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "perky" ? <GuidePerky t={t} onBack={() => setGuidePage("hub")} /> : <GuidesHub t={t} onSelect={setGuidePage} />;
+      case "settings":    return <Settings dark={dark} setDark={setDark} t={t} />;
+      case "detail":      return selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => { setSelectedOffer(null); setEmpPage("catalogue"); }} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />;
+      case "confirmation": return <PaymentConfirm orders={paidOrders} onGoToWallet={() => { setShowPaymentConfirm(false); setEmpPage("wallet"); }} onGoToCatalogue={() => { setShowPaymentConfirm(false); setEmpPage("catalogue"); }} t={t} />;
+      default:            return <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />;
+    }
   };
 
   const bossViews = {
@@ -4682,7 +4790,7 @@ function PerkyApp() {
         <div style={{ position: "fixed", inset: 0, zIndex: 500 }} onClick={() => setSidebarOpen(false)}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", animation: "pkFade 0.2s ease" }} />
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 280, background: t.sidebar, boxShadow: t.popShadow, animation: "pkSlideIn 0.25s cubic-bezier(0.4,0,0.2,1)", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
-            <Sidebar items={navItems} active={activePageId} onSelect={handleNavSelect} user={userInfo} role={isPatron ? "Espace dirigeant" : "Espace salarié"} t={t} cartCount={cart.length} />
+            <Sidebar items={navItems} active={activePageId} onSelect={handleNavSelect} user={userInfo} role={isPatron ? "Espace dirigeant" : "Espace salarié"} t={t} cartCount={cart.length} company={company} />
           </div>
         </div>
       )}
@@ -4691,12 +4799,12 @@ function PerkyApp() {
       <div style={{ display: "flex" }}>
         {/* Desktop sidebar */}
         {!isMobile && (
-          <Sidebar items={navItems} active={activePageId} onSelect={handleNavSelect} user={userInfo} role={isPatron ? "Espace dirigeant" : "Espace salarié"} t={t} cartCount={cart.length} />
+          <Sidebar items={navItems} active={activePageId} onSelect={handleNavSelect} user={userInfo} role={isPatron ? "Espace dirigeant" : "Espace salarié"} t={t} cartCount={cart.length} company={company} />
         )}
 
         {/* Page content */}
         <div style={{ flex: 1, padding: isMobile ? "20px 16px 90px" : "32px 40px", overflowY: "auto", minHeight: isMobile ? "calc(100vh - 59px)" : "calc(100vh - 59px)", overflowX: "hidden" }}>
-          {isPatron ? (bossViews[bossPage] || bossViews.home) : empViews[currentEmpPage]}
+          {isPatron ? (bossViews[bossPage] || bossViews.home) : getEmpView(currentEmpPage)}
         </div>
       </div>
 
