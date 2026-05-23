@@ -1960,120 +1960,154 @@ function TeamCalendarEmp({ employees, currentEmployee, t }) {
 
 function EmpHome({ employee, employees, scannerState, t, onGoToCatalogue }) {
   const isMobile = useIsMobile();
+
+  // Guards défensifs
+  if (!employee) return <div style={{ padding: 24, color: t.text }}>Chargement…</div>;
+  const safeScannerState = scannerState || {};
+  const navigo = safeScannerState.navigo || { pct: 50 };
+  const cadeaux = safeScannerState.cadeaux || { amount: 0 };
+  const vacances = safeScannerState.vacances || { amount: 0 };
+  const resto = safeScannerState.resto || { amount: 0, pct: 55 };
+  const ppvType = safeScannerState.ppv_type || {};
+  const ppvAlreadyMap = safeScannerState.ppv_already || {};
+
   const ppvNew = employee.ppv || 0;
-  const ppvAlready = (scannerState.ppv_type?.value === "Versement complémentaire") ? (scannerState.ppv_already?.[employee.id] || 0) : 0;
+  const ppvAlready = (ppvType.value === "Versement complémentaire") ? (ppvAlreadyMap[employee.id] || 0) : 0;
   const ppv = ppvNew + ppvAlready;
-  const navigoExtra = Math.round(((scannerState.navigo.pct - 50) / 100) * 86.40 * 12);
-  const cadeau = scannerState.cadeaux.amount;
-  const vacances = scannerState.vacances.amount;
-  const restoYear = Math.round(scannerState.resto.amount * (scannerState.resto.pct / 100) * 220);
+  const navigoExtra = Math.round(((navigo.pct - 50) / 100) * 86.40 * 12);
+  const cadeau = cadeaux.amount || 0;
+  const vacancesAmt = vacances.amount || 0;
+  const restoYear = Math.round((resto.amount || 0) * ((resto.pct || 55) / 100) * 220);
   const cashPerks = ppv + cadeau;
-  const naturePerks = navigoExtra + restoYear + vacances;
+  const naturePerks = navigoExtra + restoYear + vacancesAmt;
   const totalPerks = cashPerks + naturePerks;
 
-  return <div style={{ maxWidth: 1080, animation: "pkRise 0.4s ease both" }}>
-    <div style={{ marginBottom: 20 }}>
-      <Badge text="Espace salarié" variant="blue" t={t} dot />
-      <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Bonjour {employee.firstName} 👋</h1>
-      <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Bienvenue sur votre espace avantages — Alpha Optique</p>
-    </div>
-    <div style={{ borderRadius: 22, overflow: "hidden", marginBottom: 24, position: "relative", background: "linear-gradient(135deg, #1D4FCB 0%, #2563EB 48%, #1E3A8A 100%)", boxShadow: `0 12px 36px -10px ${t.blue}77` }}>
-      <div style={{ ...glowDot("#60A5FA", 320, 0.5), top: "-40%", right: "20%" }} />
-      <div style={{ ...glowDot("#34D399", 220, 0.3), bottom: "-50%", left: "10%" }} />
-      <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)", backgroundSize: "22px 22px", opacity: 0.6 }} />
-      <div style={{ position: "relative", padding: "30px 34px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
-        <div style={{ color: "#fff" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20, padding: "5px 12px", marginBottom: 14, fontSize: 11.5, fontWeight: 600 }}>
-            <Icon name="award" size={13} color="#fff" /> Performance entreprise
-          </div>
-          <div style={{ fontSize: 13, opacity: 0.82, marginBottom: 4 }}>Votre entreprise fait partie des</div>
-          <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: -1.2, lineHeight: 1 }}>Top 12% des TPE</div>
-          <div style={{ fontSize: 13.5, opacity: 0.78, marginTop: 8 }}>en matière d'avantages salariés</div>
-        </div>
-        <div style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 18, padding: "22px 28px", textAlign: "center", color: "#fff", backdropFilter: "blur(8px)" }}>
-          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1 }}>{fmt(totalPerks)} €</div>
-          <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>d'avantages actifs / an</div>
-        </div>
-      </div>
-    </div>
+  const empList = Array.isArray(employees) ? employees : [];
 
-    {totalPerks > 0 && <div style={{ marginBottom: 28 }}>
-      <SectionTitle icon="wallet" iconColor={t.green} title="Votre rémunération globale" sub="Ce que votre employeur vous apporte au-delà de votre salaire net" t={t} />
-      <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px" }}>
-        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, marginBottom: 14, alignItems: "stretch" }}>
-          <div style={{ flex: 1.2, background: t.bgSecondary, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px dashed ${t.borderStrong}` }}>
-            <div style={{ fontSize: 11.5, color: t.textSec, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>Votre salaire</div>
-            <div style={{ fontSize: 22, letterSpacing: 5, color: t.textTert }}>●●●●</div>
-            <div style={{ fontSize: 11, color: t.textTert, marginTop: 8 }}>Connu de vous</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>
-          <div style={{ flex: 1, background: t.greenLight, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.green}26` }}>
-            <div style={{ fontSize: 11.5, color: t.green, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En espèces</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: t.green, letterSpacing: -0.6 }}>{fmt(cashPerks)} €</div>
-            <div style={{ fontSize: 11.5, color: t.green, opacity: 0.78, marginTop: 5 }}>PPV + chèques</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>
-          <div style={{ flex: 1, background: t.blueLighter, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.blue}26` }}>
-            <div style={{ fontSize: 11.5, color: t.blue, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En nature</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: t.blue, letterSpacing: -0.6 }}>{fmt(naturePerks)} €</div>
-            <div style={{ fontSize: 11.5, color: t.blue, opacity: 0.78, marginTop: 5 }}>Transport + resto</div>
-          </div>
-        </div>
-        <div style={{ background: t.blueGrad, borderRadius: 13, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", overflow: "hidden", boxShadow: `0 8px 20px -8px ${t.blue}88` }}>
-          <div style={{ ...glowDot("#fff", 70, 0.18), top: -26, right: 40 }} />
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.88)", fontWeight: 600, position: "relative" }}>Total avantages offerts par votre employeur</span>
-          <span style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: -0.5, position: "relative" }}>{fmt(totalPerks)} €/an</span>
-        </div>
+  return (
+    <div style={{ maxWidth: 1080, animation: "pkRise 0.4s ease both" }}>
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <Badge text="Espace salarié" variant="blue" t={t} dot />
+        <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>
+          Bonjour {employee.firstName || "Salarié"} 👋
+        </h1>
+        <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>Bienvenue sur votre espace avantages — Alpha Optique</p>
       </div>
-    </div>}
 
-    <div style={{ marginBottom: 28 }}>
-      <SectionTitle icon="gift" iconColor={t.blue} title="Ce que Alpha Optique vous offre" t={t} />
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 14 }}>
-        {[
-          ppv > 0 && { title: "PPV 2026", sub: ppvAlready > 0 ? `${fmt(ppv)}€ au total (${fmt(ppvAlready)}€ + ${fmt(ppvNew)}€)` : `${fmt(ppv)}€ nets versés`, icon: "coin", type: "cash" },
-          navigoExtra > 0 && { title: `Transport ${scannerState.navigo.pct}%`, sub: `+${fmt(navigoExtra)}€/an`, icon: "bus", type: "nature" },
-          scannerState.resto.amount > 0 && { title: "Titres-restaurant", sub: `${scannerState.resto.amount}€/jour`, icon: "tools-kitchen-2", type: "nature" },
-        ].filter(Boolean).map((it, i) => {
-          const isCash = it.type === "cash";
-          return <div key={i} style={{ background: t.card, borderRadius: 14, boxShadow: t.cardShadow, padding: "16px 18px", borderTop: `3px solid ${isCash ? t.green : t.blue}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: isCash ? t.greenLight : t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={it.icon} size={16} color={isCash ? t.green : t.blue} /></div>
-              <Badge text={isCash ? "Espèces" : "Nature"} variant={isCash ? "green" : "blue"} t={t} />
+      {/* Hero */}
+      <div style={{ borderRadius: 22, overflow: "hidden", marginBottom: 24, position: "relative", background: "linear-gradient(135deg, #1D4FCB 0%, #2563EB 48%, #1E3A8A 100%)", boxShadow: `0 12px 36px -10px ${t.blue}77` }}>
+        <div style={{ ...glowDot("#60A5FA", 320, 0.5), top: "-40%", right: "20%" }} />
+        <div style={{ ...glowDot("#34D399", 220, 0.3), bottom: "-50%", left: "10%" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)", backgroundSize: "22px 22px", opacity: 0.6 }} />
+        <div style={{ position: "relative", padding: "30px 34px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
+          <div style={{ color: "#fff" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20, padding: "5px 12px", marginBottom: 14, fontSize: 11.5, fontWeight: 600 }}>
+              <Icon name="award" size={13} color="#fff" /> Performance entreprise
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: t.text, marginBottom: 2 }}>{it.title}</div>
-            <div style={{ fontSize: 12, color: t.textSec }}>{it.sub}</div>
-          </div>;
-        })}
-      </div>
-    </div>
-
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-        <Icon name="calendar" size={18} color={t.blue} /> Planning équipe
-      </div>
-      <div style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, padding: "16px 18px" }}>
-        <TeamCalendarEmp employees={employees} currentEmployee={employee} t={t} />
-      </div>
-    </div>
-
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: t.text, display: "flex", alignItems: "center", gap: 8 }}><Icon name="flame" size={18} color={t.amber} /> Offres du moment</div>
-        <button onClick={onGoToCatalogue} style={{ fontSize: 13, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Voir tout →</button>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 12 }}>
-        {OFFERS.slice(0, 4).map(o => <div key={o.id} style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, overflow: "hidden" }}>
-          <img src={o.img} alt="" style={{ width: "100%", height: 100, objectFit: "cover", display: "block" }} />
-          <div style={{ padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, color: t.textSec }}>{o.cat}</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: t.text, margin: "2px 0 4px" }}>{o.name}</div>
-            <span style={{ fontSize: 15, fontWeight: 500, color: t.blue }}>{o.display}</span>
+            <div style={{ fontSize: 13, opacity: 0.82, marginBottom: 4 }}>Votre entreprise fait partie des</div>
+            <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: -1.2, lineHeight: 1 }}>Top 12% des TPE</div>
+            <div style={{ fontSize: 13.5, opacity: 0.78, marginTop: 8 }}>en matière d'avantages salariés</div>
           </div>
-        </div>)}
+          <div style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 18, padding: "22px 28px", textAlign: "center", color: "#fff", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+            <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1 }}>{fmt(totalPerks)} €</div>
+            <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>d'avantages actifs / an</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Rémunération globale */}
+      {totalPerks > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <SectionTitle icon="wallet" iconColor={t.green} title="Votre rémunération globale" sub="Ce que votre employeur vous apporte au-delà de votre salaire net" t={t} />
+          <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px" }}>
+            <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, marginBottom: 14, alignItems: "stretch" }}>
+              <div style={{ flex: 1.2, background: t.bgSecondary, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px dashed ${t.borderStrong}` }}>
+                <div style={{ fontSize: 11.5, color: t.textSec, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>Votre salaire</div>
+                <div style={{ fontSize: 22, letterSpacing: 5, color: t.textTert }}>●●●●</div>
+                <div style={{ fontSize: 11, color: t.textTert, marginTop: 8 }}>Connu de vous</div>
+              </div>
+              {!isMobile && <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>}
+              <div style={{ flex: 1, background: t.greenLight, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.green}26` }}>
+                <div style={{ fontSize: 11.5, color: t.green, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En espèces</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: t.green, letterSpacing: -0.6 }}>{fmt(cashPerks)} €</div>
+                <div style={{ fontSize: 11.5, color: t.green, opacity: 0.78, marginTop: 5 }}>PPV + chèques</div>
+              </div>
+              {!isMobile && <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>}
+              <div style={{ flex: 1, background: t.blueLighter, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.blue}26` }}>
+                <div style={{ fontSize: 11.5, color: t.blue, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En nature</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: t.blue, letterSpacing: -0.6 }}>{fmt(naturePerks)} €</div>
+                <div style={{ fontSize: 11.5, color: t.blue, opacity: 0.78, marginTop: 5 }}>Transport + resto</div>
+              </div>
+            </div>
+            <div style={{ background: t.blueGrad, borderRadius: 13, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", overflow: "hidden", boxShadow: `0 8px 20px -8px ${t.blue}88` }}>
+              <div style={{ ...glowDot("#fff", 70, 0.18), top: -26, right: 40 }} />
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.88)", fontWeight: 600, position: "relative" }}>Total avantages offerts par votre employeur</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: -0.5, position: "relative" }}>{fmt(totalPerks)} €/an</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Avantages détaillés */}
+      <div style={{ marginBottom: 28 }}>
+        <SectionTitle icon="gift" iconColor={t.blue} title="Ce que Alpha Optique vous offre" t={t} />
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 14 }}>
+          {[
+            ppv > 0 && { title: "PPV 2026", sub: ppvAlready > 0 ? `${fmt(ppv)}€ au total (${fmt(ppvAlready)}€ + ${fmt(ppvNew)}€)` : `${fmt(ppv)}€ nets versés`, icon: "coin", type: "cash" },
+            navigoExtra > 0 && { title: `Transport ${navigo.pct}%`, sub: `+${fmt(navigoExtra)}€/an`, icon: "bus", type: "nature" },
+            (resto.amount || 0) > 0 && { title: "Titres-restaurant", sub: `${resto.amount}€/jour`, icon: "tools-kitchen-2", type: "nature" },
+          ].filter(Boolean).map((it, i) => {
+            const isCash = it.type === "cash";
+            return (
+              <div key={i} style={{ background: t.card, borderRadius: 14, boxShadow: t.cardShadow, padding: "16px 18px", borderTop: `3px solid ${isCash ? t.green : t.blue}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: isCash ? t.greenLight : t.blueLighter, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon name={it.icon} size={16} color={isCash ? t.green : t.blue} />
+                  </div>
+                  <Badge text={isCash ? "Espèces" : "Nature"} variant={isCash ? "green" : "blue"} t={t} />
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: t.text, marginBottom: 2 }}>{it.title}</div>
+                <div style={{ fontSize: 12, color: t.textSec }}>{it.sub}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Planning équipe */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: t.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="calendar" size={18} color={t.blue} /> Planning équipe
+        </div>
+        <div style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, padding: "16px 18px" }}>
+          <TeamCalendarEmp employees={empList} currentEmployee={employee} t={t} />
+        </div>
+      </div>
+
+      {/* Offres du moment */}
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: t.text, display: "flex", alignItems: "center", gap: 8 }}>
+            <Icon name="flame" size={18} color={t.amber} /> Offres du moment
+          </div>
+          <button onClick={onGoToCatalogue} style={{ fontSize: 13, color: t.blue, border: "none", background: "none", cursor: "pointer", fontFamily: font }}>Voir tout →</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 12 }}>
+          {OFFERS.slice(0, 4).map(o => (
+            <div key={o.id} onClick={onGoToCatalogue} style={{ background: t.card, borderRadius: 16, boxShadow: t.cardShadow, overflow: "hidden", cursor: "pointer" }}>
+              <img src={o.img} alt="" style={{ width: "100%", height: 100, objectFit: "cover", display: "block" }} />
+              <div style={{ padding: "10px 12px" }}>
+                <div style={{ fontSize: 11, color: t.textSec }}>{o.cat}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: t.text, margin: "2px 0 4px" }}>{o.name}</div>
+                <span style={{ fontSize: 15, fontWeight: 500, color: t.blue }}>{o.display}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  </div>;
+  );
 }
 
 // ─── EMP CATALOGUE ────────────────────────────────────────────────────
@@ -4532,7 +4566,7 @@ export default function App() {
 }
 
 function PerkyApp() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(false); // Mode clair forcé pour la démo
   const [authState, setAuthState] = useState("login");
   const [currentAccount, setCurrentAccount] = useState(null);
   const [empPage, setEmpPage] = useState("home");
@@ -4554,15 +4588,7 @@ function PerkyApp() {
   const [guidePage, setGuidePage] = useState("hub");
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    setDark(mq.matches);
-    const h = e => setDark(e.matches);
-    mq.addEventListener("change", h);
-    return () => mq.removeEventListener("change", h);
-  }, []);
-
-  const t = dark ? DARK : LIGHT;
+  // Dark mode manuel uniquement (via Paramètres)
 
   const handleLogin = (account) => {
     setCurrentAccount(account);
@@ -4597,12 +4623,17 @@ function PerkyApp() {
 
   const markAllRead = () => setNotifications(p => p.map(n => ({ ...n, read: true })));
 
+  // ── TOUS LES HOOKS ICI — AVANT TOUT RETURN ──────────────────────
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showNotifs, setShowNotifs] = useState(false);
+
+  const t = dark ? DARK : LIGHT;
+
   const activeEmployee = employees.find(e => e.id === 1) || employees.find(e => e.active) || INIT_EMPLOYEES[0];
   const currentEmpPage = showPaymentConfirm ? "confirmation" : empPage;
 
-  const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  // ── EARLY RETURNS (après tous les hooks) ────────────────────────
   if (authState === "login") return <LoginPage onLogin={handleLogin} t={t} />;
   if (authState === "emp-activation") return <EmployeeActivation onComplete={() => setAuthState("app")} t={t} />;
   if (authState === "boss-onboarding") return <PatronOnboarding onComplete={(co) => { if (co) setCompany(co); setAuthState("app"); }} t={t} />;
@@ -4610,19 +4641,32 @@ function PerkyApp() {
   const isPatron = currentAccount?.role === "patron";
 
   // Fonction lazy — évite d'instancier tous les composants salarié en même temps
-  // ce qui causait un crash silencieux (page blanche) lors du toggle de rôle
+  // Avec ErrorBoundary intégré pour diagnostic visible
   const getEmpView = (page) => {
-    if (!activeEmployee) return <div style={{ padding: 40, color: t.textSec, fontSize: 14 }}>Chargement…</div>;
-    switch (page) {
-      case "home":        return <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />;
-      case "catalogue":   return selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => setSelectedOffer(null)} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />;
-      case "cart":        return <CartPage cart={cart} onRemove={id => setCart(p => p.filter(i => i.id !== id))} onPay={handlePayment} t={t} />;
-      case "wallet":      return <EmpWallet t={t} />;
-      case "guide":       return guidePage === "sante" ? <Guide100Sante t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "cpf" ? <GuideCPF t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "perky" ? <GuidePerky t={t} onBack={() => setGuidePage("hub")} /> : <GuidesHub t={t} onSelect={setGuidePage} />;
-      case "settings":    return <Settings dark={dark} setDark={setDark} t={t} />;
-      case "detail":      return selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => { setSelectedOffer(null); setEmpPage("catalogue"); }} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />;
-      case "confirmation": return <PaymentConfirm orders={paidOrders} onGoToWallet={() => { setShowPaymentConfirm(false); setEmpPage("wallet"); }} onGoToCatalogue={() => { setShowPaymentConfirm(false); setEmpPage("catalogue"); }} t={t} />;
-      default:            return <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />;
+    if (!activeEmployee) return (
+      <div style={{ padding: 40, background: "#FEF3C7", border: "2px solid #F59E0B", borderRadius: 12, color: "#92400E", fontSize: 14 }}>
+        ⚠️ Aucun salarié actif détecté. Vérifiez les données employees.
+      </div>
+    );
+    try {
+      switch (page) {
+        case "home":        return <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />;
+        case "catalogue":   return selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => setSelectedOffer(null)} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />;
+        case "cart":        return <CartPage cart={cart} onRemove={id => setCart(p => p.filter(i => i.id !== id))} onPay={handlePayment} t={t} />;
+        case "wallet":      return <EmpWallet t={t} />;
+        case "guide":       return guidePage === "sante" ? <Guide100Sante t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "cpf" ? <GuideCPF t={t} onBack={() => setGuidePage("hub")} /> : guidePage === "perky" ? <GuidePerky t={t} onBack={() => setGuidePage("hub")} /> : <GuidesHub t={t} onSelect={setGuidePage} />;
+        case "settings":    return <Settings dark={dark} setDark={setDark} t={t} />;
+        case "detail":      return selectedOffer ? <OfferDetail offer={selectedOffer} onBack={() => { setSelectedOffer(null); setEmpPage("catalogue"); }} onAddToCart={offer => { addToCart(offer); setSelectedOffer(null); }} t={t} /> : <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />;
+        case "confirmation": return <PaymentConfirm orders={paidOrders} onGoToWallet={() => { setShowPaymentConfirm(false); setEmpPage("wallet"); }} onGoToCatalogue={() => { setShowPaymentConfirm(false); setEmpPage("catalogue"); }} t={t} />;
+        default:            return <EmpHome employee={activeEmployee} employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onGoToCatalogue={() => setEmpPage("catalogue")} />;
+      }
+    } catch (err) {
+      return (
+        <div style={{ padding: 24, background: "#FEE2E2", border: "2px solid #DC2626", borderRadius: 12, color: "#991B1B" }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Erreur de rendu : {String(err.message)}</div>
+          <pre style={{ fontSize: 11, overflow: "auto" }}>{String(err.stack)}</pre>
+        </div>
+      );
     }
   };
 
