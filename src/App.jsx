@@ -531,6 +531,7 @@ function LoginPage({ onLogin, t }) {
   return (
     <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", minHeight: "100vh", background: t.bg, fontFamily: font }}>
       <style>{`
+        @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
         @keyframes pkFade { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pkPop { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes pkRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
@@ -541,6 +542,7 @@ function LoginPage({ onLogin, t }) {
         html { -webkit-text-size-adjust: 100%; }
         body { margin: 0; }
         input, button, select { -webkit-appearance: none; appearance: none; font-family: inherit; }
+        .ti { line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
       `}</style>
 
       {/* LEFT — branding (hidden on mobile, shown as compact header instead) */}
@@ -712,7 +714,7 @@ function EmployeeActivation({ onComplete, t }) {
 
         {/* Invitation banner */}
         <div style={{ background: t.greenGrad, borderRadius: 14, padding: "14px 18px", marginBottom: 28, display: "flex", gap: 12, alignItems: "center", boxShadow: "0 4px 12px rgba(16,185,129,0.3)" }}>
-          <Icon name="mail-check" size={20} color="#fff" />
+          <Icon name="mail" size={20} color="#fff" />
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Invitation reçue</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)" }}>Alpha Optique vous a invité à rejoindre Perky</div>
@@ -975,7 +977,7 @@ function PatronOnboarding({ onComplete, t }) {
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────
 const SCANNER_SUB = [
-  { id: "ppv",      label: "Kit PPV",            icon: "file-certificate", color: "#2563EB" },
+  { id: "ppv",      label: "Kit PPV",            icon: "certificate", color: "#2563EB" },
   { id: "scanner-resto",   label: "Titres-restaurant",  icon: "tools-kitchen-2",  color: "#0EA371" },
   { id: "scanner-navigo",  label: "Transport Navigo",   icon: "bus",              color: "#F59E0B" },
   { id: "scanner-vacances",label: "Chèques vacances",   icon: "beach",            color: "#7C3AED" },
@@ -1495,24 +1497,31 @@ function BossHome({ employees, scannerState, t, onNav }) {
       <SectionTitle icon="gift" iconColor={t.green} title="Ce que vous offrez à votre équipe" sub="Décomposition des avantages activés cette année" t={t} />
       <div style={{ background: t.card, borderRadius: 18, boxShadow: t.cardShadow, padding: "22px 24px" }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, marginBottom: 16, alignItems: isMobile ? "stretch" : "stretch" }}>
-          <div style={{ flex: 1, background: t.greenLight, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.green}26` }}>
-            <div style={{ fontSize: 11.5, color: t.green, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En espèces</div>
-            <div style={{ fontSize: 25, fontWeight: 800, color: t.green, letterSpacing: -0.6 }}>{fmt(totalPPV + totalCadeaux)} €</div>
-            <div style={{ fontSize: 11.5, color: t.green, opacity: 0.78, marginTop: 5 }}>PPV + chèques cadeaux</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>
-          <div style={{ flex: 1, background: t.blueLighter, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.blue}26` }}>
-            <div style={{ fontSize: 11.5, color: t.blue, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En nature</div>
-            <div style={{ fontSize: 25, fontWeight: 800, color: t.blue, letterSpacing: -0.6 }}>{fmt(totalNavigo + totalVacances + Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n))} €</div>
-            <div style={{ fontSize: 11.5, color: t.blue, opacity: 0.78, marginTop: 5 }}>Transport + resto + vacances</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>=</div>
-          <div style={{ flex: 1.25, background: t.blueGrad, borderRadius: 14, padding: "16px 18px", textAlign: "center", position: "relative", overflow: "hidden", boxShadow: `0 8px 20px -8px ${t.blue}88` }}>
-            <div style={{ ...glowDot("#fff", 80, 0.2), top: -30, right: -10 }} />
-            <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.85)", marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4, position: "relative" }}>Total équipe / an</div>
-            <div style={{ fontSize: 25, fontWeight: 800, color: "#fff", letterSpacing: -0.6, position: "relative" }}>{fmt(grandTotal)} €</div>
-            <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.78)", marginTop: 5, position: "relative" }}>soit {fmt(Math.round(grandTotal / Math.max(n, 1)))} € / pers.</div>
-          </div>
+          {(() => {
+            const especes = totalPPV + totalCadeaux;
+            const nature = totalNavigo + totalVacances + Math.round(s.resto.amount * (s.resto.pct / 100) * 220 * n);
+            const total = especes + nature;
+            return (<>
+              <div style={{ flex: 1, background: t.greenLight, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.green}26` }}>
+                <div style={{ fontSize: 11.5, color: t.green, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En espèces</div>
+                <div style={{ fontSize: 25, fontWeight: 800, color: t.green, letterSpacing: -0.6 }}>{fmt(especes)} €</div>
+                <div style={{ fontSize: 11.5, color: t.green, opacity: 0.78, marginTop: 5 }}>PPV + chèques cadeaux</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>+</div>
+              <div style={{ flex: 1, background: t.blueLighter, borderRadius: 14, padding: "16px 18px", textAlign: "center", border: `1px solid ${t.blue}26` }}>
+                <div style={{ fontSize: 11.5, color: t.blue, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>En nature</div>
+                <div style={{ fontSize: 25, fontWeight: 800, color: t.blue, letterSpacing: -0.6 }}>{fmt(nature)} €</div>
+                <div style={{ fontSize: 11.5, color: t.blue, opacity: 0.78, marginTop: 5 }}>Transport + resto + vacances</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: t.textTert, fontWeight: 300 }}>=</div>
+              <div style={{ flex: 1.25, background: t.blueGrad, borderRadius: 14, padding: "16px 18px", textAlign: "center", position: "relative", overflow: "hidden", boxShadow: `0 8px 20px -8px ${t.blue}88` }}>
+                <div style={{ ...glowDot("#fff", 80, 0.2), top: -30, right: -10 }} />
+                <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.85)", marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4, position: "relative" }}>Total équipe / an</div>
+                <div style={{ fontSize: 25, fontWeight: 800, color: "#fff", letterSpacing: -0.6, position: "relative" }}>{fmt(total)} €</div>
+                <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.78)", marginTop: 5, position: "relative" }}>soit {fmt(Math.round(total / Math.max(n, 1)))} € / pers.</div>
+              </div>
+            </>);
+          })()}
         </div>
         <div style={{ background: t.amberLight, borderRadius: 12, padding: "13px 16px", fontSize: 12.5, color: t.amberDeep, lineHeight: 1.6, display: "flex", gap: 9, alignItems: "flex-start", border: `1px solid ${t.amber}22` }}>
           <Icon name="bulb" size={16} color={t.amber} />
@@ -3920,10 +3929,10 @@ ${article2Html}
 
   // ── RENDU ─────────────────────────────────────────────────────────
   const MODES = [
-    { id: "uniforme",   icon: "equal",       label: "Uniforme",     desc: "Même montant pour tous" },
-    { id: "anciennete", icon: "clock",        label: "Ancienneté",   desc: "Paliers selon la durée" },
-    { id: "salaire",    icon: "currency-euro",label: "Par salaire",  desc: "Tranches de rémunération" },
-    { id: "libre",      icon: "pencil",       label: "Libre",        desc: "Montant salarié par salarié" },
+    { id: "uniforme",   icon: "users",          label: "Uniforme",     desc: "Même montant pour tous" },
+    { id: "anciennete", icon: "calendar-time",  label: "Ancienneté",   desc: "Paliers selon la durée" },
+    { id: "salaire",    icon: "cash",            label: "Par salaire",  desc: "Tranches de rémunération" },
+    { id: "libre",      icon: "adjustments",     label: "Libre",        desc: "Montant salarié par salarié" },
   ];
 
   const modeColors = { uniforme: t.blue, anciennete: t.green, salaire: t.amber, libre: t.purple };
@@ -4161,7 +4170,7 @@ ${article2Html}
                   if (allStrictlyEqual) return (
                     <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 14, background: t.blueGradSoft, border: `1.5px solid ${t.blue}33`, display: "flex", gap: 12, alignItems: "flex-start" }}>
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: t.blue + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Icon name="equal" size={18} color={t.blue} />
+                        <Icon name="equal-not" size={18} color={t.blue} />
                       </div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 800, color: t.blue, marginBottom: 4 }}>Montant uniforme détecté <span style={{ fontSize: 11, fontWeight: 600, color: t.textTert, background: t.bgSecondary, padding: "2px 8px", borderRadius: 20, marginLeft: 4 }}>Art. L3314-5 CT</span></div>
@@ -4342,8 +4351,8 @@ ${article2Html}
 
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 12, margin: "18px 0" }}>
               {[
-                { icon: "file-certificate", label: "DUE", desc: "Décision Unilatérale de l'Employeur", color: t.blue },
-                { icon: "writing", label: "Remise en main propre", desc: "Liste salariés + signatures", color: t.green },
+                { icon: "certificate", label: "DUE", desc: "Décision Unilatérale de l'Employeur", color: t.blue },
+                { icon: "pencil", label: "Remise en main propre", desc: "Liste salariés + signatures", color: t.green },
                 { icon: "calculator", label: "Mémo Comptable", desc: "CTP 510 · Instructions DSN", color: t.amber },
               ].map((d, i) => (
                 <div key={i} style={{ padding: "16px", background: t.bgTint, borderRadius: 14, border: `1px solid ${t.borderSoft}`, display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -4922,7 +4931,7 @@ function MutuelleComingSoon({ t }) {
 const bossNav = [
   { id: "home", label: "Tableau de bord", icon: "home" },
   { id: "scanner", label: "Scanner", icon: "chart-bar" },
-  { id: "ppv", label: "Kit PPV", icon: "file-certificate" },
+  { id: "ppv", label: "Kit PPV", icon: "certificate" },
   { id: "team", label: "Équipe", icon: "users" },
   { id: "factures", label: "Factures", icon: "file-invoice" },
   { id: "offres", label: "Catalogue", icon: "tag" },
