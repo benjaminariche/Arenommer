@@ -146,9 +146,9 @@ const ACCOUNTS = [
 
 // ─── INITIAL DATA ─────────────────────────────────────────────────────
 const INIT_EMPLOYEES = [
-  { id: 1, firstName: "Benjamin", lastName: "Martin", email: "benjamin@alphaoptique.fr", phone: "06 12 34 56 78", role: "Opticien — CDI", seniority: 36, initials: "BM", ppv: 1000, active: true },
-  { id: 2, firstName: "Jules", lastName: "Renaud", email: "jules@alphaoptique.fr", phone: "06 98 76 54 32", role: "Opticien — CDI", seniority: 18, initials: "JR", ppv: 800, active: true },
-  { id: 3, firstName: "Ilana", lastName: "Amrani", email: "Ilana@alphaoptique.fr", phone: "07 11 22 33 44", role: "Alternante", seniority: 8, initials: "SA", ppv: 500, active: true },
+  { id: 1, firstName: "Benjamin", lastName: "Ariche", email: "benjamin@alphaoptique.fr", phone: "06 12 34 56 78", role: "Opticien — CDI", seniority: 36, initials: "BA", ppv: 1000, active: true },
+  { id: 2, firstName: "Jules", lastName: "Ariche", email: "julien@alphaoptique.fr", phone: "06 98 76 54 32", role: "Opticien — CDI", seniority: 18, initials: "JR", ppv: 800, active: true },
+  { id: 3, firstName: "Ilana", lastName: "Ariche", email: "sofia@alphaoptique.fr", phone: "07 11 22 33 44", role: "Alternante", seniority: 8, initials: "IA", ppv: 500, active: true },
 ];
 
 const INIT_SCANNER = {
@@ -782,7 +782,7 @@ function PatronOnboarding({ onComplete, t }) {
   const [company, setCompany] = useState({ name: "Alpha Optique", sector: "Optique / Santé", siret: "" });
   const [invites, setInvites] = useState([
     { id: 1, firstName: "Benjamin", lastName: "Ariche", email: "benjamin@alphaoptique.fr", role: "Opticien — CDI" },
-    { id: 2, firstName: "Jules", lastName: "Ariche", email: "jules@alphaoptique.fr", role: "Opticien — CDI" },
+    { id: 2, firstName: "Jules", lastName: "Ariche", email: "julien@alphaoptique.fr", role: "Opticien — CDI" },
     { id: 3, firstName: "Ilana", lastName: "Ariche", email: "sofia@alphaoptique.fr", role: "Alternante" },
   ]);
   const [newInvite, setNewInvite] = useState({ firstName: "", lastName: "", email: "", role: "" });
@@ -4416,6 +4416,509 @@ ${article2Html}
   );
 }
 
+// ─── SCANNER PROSPECT ─────────────────────────────────────────────────
+const SCANNER_STEPS = [
+  {
+    id: "company_name",
+    label: "Quel est le nom de votre entreprise ?",
+    sub: "Pour personnaliser votre rapport d'audit.",
+    type: "text",
+    placeholder: "Ex : Optique Dupont",
+  },
+  {
+    id: "sector",
+    label: "Dans quel secteur exercez-vous ?",
+    sub: "Certains dispositifs varient selon votre convention collective.",
+    type: "single",
+    opts: ["Commerce / Retail", "Optique / Santé", "Hôtellerie-Restauration", "BTP / Artisanat", "Services aux entreprises", "Beauté / Bien-être", "Transport / Logistique", "Autre"],
+  },
+  {
+    id: "effectif",
+    label: "Combien de salariés avez-vous ?",
+    sub: "CDI, CDD, alternants et apprentis inclus.",
+    type: "number",
+    placeholder: "Ex : 5",
+  },
+  {
+    id: "anciennete",
+    label: "Quelle est l'ancienneté moyenne de votre équipe ?",
+    sub: "Utile pour calibrer la PPV par paliers d'ancienneté.",
+    type: "single",
+    opts: ["Moins de 1 an en moyenne", "Entre 1 et 3 ans", "Entre 3 et 5 ans", "Plus de 5 ans"],
+  },
+  {
+    id: "contrats",
+    label: "Quels types de contrats ?",
+    sub: "Sélectionnez tous ceux présents dans votre équipe.",
+    type: "multi",
+    opts: ["CDI", "CDD", "Alternant(e) / Apprenti(e)", "Stagiaire"],
+  },
+  {
+    id: "ppv_status",
+    label: "Avez-vous versé une PPV (prime Macron) récemment ?",
+    sub: "La prime de partage de la valeur permet jusqu'à 3 000€/salarié exonérés. 2026 est la dernière année.",
+    type: "single",
+    opts: ["Oui, cette année", "Oui, l'année dernière mais pas cette année", "Non, jamais", "Je ne connais pas ce dispositif"],
+  },
+  {
+    id: "ppv_intention",
+    label: "Envisagez-vous de verser une PPV en 2026 ?",
+    sub: "C'est la dernière année d'exonération totale pour les TPE.",
+    type: "single",
+    opts: ["Oui, c'est prévu", "J'y réfléchis", "Non", "Je veux en savoir plus d'abord"],
+    condition: (a) => a.ppv_status === "Non, jamais" || a.ppv_status === "Je ne connais pas ce dispositif",
+  },
+  {
+    id: "ppv_montant",
+    label: "Quel montant de PPV avez-vous versé par salarié ?",
+    sub: "Le plafond est de 3 000€ (ou 6 000€ avec un accord d'intéressement).",
+    type: "single",
+    opts: ["Moins de 500€", "Entre 500€ et 1 000€", "Entre 1 000€ et 2 000€", "Entre 2 000€ et 3 000€", "Le maximum (3 000€)"],
+    condition: (a) => a.ppv_status === "Oui, cette année" || a.ppv_status === "Oui, l'année dernière mais pas cette année",
+  },
+  {
+    id: "ppv_difficulte",
+    label: "La mise en place a-t-elle été compliquée ?",
+    sub: "Cela nous aide à calibrer l'accompagnement Perky.",
+    type: "single",
+    opts: ["Oui, très laborieux avec mon comptable", "Un peu, mais ça s'est fait", "Non, c'était simple", "Je n'ai pas encore essayé"],
+    condition: (a) => a.ppv_status !== "Je ne connais pas ce dispositif" && a.ppv_status !== "Non, jamais",
+  },
+  {
+    id: "ppv_moduler",
+    label: "Aimeriez-vous récompenser davantage certains salariés ?",
+    sub: "La PPV permet de moduler selon l'ancienneté ou la classification.",
+    type: "single",
+    opts: ["Oui, j'aimerais différencier", "Non, je préfère donner pareil à tout le monde", "Je ne savais pas que c'était possible"],
+  },
+  {
+    id: "transport_modes",
+    label: "Comment vos salariés viennent-ils travailler ?",
+    sub: "Plusieurs réponses possibles.",
+    type: "multi",
+    opts: ["Transport en commun (Navigo, bus)", "Voiture personnelle", "Vélo", "Trottinette électrique", "Covoiturage", "Marche à pied"],
+  },
+  {
+    id: "transport_remb",
+    label: "Quel niveau de remboursement transport appliquez-vous ?",
+    sub: "50% du Navigo est le minimum légal obligatoire.",
+    type: "single",
+    opts: ["50% du Navigo (le minimum obligatoire)", "Entre 50% et 75%", "75% (le maximum exonéré)", "Je ne rembourse pas / Pas concerné"],
+    condition: (a) => (a.transport_modes || []).includes("Transport en commun (Navigo, bus)"),
+  },
+  {
+    id: "cadeaux",
+    label: "Comment récompensez-vous vos salariés aux occasions spéciales ?",
+    sub: "Noël, naissances, mariages…",
+    type: "single",
+    opts: ["Chèques cadeaux / bons d'achat officiels", "Cash, resto d'équipe ou cadeau informel", "Rien de particulier"],
+  },
+  {
+    id: "enfants_count",
+    label: "Combien de salariés ont des enfants de moins de 16 ans ?",
+    sub: "Cela déverrouille des chèques cadeaux supplémentaires (Noël enfants, rentrée scolaire).",
+    type: "single",
+    opts: ["Aucun", "1 salarié", "2 salariés", "3 ou plus"],
+  },
+  {
+    id: "titres_resto",
+    label: "Proposez-vous des titres-restaurant ?",
+    sub: "Swile, Edenred, Pluxee…",
+    type: "single",
+    opts: ["Oui, déjà en place", "Non", "J'y réfléchis"],
+    condition: (a) => !["Hôtellerie-Restauration", "BTP / Artisanat"].includes(a.sector),
+  },
+  {
+    id: "titres_resto_montant",
+    label: "Quel est le montant facial de vos titres-restaurant ?",
+    sub: "La part patronale est exonérée jusqu'à 7,63€/ticket en 2026.",
+    type: "single",
+    opts: ["Moins de 8€", "Entre 8€ et 12€", "Plus de 12€", "Je ne sais pas exactement"],
+    condition: (a) => a.titres_resto === "Oui, déjà en place" && !["Hôtellerie-Restauration", "BTP / Artisanat"].includes(a.sector),
+  },
+  {
+    id: "cheques_vacances",
+    label: "Proposez-vous des chèques vacances ANCV ?",
+    sub: "Accessible aux TPE sans CSE. Le dirigeant peut aussi en bénéficier.",
+    type: "single",
+    opts: ["Oui, déjà en place", "Non", "Je ne savais pas que c'était possible pour les TPE"],
+  },
+  {
+    id: "mutuelle",
+    label: "Êtes-vous satisfait de votre mutuelle d'entreprise ?",
+    sub: "Beaucoup de TPE ont une mutuelle sous-optimisée ou trop chère.",
+    type: "single",
+    opts: ["Oui, bonne couverture au bon prix", "Pas sûr, je n'ai pas comparé depuis longtemps", "Non, je trouve que c'est trop cher pour ce que c'est"],
+  },
+];
+
+function analyzeScan(a) {
+  const n = parseInt(a.effectif) || 1;
+  const name = a.company_name || "Votre entreprise";
+  const isHCRorBTP = ["Hôtellerie-Restauration", "BTP / Artisanat"].includes(a.sector);
+  const items = [];
+
+  // ── PPV ──
+  const ppvDone = a.ppv_status === "Oui, cette année";
+  const ppvOld = a.ppv_status === "Oui, l'année dernière mais pas cette année";
+  const ppvNever = a.ppv_status === "Non, jamais" || a.ppv_status === "Je ne connais pas ce dispositif";
+  let ppvGap = 0, ppvPct = 0, ppvDesc = "", ppvStatus = "todo";
+  let ppvCta = "Générer mon kit PPV", ppvAction = "Perky génère votre DUE pré-remplie + mémo comptable en 2 clics.";
+
+  if (ppvDone) {
+    const montantMap = { "Moins de 500€": 500, "Entre 500€ et 1 000€": 1000, "Entre 1 000€ et 2 000€": 2000, "Entre 2 000€ et 3 000€": 3000, "Le maximum (3 000€)": 3000 };
+    const versed = montantMap[a.ppv_montant] || 1000;
+    ppvGap = Math.max(0, (3000 - versed) * n);
+    ppvPct = Math.round((versed / 3000) * 100);
+    ppvStatus = versed >= 3000 ? "active" : "ready";
+    ppvDesc = versed >= 3000
+      ? "Bravo, vous avez versé le maximum ! Vous pouvez envisager un accord d'intéressement pour monter à 6 000€."
+      : `Vous avez versé ${versed.toLocaleString("fr-FR")}€/salarié. Il reste ${(3000 - versed).toLocaleString("fr-FR")}€ de marge. 2026 est la dernière année d'exonération maximale.`;
+    if (versed < 3000) ppvCta = "Compléter ma PPV";
+  } else {
+    ppvGap = n * (ppvNever ? 3000 : 1500);
+    ppvPct = 0;
+    ppvDesc = ppvNever
+      ? `Vous n'avez jamais versé de PPV. C'est jusqu'à 3 000€/salarié, sans charges, sans impôts. 2026 est la dernière année d'exonération totale.`
+      : "Vous l'avez fait avant mais pas cette année. Relancez le dispositif — Perky vous prépare tout.";
+    if (a.ppv_intention === "Oui, c'est prévu") {
+      ppvDesc += " Perky génère tous les documents nécessaires en quelques minutes.";
+      ppvStatus = "ready";
+    }
+  }
+  if (a.ppv_moduler === "Oui, j'aimerais différencier" || a.ppv_moduler === "Je ne savais pas que c'était possible") {
+    ppvDesc += " La PPV est modulable par ancienneté — Perky intègre automatiquement les paliers dans votre DUE.";
+  }
+  if (a.ppv_difficulte === "Oui, très laborieux avec mon comptable") {
+    ppvAction = "Perky génère votre DUE + mémo comptable prêt à transmettre avec le bon CTP. Fini les allers-retours.";
+  }
+  items.push({ title: "Prime de partage de la valeur (PPV)", amount: ppvGap, pct: ppvPct, desc: ppvDesc, status: ppvGap === 0 ? "active" : ppvStatus, color: ppvGap === 0 ? "#1D9E75" : ppvStatus === "ready" ? "#378ADD" : "#BA7517", cta: "Configurer via Kit PPV →", action: ppvGap > 0 ? "Rendez-vous dans l'onglet « Kit PPV » de votre espace patron pour générer votre DUE et mémo comptable." : "", perkyLink: ppvGap > 0 });
+
+  // ── TRANSPORT ──
+  const modes = a.transport_modes || [];
+  const hasTC = modes.includes("Transport en commun (Navigo, bus)");
+  const hasVelo = modes.includes("Vélo") || modes.includes("Trottinette électrique") || modes.includes("Covoiturage");
+
+  if (hasTC) {
+    const is75 = a.transport_remb === "75% (le maximum exonéré)";
+    const isMid = a.transport_remb === "Entre 50% et 75%";
+    const navGap = is75 ? 0 : isMid ? n * 130 : n * 259;
+    items.push({ title: "Remboursement Navigo optimisé", amount: navGap, pct: is75 ? 100 : isMid ? 70 : 50, desc: is75 ? "Parfait, vous êtes au maximum exonéré (75%)." : `En passant à 75%, chaque salarié gagne ~${isMid ? 130 : 259}€/an net. Coût pour vous : exonéré et déductible.`, status: is75 ? "active" : "todo", color: is75 ? "#1D9E75" : "#BA7517", cta: "Configurer via Scanner →", action: is75 ? "" : "Rendez-vous dans « Scanner → Transport Navigo » pour configurer et obtenir le mémo comptable.", perkyLink: !is75 });
+  }
+  if (hasVelo) {
+    items.push({ title: "Forfait mobilités durables (FMD)", amount: n * 600, pct: 0, desc: `Vélo/trottinette/covoiturage : jusqu'à 600€/an exonérés par salarié.${hasTC ? " Cumulable avec le Navigo jusqu'à 900€." : ""}`, status: "todo", color: "#BA7517", cta: "Configurer via Scanner →", action: "Rendez-vous dans « Scanner → Transport Navigo » pour activer ce dispositif.", perkyLink: true });
+  }
+
+  // ── CHÈQUES CADEAUX ──
+  const cadOk = a.cadeaux === "Chèques cadeaux / bons d'achat officiels";
+  const kidsMap = { "Aucun": 0, "1 salarié": 1, "2 salariés": 2, "3 ou plus": 3 };
+  const kidsCount = kidsMap[a.enfants_count] || 0;
+  const cadBase = cadOk ? 0 : n * 193;
+  const cadKids = kidsCount * 193 * 2;
+  const cadTotal = cadOk ? cadKids : cadBase + cadKids;
+  let cadDesc = cadOk
+    ? kidsCount > 0 ? `En place. Mais exploitez-vous les événements enfants ? ${kidsCount} salarié(s) avec enfants = ~${cadKids.toLocaleString("fr-FR")}€ supplémentaires (Noël enfants + rentrée scolaire).` : "En place. Vérifiez que vous utilisez tous les événements URSSAF officiels."
+    : a.cadeaux === "Cash, resto d'équipe ou cadeau informel"
+      ? `Vos cadeaux informels ne sont pas optimisés fiscalement. En passant par des chèques cadeaux URSSAF : ~193€/salarié à Noël, 100% exonéré.${kidsCount > 0 ? ` + ${kidsCount} salarié(s) avec enfants.` : ""}`
+      : `Rien en place actuellement. Les chèques cadeaux URSSAF : ~193€/salarié sans charges.${kidsCount > 0 ? ` + événements enfants pour ${kidsCount} salarié(s).` : ""}`;
+  items.push({ title: "Chèques cadeaux URSSAF", amount: cadTotal, pct: cadOk && cadTotal === 0 ? 100 : cadOk ? 60 : 0, desc: cadDesc, status: cadOk && cadTotal === 0 ? "active" : cadTotal > 0 ? "todo" : "active", color: cadOk && cadTotal === 0 ? "#1D9E75" : "#BA7517", cta: "Configurer via Scanner →", action: cadTotal > 0 ? "Rendez-vous dans « Scanner → Chèques cadeaux » pour configurer l'événement URSSAF et obtenir le kit comptable." : "", perkyLink: cadTotal > 0 });
+
+  // ── TITRES-RESTAURANT (hors HCR/BTP) ──
+  if (!isHCRorBTP) {
+    const trOk = a.titres_resto === "Oui, déjà en place";
+    const trGap = trOk ? 0 : n * 1200;
+    let trDesc = trOk
+      ? a.titres_resto_montant === "Moins de 8€" ? "En place mais le montant facial semble bas. Vous pouvez monter jusqu'à ~13€ (part patronale exonérée jusqu'à 7,63€)." : "En place. Vérifiez que la part patronale est entre 50% et 60% du montant facial."
+      : "Les titres-restaurant représentent ~1 200€/an de pouvoir d'achat par salarié. La part patronale est exonérée jusqu'à 7,63€/ticket.";
+    items.push({ title: "Titres-restaurant", amount: trGap, pct: trOk ? 100 : 0, desc: trDesc, status: trOk ? "active" : "todo", color: trOk ? "#1D9E75" : "#BA7517", cta: "Configurer via Scanner →", action: trOk ? "" : "Rendez-vous dans « Scanner → Titres-restaurant » pour configurer et obtenir le kit comptable.", perkyLink: !trOk });
+  } else {
+    items.push({ title: "Dispositif repas conventionnel", amount: 0, pct: 100, desc: `Secteur ${a.sector} : les titres-restaurant standard sont remplacés par les dispositifs conventionnels (Panier BTP / Avantage en Nature Repas HCR), gérés directement en paie.`, status: "na", color: "#888780", cta: "", action: "", perkyLink: false });
+  }
+
+  // ── CHÈQUES VACANCES ──
+  const cvOk = a.cheques_vacances === "Oui, déjà en place";
+  const cvGap = cvOk ? 0 : n * 500;
+  items.push({ title: "Chèques vacances ANCV", amount: cvGap, pct: cvOk ? 100 : 0, desc: cvOk ? "En place. Vérifiez que la contribution patronale est au maximum exonéré (~550€/salarié/an)." : a.cheques_vacances === "Je ne savais pas que c'était possible pour les TPE" ? "Bonne nouvelle : les TPE sans CSE y ont droit ! ~500€/salarié/an exonéré. Le dirigeant peut aussi en bénéficier." : "~500€/salarié/an exonéré via l'ANCV. Simple à mettre en place.", status: cvOk ? "active" : "todo", color: cvOk ? "#1D9E75" : "#BA7517", cta: "Configurer via Scanner →", action: cvOk ? "" : "Rendez-vous dans « Scanner → Chèques vacances » pour configurer et obtenir le kit comptable.", perkyLink: !cvOk });
+
+  // ── MUTUELLE ──
+  const mutOk = a.mutuelle === "Oui, bonne couverture au bon prix";
+  items.push({ title: "Optimisation mutuelle", amount: mutOk ? 0 : n * 180, pct: mutOk ? 100 : 0, desc: mutOk ? "Vous êtes satisfait de votre mutuelle. Perky pourra faire une comparaison gratuite lors du renouvellement." : a.mutuelle === "Non, je trouve que c'est trop cher pour ce que c'est" ? "Votre mutuelle semble trop chère. Une comparaison pourrait faire économiser ~15€/mois par salarié tout en améliorant les garanties." : "Vous n'avez pas comparé depuis longtemps. Les offres évoluent vite — une comparaison rapide peut générer des économies significatives.", status: mutOk ? "active" : "todo", color: mutOk ? "#1D9E75" : "#BA7517", cta: mutOk ? "Vérifié" : "Comparer (bientôt)", action: "", perkyLink: false });
+
+  const total = items.filter(i => i.status !== "na").reduce((s, i) => s + i.amount, 0);
+  const actives = items.filter(i => i.status === "active").length;
+  const gPct = Math.round((actives / items.filter(i => i.status !== "na").length) * 100);
+  return { items, total, gPct, actives, count: items.length, n, name, sector: a.sector };
+}
+
+function ScannerCounter({ target, dur = 1400 }) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    let c = 0;
+    const s = Math.ceil(target / (dur / 16));
+    const id = setInterval(() => { c = Math.min(c + s, target); setV(c); if (c >= target) clearInterval(id); }, 16);
+    return () => clearInterval(id);
+  }, [target]);
+  return <span>{v.toLocaleString("fr-FR")} €</span>;
+}
+
+function ScannerProspect({ t }) {
+  const isMobile = useIsMobile();
+  const [step, setStep] = useState(-1);
+  const [ans, setAns] = useState({});
+  const [res, setRes] = useState(null);
+
+  const visibleSteps = SCANNER_STEPS.filter(s => !s.condition || s.condition(ans));
+  const curQ = visibleSteps[step];
+  const progress = step >= 0 ? ((step + 1) / visibleSteps.length) * 100 : 0;
+
+  const set = (id, v) => setAns(p => ({ ...p, [id]: v }));
+  const tog = (id, v) => setAns(p => {
+    const arr = p[id] || [];
+    return { ...p, [id]: arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v] };
+  });
+  const canNext = () => {
+    if (step < 0) return true;
+    const a = ans[curQ.id];
+    if (curQ.type === "text") return a && a.trim().length > 0;
+    if (curQ.type === "number") return a && parseInt(a) > 0;
+    if (curQ.type === "single") return !!a;
+    if (curQ.type === "multi") return a && a.length > 0;
+    return true;
+  };
+  const next = () => { if (step < visibleSteps.length - 1) setStep(step + 1); else setRes(analyzeScan(ans)); };
+  const restart = () => { setStep(-1); setAns({}); setRes(null); };
+
+  const sColors = { active: "#1D9E75", ready: "#378ADD", todo: "#BA7517", na: "#888780" };
+  const sLabels = { active: "Activé ✓", ready: "Kit prêt", todo: "À activer", na: "N/A sectoriel" };
+
+  // ── RAPPORT FINAL ──
+  if (res) return (
+    <div style={{ maxWidth: 680, margin: "0 auto", animation: "pkRise 0.4s ease" }}>
+      <div style={{ marginBottom: 20 }}>
+        <Badge text="Rapport d'audit" variant="green" t={t} dot />
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.7 }}>Résultats pour {res.name}</h1>
+        <p style={{ fontSize: 14, color: t.textSec, margin: 0 }}>{res.n} salarié{res.n > 1 ? "s" : ""} · {res.sector || "—"}</p>
+      </div>
+
+      {/* Hero total */}
+      <div style={{ background: "linear-gradient(135deg, #1D4FCB 0%, #2563EB 50%, #1E3A8A 100%)", borderRadius: 20, padding: "24px 28px", color: "#fff", marginBottom: 20, position: "relative", overflow: "hidden", boxShadow: `0 12px 32px -10px rgba(37,99,235,0.5)` }}>
+        <div style={{ ...glowDot("#60A5FA", 260, 0.4), top: "-40%", right: "10%" }} />
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 12.5, opacity: 0.82, fontWeight: 600, marginBottom: 6 }}>Pouvoir d'achat récupérable identifié</div>
+          <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.4, lineHeight: 1 }}><ScannerCounter target={res.total} /></div>
+          <div style={{ fontSize: 12.5, opacity: 0.72, marginTop: 8 }}>pour {res.n} salarié{res.n > 1 ? "s" : ""} — ~{Math.round(res.total / Math.max(res.n, 1)).toLocaleString("fr-FR")} €/pers./an</div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+        <div style={{ background: t.greenLight, borderRadius: 14, padding: "14px 18px", textAlign: "center", border: `1px solid ${t.green}22` }}>
+          <div style={{ fontSize: 26, fontWeight: 800, color: t.greenDeep }}>{res.actives}/{res.items.filter(i => i.status !== "na").length}</div>
+          <div style={{ fontSize: 12.5, color: t.green, marginTop: 2 }}>dispositifs activés</div>
+        </div>
+        <div style={{ background: res.total > 0 ? t.amberLight : t.greenLight, borderRadius: 14, padding: "14px 18px", textAlign: "center", border: `1px solid ${res.total > 0 ? t.amber : t.green}22` }}>
+          <div style={{ fontSize: 26, fontWeight: 800, color: res.total > 0 ? t.amberDeep : t.greenDeep }}>{res.gPct}%</div>
+          <div style={{ fontSize: 12.5, color: res.total > 0 ? t.amber : t.green, marginTop: 2 }}>optimisé</div>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 20 }}><Bar pct={res.gPct} color={t.blue} h={8} /></div>
+
+      {/* Items */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+        {res.items.map((it, i) => (
+          <div key={i} style={{ background: t.card, borderRadius: 16, padding: "18px 20px", border: `1px solid ${t.borderSoft}`, borderLeft: `4px solid ${it.color}`, boxShadow: t.cardShadow }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6, gap: 12 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: t.text, flex: 1 }}>{it.title}</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: it.color, whiteSpace: "nowrap" }}>
+                {it.amount > 0 ? `${it.amount.toLocaleString("fr-FR")} €` : it.status === "active" ? "✓ Actif" : "—"}
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: t.textSec, margin: "0 0 10px", lineHeight: 1.6 }}>{it.desc}</p>
+            <Bar pct={it.pct} color={it.color} h={5} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10, flexWrap: "wrap", gap: 6 }}>
+              <span style={{ fontSize: 12, color: it.color, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 7, height: 7, borderRadius: 2, background: it.color, display: "inline-block" }} />
+                {sLabels[it.status]}
+              </span>
+              {it.perkyLink && it.amount > 0 && (
+                <span style={{ fontSize: 12, fontWeight: 700, color: it.color, background: it.color + "18", padding: "5px 14px", borderRadius: 20, border: `1px solid ${it.color}33` }}>
+                  {it.cta}
+                </span>
+              )}
+            </div>
+            {it.action && it.amount > 0 && (
+              <div style={{ marginTop: 10, fontSize: 12.5, color: t.blue, background: t.blueGradSoft, padding: "9px 14px", borderRadius: 10, lineHeight: 1.55, border: `1px solid ${t.blue}22` }}>{it.action}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Légende */}
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
+        {Object.entries(sLabels).filter(([k]) => k !== "na").map(([k, l]) => (
+          <span key={k} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: t.textSec }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: sColors[k], display: "inline-block" }} />{l}
+          </span>
+        ))}
+      </div>
+
+      {/* Disclaimer */}
+      <div style={{ padding: "14px 18px", background: t.bgTint, borderRadius: 12, fontSize: 12, color: t.textTert, lineHeight: 1.65, borderLeft: `3px solid ${t.blue}55`, marginBottom: 16 }}>
+        Ce rapport est indicatif et basé sur vos déclarations. Les montants sont des estimations. Chaque dispositif doit être validé avec votre expert-comptable avant mise en œuvre. Perky informe et facilite — Perky ne certifie pas.
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={restart} style={{ flex: 1, padding: "13px", borderRadius: 12, border: `1.5px solid ${t.borderSoft}`, background: t.card, color: t.textSec, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: font }}>Recommencer</button>
+        <button onClick={() => window.print()} style={{ flex: 1, padding: "13px", borderRadius: 12, border: "none", background: t.blueGrad, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font, boxShadow: "0 4px 14px rgba(37,99,235,0.35)" }}>Imprimer le rapport</button>
+      </div>
+    </div>
+  );
+
+  // ── PAGE D'ACCUEIL SCANNER ──
+  if (step < 0) return (
+    <div style={{ maxWidth: 580, margin: "0 auto", textAlign: "center", animation: "pkRise 0.4s ease", padding: "20px 0" }}>
+      <div style={{ width: 72, height: 72, borderRadius: 22, background: t.blueGrad, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(37,99,235,0.35)" }}>
+        <Icon name="search" size={34} color="#fff" />
+      </div>
+      <Badge text="Scanner pouvoir d'achat" variant="blue" t={t} dot />
+      <h1 style={{ fontSize: 28, fontWeight: 800, color: t.text, margin: "14px 0 12px", letterSpacing: -0.8, lineHeight: 1.2 }}>Combien laissez-vous sur la table chaque année ?</h1>
+      <p style={{ fontSize: 15, color: t.textSec, lineHeight: 1.7, maxWidth: 440, margin: "0 auto 32px" }}>
+        En 5 minutes, identifiez les dispositifs d'avantages non activés pour votre équipe — PPV, transport, titres-restaurant, chèques vacances et plus.
+      </p>
+      <button onClick={() => setStep(0)} style={{ padding: "15px 48px", borderRadius: 14, border: "none", background: t.blueGrad, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: font, boxShadow: "0 4px 16px rgba(37,99,235,0.4)", transition: "transform 0.15s" }}
+        onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+        onMouseLeave={e => e.currentTarget.style.transform = "none"}>
+        Lancer mon audit gratuit →
+      </button>
+      <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 24, fontSize: 13, color: t.textTert }}>
+        {["Confidentiel", "Sans engagement", "Résultat immédiat"].map(l => (
+          <span key={l} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <Icon name="check" size={13} color={t.green} /> {l}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+
+  // ── QUESTIONS ──
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", animation: "pkRise 0.3s ease" }}>
+      {/* Header progress */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: t.textSec }}>Question {step + 1} / {visibleSteps.length}</span>
+        <span style={{ fontSize: 12, color: t.textTert }}>{Math.round(progress)}% complété</span>
+      </div>
+      <Bar pct={progress} color={t.blue} h={6} />
+
+      <div style={{ margin: "28px 0 20px" }}>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: t.text, margin: "0 0 6px", lineHeight: 1.4, letterSpacing: -0.4 }}>{curQ.label}</h2>
+        <p style={{ fontSize: 13, color: t.textSec, margin: 0, lineHeight: 1.55 }}>{curQ.sub}</p>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        {(curQ.type === "text" || curQ.type === "number") && (
+          <input type={curQ.type === "number" ? "number" : "text"} value={ans[curQ.id] || ""} onChange={e => set(curQ.id, e.target.value)}
+            placeholder={curQ.placeholder} autoFocus
+            style={{ width: "100%", padding: "14px 16px", fontSize: 16, border: `1.5px solid ${t.border}`, borderRadius: 12, outline: "none", boxSizing: "border-box", fontFamily: font, background: t.bgTint, color: t.text }}
+            onFocus={e => { e.target.style.borderColor = t.blue; e.target.style.boxShadow = `0 0 0 4px ${t.ring}`; }}
+            onBlur={e => { e.target.style.borderColor = t.border; e.target.style.boxShadow = "none"; }} />
+        )}
+        {curQ.type === "single" && curQ.opts.map(o => {
+          const sel = ans[curQ.id] === o;
+          return (
+            <button key={o} onClick={() => set(curQ.id, o)}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "13px 16px", marginBottom: 8, border: `2px solid ${sel ? t.blue : t.borderSoft}`, borderRadius: 13, background: sel ? t.blueGradSoft : t.card, color: sel ? t.blue : t.text, fontSize: 14, textAlign: "left", cursor: "pointer", fontFamily: font, transition: "all 0.15s", fontWeight: sel ? 700 : 400 }}>
+              <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${sel ? t.blue : t.borderStrong}`, background: sel ? t.blue : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                {sel && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />}
+              </div>
+              {o}
+            </button>
+          );
+        })}
+        {curQ.type === "multi" && curQ.opts.map(o => {
+          const sel = (ans[curQ.id] || []).includes(o);
+          return (
+            <button key={o} onClick={() => tog(curQ.id, o)}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "13px 16px", marginBottom: 8, border: `2px solid ${sel ? t.blue : t.borderSoft}`, borderRadius: 13, background: sel ? t.blueGradSoft : t.card, color: sel ? t.blue : t.text, fontSize: 14, textAlign: "left", cursor: "pointer", fontFamily: font, transition: "all 0.15s", fontWeight: sel ? 700 : 400 }}>
+              <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${sel ? t.blue : t.borderStrong}`, background: sel ? t.blue : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                {sel && <Icon name="check" size={12} color="#fff" />}
+              </div>
+              {o}
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        {step > 0 && (
+          <button onClick={() => setStep(step - 1)} style={{ padding: "13px 22px", borderRadius: 12, border: `1.5px solid ${t.borderSoft}`, background: t.card, color: t.textSec, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: font }}>
+            ← Retour
+          </button>
+        )}
+        <button onClick={next} disabled={!canNext()}
+          style={{ flex: 1, padding: "13px 22px", borderRadius: 12, border: "none", background: canNext() ? t.blueGrad : t.bgSecondary, color: canNext() ? "#fff" : t.textTert, fontSize: 14, fontWeight: 700, cursor: canNext() ? "pointer" : "default", fontFamily: font, boxShadow: canNext() ? "0 4px 14px rgba(37,99,235,0.35)" : "none", transition: "transform 0.15s" }}
+          onMouseEnter={e => { if (canNext()) e.currentTarget.style.transform = "translateY(-1px)"; }}
+          onMouseLeave={e => e.currentTarget.style.transform = "none"}>
+          {step === visibleSteps.length - 1 ? "Voir mon rapport →" : "Suivant →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── MUTUELLE COMING SOON ──────────────────────────────────────────────
+function MutuelleComingSoon({ t }) {
+  return (
+    <div style={{ maxWidth: 620, margin: "0 auto", animation: "pkRise 0.4s ease" }}>
+      <div style={{ marginBottom: 28 }}>
+        <Badge text="Bientôt disponible" variant="purple" t={t} dot />
+        <h1 style={{ fontSize: 27, fontWeight: 800, color: t.text, margin: "8px 0 4px", letterSpacing: -0.8 }}>Mutuelle d'entreprise</h1>
+      </div>
+
+      <div style={{ background: `linear-gradient(135deg, #6D28D9 0%, #7C3AED 55%, #5B21B6 100%)`, borderRadius: 22, padding: "36px 36px", color: "#fff", marginBottom: 24, position: "relative", overflow: "hidden", boxShadow: "0 12px 36px -10px rgba(109,40,217,0.5)" }}>
+        <div style={{ ...glowDot("#A78BFA", 280, 0.5), top: "-40%", right: "5%" }} />
+        <div style={{ ...glowDot("#DDD6FE", 180, 0.25), bottom: "-50%", left: "15%" }} />
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 44, marginBottom: 16 }}>🛡️</div>
+          <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.3, marginBottom: 12, letterSpacing: -0.5 }}>
+            Des recommandations mutuelles<br />taillées pour votre TPE
+          </div>
+          <div style={{ fontSize: 14.5, opacity: 0.88, lineHeight: 1.75, maxWidth: 420 }}>
+            Perky analysera votre profil — secteur, effectif, convention collective — et vous proposera les mutuelles partenaires les plus adaptées et les plus compétitives du marché TPE.
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
+        {[
+          { icon: "search", title: "Comparaison intelligente", desc: "Filtrée par secteur, effectif et convention collective" },
+          { icon: "coin", title: "Économies identifiées", desc: "~15€/mois/salarié en moyenne sur les contrats non comparés" },
+          { icon: "shield-check", title: "Conformité garantie", desc: "Contrats ANI-conformes avec clause de désignation vérifiée" },
+        ].map((it, i) => (
+          <div key={i} style={{ background: t.card, borderRadius: 16, padding: "18px 16px", border: `1px solid ${t.borderSoft}`, boxShadow: t.cardShadow }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: t.purple + "22", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+              <Icon name={it.icon} size={18} color={t.purple} />
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: t.text, marginBottom: 5, letterSpacing: -0.2 }}>{it.title}</div>
+            <div style={{ fontSize: 12, color: t.textSec, lineHeight: 1.55 }}>{it.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: t.bgTint, borderRadius: 16, padding: "22px 24px", border: `1px solid ${t.borderSoft}`, display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 13, background: t.purple + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon name="bell" size={22} color={t.purple} />
+        </div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: t.text, marginBottom: 3 }}>Disponible prochainement</div>
+          <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>Ce module sera intégré dans une prochaine mise à jour. En attendant, votre expert-comptable reste votre meilleur interlocuteur pour un bilan mutuelle.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const bossNav = [
   { id: "home", label: "Tableau de bord", icon: "home" },
   { id: "scanner", label: "Scanner", icon: "chart-bar" },
@@ -4423,6 +4926,7 @@ const bossNav = [
   { id: "team", label: "Équipe", icon: "users" },
   { id: "factures", label: "Factures", icon: "file-invoice" },
   { id: "offres", label: "Catalogue", icon: "tag" },
+  { id: "mutuelle", label: "Mutuelle", icon: "shield-check" },
   { id: "settings", label: "Paramètres", icon: "settings" },
 ];
 
@@ -4673,12 +5177,14 @@ function PerkyApp() {
   const bossViews = {
     home: <BossHome employees={employees.filter(e => e.active)} scannerState={scannerState} t={t} onNav={setBossPage} />,
     scanner: <BossScanner employees={employees} scannerState={scannerState} t={t} company={company} />,
+    "scanner-prospect": <ScannerProspect t={t} />,
     ppv: <BossPPVKit employees={employees} company={company} t={t} />,
     "scanner-ppv": <BossPPVKit employees={employees} company={company} t={t} />,
     "scanner-resto": <BossSubKit kitId="resto" employees={employees} scannerState={scannerState} setScannerState={setScannerState} company={company} t={t} />,
     "scanner-navigo": <BossSubKit kitId="navigo" employees={employees} scannerState={scannerState} setScannerState={setScannerState} company={company} t={t} />,
     "scanner-vacances": <BossSubKit kitId="vacances" employees={employees} scannerState={scannerState} setScannerState={setScannerState} company={company} t={t} />,
     "scanner-cadeaux": <BossSubKit kitId="cadeaux" employees={employees} scannerState={scannerState} setScannerState={setScannerState} company={company} t={t} />,
+    mutuelle: <MutuelleComingSoon t={t} />,
     team: <BossTeam employees={employees} setEmployees={setEmployees} t={t} />,
     factures: <BossFactures t={t} />,
     offres: <EmpCatalogue onOfferClick={o => setSelectedOffer(o)} onAddToCart={addToCart} selectedCat={selectedCat} setSelectedCat={setSelectedCat} t={t} />,
@@ -4775,9 +5281,15 @@ function PerkyApp() {
           /* Desktop topbar */
           <>
             <div style={{ display: "flex", gap: 4, padding: 3, background: t.bgSecondary, borderRadius: 12, border: `1px solid ${t.borderSoft}` }}>
-              {[{ id: "employee", icon: "user", label: "Espace salarié" }, { id: "employer", icon: "briefcase", label: "Espace patron" }].map(m => {
-                const isActive = isPatron ? m.id === "employer" : m.id === "employee";
-                return <button key={m.id} onClick={() => { if (m.id === "employee") setCurrentAccount({ ...currentAccount, role: "employee" }); else setCurrentAccount({ ...currentAccount, role: "patron" }); }}
+              {[{ id: "employee", icon: "user", label: "Espace salarié" }, { id: "employer", icon: "briefcase", label: "Espace patron" }, { id: "scanner-prospect", icon: "search", label: "Scanner prospect" }].map(m => {
+                const isActive = m.id === "scanner-prospect"
+                  ? bossPage === "scanner-prospect"
+                  : isPatron ? m.id === "employer" : m.id === "employee";
+                return <button key={m.id} onClick={() => {
+                  if (m.id === "employee") setCurrentAccount({ ...currentAccount, role: "employee" });
+                  else if (m.id === "employer") setCurrentAccount({ ...currentAccount, role: "patron" });
+                  else { setCurrentAccount({ ...currentAccount, role: "patron" }); setBossPage("scanner-prospect"); }
+                }}
                   style={{ padding: "7px 15px", borderRadius: 9, border: "none", fontSize: 13, cursor: "pointer", fontFamily: font, fontWeight: isActive ? 700 : 500, background: isActive ? t.card : "transparent", color: isActive ? t.blue : t.textSec, display: "flex", alignItems: "center", gap: 7, boxShadow: isActive ? t.cardShadowSoft : "none", transition: "all 0.15s" }}>
                   <Icon name={m.icon} size={14} color={isActive ? t.blue : t.textSec} /> {m.label}
                 </button>;
