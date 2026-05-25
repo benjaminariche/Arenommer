@@ -147,8 +147,8 @@ const ACCOUNTS = [
 // ─── INITIAL DATA ─────────────────────────────────────────────────────
 const INIT_EMPLOYEES = [
   { id: 1, firstName: "Benjamin", lastName: "Martin", email: "benjamin@alphaoptique.fr", phone: "06 12 34 56 78", role: "Opticien — CDI", seniority: 36, initials: "BM", ppv: 1000, active: true },
-  { id: 2, firstName: "Julien", lastName: "Renaud", email: "julien@alphaoptique.fr", phone: "06 98 76 54 32", role: "Opticien — CDI", seniority: 18, initials: "JR", ppv: 800, active: true },
-  { id: 3, firstName: "Sofia", lastName: "Amrani", email: "sofia@alphaoptique.fr", phone: "07 11 22 33 44", role: "Alternante", seniority: 8, initials: "SA", ppv: 500, active: true },
+  { id: 2, firstName: "Jules", lastName: "Renaud", email: "jules@alphaoptique.fr", phone: "06 98 76 54 32", role: "Opticien — CDI", seniority: 18, initials: "JR", ppv: 800, active: true },
+  { id: 3, firstName: "Ilana", lastName: "Amrani", email: "Ilana@alphaoptique.fr", phone: "07 11 22 33 44", role: "Alternante", seniority: 8, initials: "SA", ppv: 500, active: true },
 ];
 
 const INIT_SCANNER = {
@@ -234,7 +234,7 @@ function downloadKit(kitId, { company, employees, scannerState }) {
       <p><strong>Article 3 — Date de versement :</strong> Avec la paie du mois de [mois] 2026.</p>
       <p><strong>Article 4 — Régime fiscal :</strong> Exonération totale (cotisations + CSG/CRDS + IR) pour les salariés &lt; 3 SMIC, entreprise &lt; 50 salariés.</p>
       <div class="signature-line">Fait à ________________, le ${date}<br><br>Signature du dirigeant : _______________________</div>
-      <h2>Mémo pour l'expert-comptable (Effigest)</h2>
+      <h2>Mémo pour l'expert-comptable (JB Company)</h2>
       <table class="info-table">
         <tr><td>Client</td><td>${companyName}</td></tr>
         <tr><td>Objet</td><td>Versement PPV au titre de 2026 — ${totalPPV.toLocaleString("fr-FR")}€ total équipe</td></tr>
@@ -781,9 +781,9 @@ function PatronOnboarding({ onComplete, t }) {
   const [step, setStep] = useState(1);
   const [company, setCompany] = useState({ name: "Alpha Optique", sector: "Optique / Santé", siret: "" });
   const [invites, setInvites] = useState([
-    { id: 1, firstName: "Benjamin", lastName: "Martin", email: "benjamin@alphaoptique.fr", role: "Opticien — CDI" },
-    { id: 2, firstName: "Julien", lastName: "Renaud", email: "julien@alphaoptique.fr", role: "Opticien — CDI" },
-    { id: 3, firstName: "Sofia", lastName: "Amrani", email: "sofia@alphaoptique.fr", role: "Alternante" },
+    { id: 1, firstName: "Benjamin", lastName: "Ariche", email: "benjamin@alphaoptique.fr", role: "Opticien — CDI" },
+    { id: 2, firstName: "Jules", lastName: "Ariche", email: "jules@alphaoptique.fr", role: "Opticien — CDI" },
+    { id: 3, firstName: "Ilana", lastName: "Ariche", email: "sofia@alphaoptique.fr", role: "Alternante" },
   ]);
   const [newInvite, setNewInvite] = useState({ firstName: "", lastName: "", email: "", role: "" });
   const [showAddInvite, setShowAddInvite] = useState(false);
